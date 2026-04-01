@@ -282,7 +282,7 @@
       isApiMode = !BROWSER_ENGINE_STRATEGIES.has(currentStrategyId);
 
       try {
-        const resp = await fetch(`/api/strategies/${currentStrategyId}`);
+        const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}`);
         if (!resp.ok) throw new Error(`Strategy not found: ${currentStrategyId}`);
         strategyConfig = await resp.json();
       } catch (err) {
