@@ -788,14 +788,16 @@
     // =========================================================================
     async function loadData() {
       try {
-        const resp = await fetch(`/api/strategies/${currentStrategyId}/precomputed`);
+        const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}/precomputed`);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const csvRows = parseCSV(await resp.text());
         rawData = extractRawPrices(csvRows);
         csvIndicators = extractCSVIndicators(csvRows);
         executeRecalc();
       } catch (error) {
-        document.querySelector('.main-container').innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+        // Precomputed CSV not available (e.g. on cloud deployment) — fall back to API backtest
+        console.warn('Precomputed CSV unavailable (' + error.message + '), falling back to API backtest...');
+        await runBacktestViaAPI(readParams());
       }
     }
 
