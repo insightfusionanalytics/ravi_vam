@@ -80,17 +80,83 @@ def _normalize_trades(trade_log: list, alloc: dict, dfs: dict) -> list:
     return normalized
 
 
+def _build_indicator_lookups(dfs: dict, params: dict) -> dict:
+    """Pre-compute SPY SMA-50/200, RSI-14, VIX, and price lookups from raw dfs."""
+    import numpy as np
+
+    lookups: dict[str, dict[str, float]] = {
+        "spy": {}, "qqq": {}, "vix": {},
+        "upro_open": {}, "upro_close": {},
+        "tqqq_open": {}, "tqqq_close": {},
+        "spy_sma50": {}, "spy_sma200": {}, "spy_rsi_14": {},
+    }
+
+    # Price lookups
+    for sym, key_open, key_close in [
+        ("SPY", "spy", "spy"), ("QQQ", "qqq", "qqq"),
+        ("UPRO", "upro_open", "upro_close"), ("TQQQ", "tqqq_open", "tqqq_close"),
+    ]:
+        if sym not in dfs:
+            continue
+        for idx_date, row in dfs[sym].iterrows():
+            d = str(idx_date.date()) if hasattr(idx_date, "date") else str(idx_date)[:10]
+            if sym in ("SPY", "QQQ"):
+                lookups[key_open][d] = float(row["close"])
+            else:
+                lookups[key_open][d] = float(row["open"])
+                lookups[key_close][d] = float(row["close"])
+
+    # VIX — stored in dfs as a separate file, or use ^VIX
+    vix_path = None
+    if "SPY" in dfs:
+        # Try loading VIX from cboe directory
+        from app.config import find_data_dir
+        data_dir = find_data_dir()
+        vix_csv = data_dir / "cboe" / "VIX_daily.csv"
+        if vix_csv.exists():
+            try:
+                vix_df = pd.read_csv(vix_csv, index_col=0, parse_dates=True)
+                vix_df.columns = [c.lower() for c in vix_df.columns]
+                for idx_date, row in vix_df.iterrows():
+                    d = str(idx_date.date()) if hasattr(idx_date, "date") else str(idx_date)[:10]
+                    lookups["vix"][d] = float(row["close"])
+            except Exception:
+                pass
+
+    # Compute SMA-50, SMA-200, RSI-14 from SPY close
+    if "SPY" in dfs:
+        spy_df = dfs["SPY"].copy()
+        spy_df["sma50"] = spy_df["close"].rolling(50).mean()
+        spy_df["sma200"] = spy_df["close"].rolling(200).mean()
+
+        # RSI-14
+        delta = spy_df["close"].diff()
+        gain = delta.where(delta > 0, 0.0)
+        loss = (-delta).where(delta < 0, 0.0)
+        avg_gain = gain.ewm(span=14, adjust=False).mean()
+        avg_loss = loss.ewm(span=14, adjust=False).mean()
+        rs = avg_gain / avg_loss.replace(0, np.nan)
+        spy_df["rsi"] = 100 - (100 / (1 + rs))
+
+        for idx_date, row in spy_df.iterrows():
+            d = str(idx_date.date()) if hasattr(idx_date, "date") else str(idx_date)[:10]
+            if not np.isnan(row["sma50"]):
+                lookups["spy_sma50"][d] = round(float(row["sma50"]), 2)
+            if not np.isnan(row["sma200"]):
+                lookups["spy_sma200"][d] = round(float(row["sma200"]), 2)
+            if not np.isnan(row.get("rsi", float("nan"))):
+                lookups["spy_rsi_14"][d] = round(float(row["rsi"]), 2)
+
+    return lookups
+
+
 def _serialize_result(equity_curve: pd.DataFrame, trade_log: list, metrics: dict,
                       alloc: dict, dfs: dict) -> dict:
     """Convert backtest_ravi_v5 output to the standard API response format."""
     initial_equity = float(equity_curve["equity"].iloc[0])
 
-    # Build SPY price lookup for daily log enrichment
-    spy_prices: dict[str, float] = {}
-    if "SPY" in dfs:
-        for idx_date, row in dfs["SPY"].iterrows():
-            d = str(idx_date.date()) if hasattr(idx_date, "date") else str(idx_date)[:10]
-            spy_prices[d] = float(row["close"])
+    # Build all indicator lookups from raw data
+    lookups = _build_indicator_lookups(dfs, {})
 
     daily_log = []
     for date, row in equity_curve.iterrows():
@@ -100,13 +166,17 @@ def _serialize_result(equity_curve: pd.DataFrame, trade_log: list, metrics: dict
             "state": row.get("regime", "UNKNOWN"),
             "state_changed_today": "NO",
             "portfolio_value": round(float(row["equity"]), 2),
-            "spy_close": spy_prices.get(date_str, 0.0),
-            "qqq_close": 0.0,
-            "upro_open": 0.0,
-            "upro_close": 0.0,
-            "tqqq_open": 0.0,
-            "tqqq_close": 0.0,
-            "vix": 0.0,
+            "spy_close": lookups["spy"].get(date_str, 0.0),
+            "qqq_close": lookups["qqq"].get(date_str, 0.0),
+            "upro_open": lookups["upro_open"].get(date_str, 0.0),
+            "upro_close": lookups["upro_close"].get(date_str, 0.0),
+            "tqqq_open": lookups["tqqq_open"].get(date_str, 0.0),
+            "tqqq_close": lookups["tqqq_close"].get(date_str, 0.0),
+            "vix": lookups["vix"].get(date_str, 0.0),
+            "spy_sma50": lookups["spy_sma50"].get(date_str, None),
+            "spy_sma200": lookups["spy_sma200"].get(date_str, None),
+            "spy_rsi_14": lookups["spy_rsi_14"].get(date_str, None),
+            "vix_threshold": 30,
             "upro_allocation_pct": 0.0,
             "tqqq_allocation_pct": 0.0,
             "cash_allocation_pct": 0.0,
