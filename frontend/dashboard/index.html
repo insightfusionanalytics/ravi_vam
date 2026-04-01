@@ -267,6 +267,9 @@
     let currentStrategyId = null;
     let isApiMode = false;
 
+    // API base URL — empty string for same-origin (local dev), full URL for split deployment
+    const API_BASE = window.location.hostname === 'localhost' ? '' : (window.__RAVI_API_BASE || 'https://ravi-vam-api.onrender.com');
+
     // Strategies that have a JS browser engine (others use API)
     const BROWSER_ENGINE_STRATEGIES = new Set(['step1_upro_4state', 'step2_upro_tqqq_6state']);
 
@@ -392,7 +395,7 @@
 
     async function fetchDataSource() {
       try {
-        const resp = await fetch('/api/data-source');
+        const resp = await fetch(API_BASE + '/api/data-source');
         if (!resp.ok) return;
         const info = await resp.json();
         updateDataSourceBadge(info.source, info.label, info.is_fallback);
@@ -805,7 +808,7 @@
       if (btn) { btn.disabled = true; btn.textContent = '⏳ Running...'; }
 
       try {
-        const resp = await fetch('/api/backtest', {
+        const resp = await fetch(API_BASE + '/api/backtest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

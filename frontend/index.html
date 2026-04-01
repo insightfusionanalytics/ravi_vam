@@ -209,6 +209,9 @@
   </div>
 
   <script>
+    // API base URL — empty string for same-origin (local dev), full URL for split deployment
+    const API_BASE = window.location.hostname === 'localhost' ? '' : (window.__RAVI_API_BASE || 'https://ravi-vam-api.onrender.com');
+
     function getBadge(strategy) {
       if (strategy.api_mode) {
         return '<span class="card-badge badge-api">API Mode</span>';
@@ -285,7 +288,7 @@
 
     async function loadStrategies() {
       try {
-        const resp = await fetch('/api/strategies');
+        const resp = await fetch(API_BASE + '/api/strategies');
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const strategies = await resp.json();
         const list = Object.values(strategies);
@@ -308,7 +311,7 @@
 
     async function fetchDataSource() {
       try {
-        const resp = await fetch('/api/data-source');
+        const resp = await fetch(API_BASE + '/api/data-source');
         if (!resp.ok) return;
         const info = await resp.json();
         const badge = document.getElementById('data-source-badge');

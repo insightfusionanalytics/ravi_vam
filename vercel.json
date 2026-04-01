@@ -1,0 +1,8 @@
+{
+  "buildCommand": "",
+  "outputDirectory": "frontend",
+  "framework": null,
+  "rewrites": [
+    { "source": "/dashboard/(.*)", "destination": "/dashboard/index.html" }
+  ]
+}
