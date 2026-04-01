@@ -132,6 +132,81 @@
     .loading-spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { color: var(--text-dim); font-size: 13px; }
+
+    /* ===== RESPONSIVE — Tablet (<=900px) ===== */
+    @media (max-width: 900px) {
+      .container { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+      .sidebar { width: 100%; max-height: 50vh; border-right: none; border-bottom: 1px solid var(--card-border); }
+      .sidebar.collapsed { max-height: 0; width: 100%; }
+      .sidebar-toggle { position: sticky; left: 0; top: auto; transform: none; width: 100%; height: 32px; border-radius: 0; font-size: 11px; z-index: 100; }
+      .trade-panel { width: 100%; max-height: 50vh; border-left: none; border-top: 1px solid var(--card-border); }
+      .trade-panel.collapsed { max-height: 0; width: 100%; }
+      .trade-panel-toggle { position: sticky; right: 0; top: auto; transform: none; width: 100%; height: 32px; border-radius: 0; font-size: 11px; z-index: 100; }
+      .chart-canvas { height: 320px; }
+      .chart-canvas.tall { height: 360px; }
+      .chart-canvas.short { height: 150px; }
+      .metrics-bar { gap: 12px; padding: 10px 16px; }
+      .metric-value { font-size: 15px; }
+      .controls { padding: 8px 16px; }
+      .header { padding: 10px 16px; }
+      .state-timeline { height: auto; min-height: 40px; flex-wrap: wrap; gap: 8px; padding: 8px 12px; }
+    }
+
+    /* ===== RESPONSIVE — Mobile (<=600px) ===== */
+    @media (max-width: 600px) {
+      .header { padding: 8px 12px; gap: 6px; flex-wrap: wrap; }
+      .header-left { gap: 8px; flex-wrap: wrap; }
+      .back-link { font-size: 10px; padding: 3px 8px; }
+      .logo { font-size: 12px; }
+      .strategy-name { font-size: 11px; padding-left: 8px; border-left: none; }
+      .data-source-badge { font-size: 9px; padding: 2px 6px; }
+      .metrics-bar { gap: 8px; padding: 8px 12px; }
+      .metric { min-width: 0; }
+      .metric-label { font-size: 9px; letter-spacing: 0.5px; }
+      .metric-value { font-size: 13px; }
+      .controls { padding: 6px 12px; gap: 4px; }
+      .controls .group-label { font-size: 10px; }
+      .btn { padding: 5px 10px; font-size: 11px; }
+      .sep { height: 20px; margin: 0 4px; }
+      .sidebar { padding: 8px; max-height: 45vh; }
+      .section-title { font-size: 10px; }
+      .param-name { font-size: 10px; }
+      .param-value { font-size: 10px; }
+      .main-container { padding: 10px; gap: 14px; }
+      .chart-container { padding: 10px; margin-bottom: 14px; }
+      .chart-label { font-size: 11px; margin-bottom: 8px; }
+      .chart-canvas { height: 260px; }
+      .chart-canvas.tall { height: 300px; }
+      .chart-canvas.short { height: 130px; }
+      .chart-tooltip { min-width: 200px; padding: 8px 12px; font-size: 10px; left: 8px; top: 32px; }
+      .trade-panel { padding: 10px; max-height: 40vh; }
+      .trade-panel-title { font-size: 11px; margin-bottom: 8px; }
+      .trade-summary { padding: 8px; }
+      .trade-summary-row { font-size: 10px; }
+      .trade-item { padding: 6px; font-size: 10px; }
+      .state-machine { padding: 12px; }
+      .states-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+      .state-node { padding: 8px 10px; font-size: 10px; }
+      .state-timeline { height: auto; padding: 6px 10px; flex-wrap: wrap; gap: 6px; }
+      .timeline-bar { height: 16px; min-width: 100%; }
+      .run-btn { padding: 8px; font-size: 11px; }
+      .api-mode-notice { padding: 6px 10px; font-size: 9px; }
+      .state-badge { font-size: 9px; padding: 4px 10px; top: 14px; right: 14px; }
+    }
+
+    /* ===== RESPONSIVE — Small Mobile (<=400px) ===== */
+    @media (max-width: 400px) {
+      .header-left { gap: 4px; }
+      .strategy-name { display: none; }
+      .metrics-bar { gap: 6px; padding: 6px 10px; justify-content: space-between; }
+      .metric-value { font-size: 12px; }
+      .metric-label { font-size: 8px; }
+      .card-stats { grid-template-columns: repeat(2, 1fr); }
+      .chart-canvas { height: 220px; }
+      .chart-canvas.tall { height: 260px; }
+      .chart-canvas.short { height: 110px; }
+      .states-grid { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
+    }
   </style>
 </head>
 <body>
@@ -309,6 +384,23 @@
       }
 
       wireSliders();
+
+      // On mobile, collapse both panels by default to show charts full-width
+      if (isMobile()) {
+        const sb = document.querySelector('.sidebar');
+        const tp = document.querySelector('.trade-panel');
+        const sbBtn = document.getElementById('sidebar-toggle-btn');
+        const tpBtn = document.getElementById('trade-panel-toggle-btn');
+        if (sb && !sb.classList.contains('collapsed')) {
+          sb.classList.add('collapsed');
+          if (sbBtn) sbBtn.textContent = '▼ Show Parameters';
+        }
+        if (tp && !tp.classList.contains('collapsed')) {
+          tp.classList.add('collapsed');
+          if (tpBtn) tpBtn.textContent = '▼ Show Trades';
+        }
+        setTimeout(resizeAllCharts, 400);
+      }
     }
 
     // =========================================================================
@@ -1174,18 +1266,31 @@
     function toggleRsiPanel() { const b = document.getElementById('btn-rsi'); b.classList.toggle('active'); document.getElementById('rsi-container').style.display = b.classList.contains('active') ? 'block' : 'none'; }
     function toggleBuys() { document.getElementById('btn-buys').classList.toggle('active'); showBuys = document.getElementById('btn-buys').classList.contains('active'); updateTradeMarkers(); }
     function toggleSells() { document.getElementById('btn-sells').classList.toggle('active'); showSells = document.getElementById('btn-sells').classList.contains('active'); updateTradeMarkers(); }
+    function isMobile() { return window.innerWidth <= 900; }
     function toggleSidebar() {
       const sb = document.querySelector('.sidebar'); const btn = document.getElementById('sidebar-toggle-btn');
       sb.classList.toggle('collapsed');
-      btn.textContent = sb.classList.contains('collapsed') ? '▶' : '◀';
-      btn.style.left = sb.classList.contains('collapsed') ? '0' : '320px';
+      const collapsed = sb.classList.contains('collapsed');
+      if (isMobile()) {
+        btn.textContent = collapsed ? '▼ Show Parameters' : '▲ Hide Parameters';
+        btn.style.left = ''; btn.style.right = '';
+      } else {
+        btn.textContent = collapsed ? '▶' : '◀';
+        btn.style.left = collapsed ? '0' : '320px';
+      }
       setTimeout(resizeAllCharts, 350);
     }
     function toggleTradePanel() {
       const tp = document.querySelector('.trade-panel'); const btn = document.getElementById('trade-panel-toggle-btn');
       tp.classList.toggle('collapsed');
-      btn.textContent = tp.classList.contains('collapsed') ? '◀' : '▶';
-      btn.style.right = tp.classList.contains('collapsed') ? '0' : '280px';
+      const collapsed = tp.classList.contains('collapsed');
+      if (isMobile()) {
+        btn.textContent = collapsed ? '▼ Show Trades' : '▲ Hide Trades';
+        btn.style.left = ''; btn.style.right = '';
+      } else {
+        btn.textContent = collapsed ? '◀' : '▶';
+        btn.style.right = collapsed ? '0' : '280px';
+      }
       setTimeout(resizeAllCharts, 350);
     }
     function resizeAllCharts() {

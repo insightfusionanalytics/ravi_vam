@@ -167,6 +167,49 @@
       display: flex; align-items: center; justify-content: space-between;
       font-size: 11px; color: var(--text-muted);
     }
+
+    /* ===== RESPONSIVE — Tablet ===== */
+    @media (max-width: 768px) {
+      .header { padding: 16px 20px; }
+      .header-brand { gap: 10px; }
+      .tagline { display: none; }
+      .hero { padding: 40px 20px 28px; }
+      .hero-title { font-size: 28px; }
+      .hero-subtitle { font-size: 13px; }
+      .strategies-section { padding: 0 20px 40px; }
+      .strategy-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+      .footer { padding: 16px 20px; }
+      .loading { padding: 60px 20px; }
+      .error-msg { margin: 20px; }
+    }
+
+    /* ===== RESPONSIVE — Mobile ===== */
+    @media (max-width: 480px) {
+      .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+      .header-meta { font-size: 10px; gap: 6px; }
+      .hero { padding: 28px 16px 20px; }
+      .hero-title { font-size: 22px; margin-bottom: 8px; }
+      .hero-subtitle { font-size: 12px; line-height: 1.6; }
+      .hero-note { font-size: 10px; }
+      .strategies-section { padding: 0 12px 32px; }
+      .section-header { margin-bottom: 16px; }
+      .strategy-grid { grid-template-columns: 1fr; gap: 12px; }
+      .strategy-card { padding: 16px; }
+      .card-header { flex-wrap: wrap; gap: 6px; }
+      .card-name { font-size: 14px; }
+      .card-badge { margin-left: 0; }
+      .card-desc { font-size: 11px; margin-bottom: 12px; }
+      .card-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+      .stat-block { padding: 6px 4px; }
+      .stat-label { font-size: 8px; }
+      .stat-value { font-size: 12px; }
+      .card-meta { gap: 6px; flex-wrap: wrap; padding-top: 10px; }
+      .meta-pill { font-size: 9px; padding: 2px 6px; }
+      .card-arrow { display: none; }
+      .footer { padding: 14px 16px; flex-direction: column; gap: 4px; text-align: center; }
+      .loading { padding: 40px 16px; }
+      .error-msg { margin: 16px; padding: 16px; font-size: 12px; }
+    }
   </style>
 </head>
 <body>
