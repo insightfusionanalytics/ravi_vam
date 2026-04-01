@@ -1,0 +1,110 @@
+{
+  "id": "v5b_nonleveraged",
+  "name": "v5b — Adaptive Regime (Non-Leveraged)",
+  "version": "5b",
+  "description": "Same adaptive regime engine as v5 but with SPY/QQQ instead of UPRO/TQQQ in the aggressive state. Avoids leverage drag in uncertain regimes. Better risk-adjusted returns than v5 despite lower absolute returns. AGGRESSIVE: 60% SPY + 40% QQQ. DEFENSIVE: 60% SHY + 40% GLD.",
+  "engine": "v5b",
+  "instruments": ["SPY", "QQQ", "SHY", "GLD"],
+  "signal_source": "SPY SMA + RSI + ATR",
+  "states": ["AGGRESSIVE", "DEFENSIVE", "CRASH_PROTECT"],
+  "allocations": {
+    "AGGRESSIVE": "60% SPY + 40% QQQ",
+    "DEFENSIVE": "60% SHY + 40% GLD",
+    "CRASH_PROTECT": "60% SHY + 40% GLD"
+  },
+  "data_period": "2020-2025 (DataBento)",
+  "benchmark_results": {
+    "cagr_pct": 9.28,
+    "sharpe": 0.74,
+    "sortino": 1.02,
+    "calmar": 0.367,
+    "max_drawdown_pct": -25.27,
+    "total_return_pct": 70.21,
+    "final_value": 170210.0,
+    "total_trades": 27,
+    "years": 5.2
+  },
+  "api_mode": true,
+  "params": {
+    "sma_short": {
+      "label": "SMA Short Period",
+      "group": "Trend Signals",
+      "type": "range",
+      "default": 50,
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": ""
+    },
+    "sma_long": {
+      "label": "SMA Long Period",
+      "group": "Trend Signals",
+      "type": "range",
+      "default": 200,
+      "min": 100,
+      "max": 300,
+      "step": 10,
+      "unit": ""
+    },
+    "rsi_aggressive_min": {
+      "label": "RSI Min (Aggressive Entry)",
+      "group": "RSI Conditions",
+      "type": "range",
+      "default": 50,
+      "min": 40,
+      "max": 65,
+      "step": 1,
+      "unit": ""
+    },
+    "atr_threshold_pct": {
+      "label": "ATR% Volatility Guard",
+      "group": "Volatility Guard",
+      "type": "range",
+      "default": 20,
+      "min": 10,
+      "max": 40,
+      "step": 2,
+      "unit": "×0.1%"
+    },
+    "dd_trigger_pct": {
+      "label": "Drawdown Circuit Breaker",
+      "group": "Risk Management",
+      "type": "range",
+      "default": 15,
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "unit": "%"
+    },
+    "dd_lookback_days": {
+      "label": "Drawdown Lookback",
+      "group": "Risk Management",
+      "type": "range",
+      "default": 60,
+      "min": 20,
+      "max": 120,
+      "step": 10,
+      "unit": " days"
+    },
+    "crash_protect_cooldown": {
+      "label": "Crash Protect Cooldown",
+      "group": "Risk Management",
+      "type": "range",
+      "default": 20,
+      "min": 5,
+      "max": 40,
+      "step": 1,
+      "unit": " days"
+    },
+    "capital": {
+      "label": "Initial Capital",
+      "group": "Portfolio Allocation",
+      "type": "range",
+      "default": 100000,
+      "min": 10000,
+      "max": 1000000,
+      "step": 10000,
+      "unit": "$"
+    }
+  }
+}

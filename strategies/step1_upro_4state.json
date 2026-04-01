@@ -1,0 +1,120 @@
+{
+  "id": "step1_upro_4state",
+  "name": "Step 1 — UPRO Only (4-State)",
+  "version": "1",
+  "description": "4-state machine using only UPRO (3x S&P 500). States: BULL_100 (99% UPRO), BULL_TRIMMED (75% UPRO, RSI-triggered), DEFENSIVE (50% UPRO, SMA breach), CASH (kill switch). Signal source: SPY SMA-50/200, RSI-14, VIX.",
+  "engine": "step1",
+  "instruments": ["UPRO"],
+  "signal_source": "SPY + VIX",
+  "states": ["BULL_100", "BULL_TRIMMED", "DEFENSIVE", "CASH"],
+  "allocations": {
+    "BULL_100": "99% UPRO",
+    "BULL_TRIMMED": "75% UPRO",
+    "DEFENSIVE": "50% UPRO",
+    "CASH": "0% (all cash)"
+  },
+  "data_period": "2020-2025 (DataBento)",
+  "benchmark_results": {
+    "cagr_pct": 21.44,
+    "sharpe": 0.676,
+    "sortino": 0.88,
+    "calmar": 0.559,
+    "max_drawdown_pct": -38.34,
+    "total_return_pct": 174.82,
+    "final_value": 274820.99,
+    "total_trades": 67,
+    "years": 5.2
+  },
+  "params": {
+    "vixThreshold": {
+      "label": "VIX Kill Switch",
+      "group": "Kill Switch (Priority 1)",
+      "type": "range",
+      "default": 30,
+      "min": 20,
+      "max": 45,
+      "step": 1,
+      "unit": ""
+    },
+    "smaKill": {
+      "label": "SMA Period (Kill)",
+      "group": "Kill Switch (Priority 1)",
+      "type": "range",
+      "default": 200,
+      "min": 100,
+      "max": 300,
+      "step": 10,
+      "unit": ""
+    },
+    "smaDef": {
+      "label": "SMA Period (Defense)",
+      "group": "Defensive Trim (Priority 2)",
+      "type": "range",
+      "default": 50,
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": ""
+    },
+    "confirmDays": {
+      "label": "Confirm Days",
+      "group": "Defensive Trim (Priority 2)",
+      "type": "range",
+      "default": 2,
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "unit": " days"
+    },
+    "rsiPeriod": {
+      "label": "RSI Period",
+      "group": "RSI Trim (Priority 3)",
+      "type": "range",
+      "default": 14,
+      "min": 7,
+      "max": 28,
+      "step": 1,
+      "unit": ""
+    },
+    "rsiOB": {
+      "label": "RSI Overbought (Trim)",
+      "group": "RSI Trim (Priority 3)",
+      "type": "range",
+      "default": 75,
+      "min": 65,
+      "max": 85,
+      "step": 1,
+      "unit": ""
+    },
+    "rsiRe": {
+      "label": "RSI Rebuy Level",
+      "group": "RSI Trim (Priority 3)",
+      "type": "range",
+      "default": 60,
+      "min": 40,
+      "max": 70,
+      "step": 1,
+      "unit": ""
+    },
+    "uproSplit": {
+      "label": "UPRO Allocation",
+      "group": "Portfolio Allocation",
+      "type": "range",
+      "default": 100,
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%"
+    },
+    "capital": {
+      "label": "Initial Capital",
+      "group": "Portfolio Allocation",
+      "type": "range",
+      "default": 100000,
+      "min": 10000,
+      "max": 1000000,
+      "step": 10000,
+      "unit": "$"
+    }
+  }
+}

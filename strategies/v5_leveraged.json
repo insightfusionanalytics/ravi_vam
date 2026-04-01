@@ -1,0 +1,110 @@
+{
+  "id": "v5_leveraged",
+  "name": "v5 — Adaptive Regime (Leveraged)",
+  "version": "5",
+  "description": "5-state adaptive regime rotation with ATR volatility guard and drawdown circuit breaker. AGGRESSIVE state: 60% UPRO + 40% TQQQ. DEFENSIVE: 60% SHY + 40% GLD. Circuit breaker triggers at configurable drawdown%, exits after cooldown. Note: leveraged ETFs amplify losses in uncertain regimes — see v5b for non-leveraged version.",
+  "engine": "v5",
+  "instruments": ["UPRO", "TQQQ", "SHY", "GLD"],
+  "signal_source": "SPY SMA + RSI + ATR",
+  "states": ["AGGRESSIVE", "DEFENSIVE", "CRASH_PROTECT"],
+  "allocations": {
+    "AGGRESSIVE": "60% UPRO + 40% TQQQ",
+    "DEFENSIVE": "60% SHY + 40% GLD",
+    "CRASH_PROTECT": "100% SHY"
+  },
+  "data_period": "2020-2025 (DataBento)",
+  "benchmark_results": {
+    "cagr_pct": -6.54,
+    "sharpe": -0.099,
+    "sortino": -0.096,
+    "calmar": -0.143,
+    "max_drawdown_pct": -45.81,
+    "total_return_pct": -33.33,
+    "final_value": 66670.0,
+    "total_trades": 27,
+    "years": 5.2
+  },
+  "api_mode": true,
+  "params": {
+    "sma_short": {
+      "label": "SMA Short Period",
+      "group": "Trend Signals",
+      "type": "range",
+      "default": 50,
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": ""
+    },
+    "sma_long": {
+      "label": "SMA Long Period",
+      "group": "Trend Signals",
+      "type": "range",
+      "default": 200,
+      "min": 100,
+      "max": 300,
+      "step": 10,
+      "unit": ""
+    },
+    "rsi_aggressive_min": {
+      "label": "RSI Min (Aggressive Entry)",
+      "group": "RSI Conditions",
+      "type": "range",
+      "default": 50,
+      "min": 40,
+      "max": 65,
+      "step": 1,
+      "unit": ""
+    },
+    "atr_threshold_pct": {
+      "label": "ATR% Volatility Guard",
+      "group": "Volatility Guard",
+      "type": "range",
+      "default": 20,
+      "min": 10,
+      "max": 40,
+      "step": 2,
+      "unit": "×0.1%"
+    },
+    "dd_trigger_pct": {
+      "label": "Drawdown Circuit Breaker",
+      "group": "Risk Management",
+      "type": "range",
+      "default": 15,
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "unit": "%"
+    },
+    "dd_lookback_days": {
+      "label": "Drawdown Lookback",
+      "group": "Risk Management",
+      "type": "range",
+      "default": 60,
+      "min": 20,
+      "max": 120,
+      "step": 10,
+      "unit": " days"
+    },
+    "crash_protect_cooldown": {
+      "label": "Crash Protect Cooldown",
+      "group": "Risk Management",
+      "type": "range",
+      "default": 20,
+      "min": 5,
+      "max": 40,
+      "step": 1,
+      "unit": " days"
+    },
+    "capital": {
+      "label": "Initial Capital",
+      "group": "Portfolio Allocation",
+      "type": "range",
+      "default": 100000,
+      "min": 10000,
+      "max": 1000000,
+      "step": 10000,
+      "unit": "$"
+    }
+  }
+}

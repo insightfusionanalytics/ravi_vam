@@ -1,0 +1,111 @@
+{
+  "id": "v3_7state_optimized",
+  "name": "v3 — 7-State Leveraged Rotation",
+  "version": "3",
+  "description": "7-state adaptive regime rotation with SMA golden/death cross signals. UPRO 100% in bull regime, SHY in bear. Includes BULL_CAUTION, NEUTRAL, MOMENTUM, RECOVERY, and CRASH states for finer regime detection. Leveraged — high volatility.",
+  "engine": "v3",
+  "instruments": ["UPRO", "SHY"],
+  "signal_source": "SPY SMA + RSI + ATR",
+  "states": ["BULL_FULL", "BULL_CAUTION", "MOMENTUM", "NEUTRAL", "RECOVERY", "BEAR_HEDGE", "CRASH"],
+  "allocations": {
+    "AGGRESSIVE (BULL_FULL/MOMENTUM)": "100% UPRO",
+    "MODERATE (BULL_CAUTION/RECOVERY)": "50% UPRO + 50% SHY",
+    "DEFENSIVE (BEAR_HEDGE)": "100% SHY",
+    "CRASH": "100% Cash"
+  },
+  "data_period": "2020-2025 (DataBento)",
+  "benchmark_results": {
+    "cagr_pct": -1.08,
+    "sharpe": 0.215,
+    "sortino": 0.194,
+    "calmar": -0.015,
+    "max_drawdown_pct": -74.23,
+    "total_return_pct": -6.32,
+    "final_value": 93680.0,
+    "total_trades": 176,
+    "years": 5.2
+  },
+  "api_mode": true,
+  "params": {
+    "sma_short": {
+      "label": "SMA Short Period",
+      "group": "Trend Signals",
+      "type": "range",
+      "default": 50,
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": ""
+    },
+    "sma_long": {
+      "label": "SMA Long Period",
+      "group": "Trend Signals",
+      "type": "range",
+      "default": 200,
+      "min": 100,
+      "max": 300,
+      "step": 10,
+      "unit": ""
+    },
+    "rsi_aggressive_min": {
+      "label": "RSI Min (Aggressive)",
+      "group": "RSI Conditions",
+      "type": "range",
+      "default": 50,
+      "min": 40,
+      "max": 65,
+      "step": 1,
+      "unit": ""
+    },
+    "rsi_oversold": {
+      "label": "RSI Oversold",
+      "group": "RSI Conditions",
+      "type": "range",
+      "default": 30,
+      "min": 20,
+      "max": 40,
+      "step": 1,
+      "unit": ""
+    },
+    "atr_threshold_pct": {
+      "label": "ATR% Volatility Guard",
+      "group": "Volatility Guard",
+      "type": "range",
+      "default": 20,
+      "min": 10,
+      "max": 40,
+      "step": 2,
+      "unit": "×0.1%"
+    },
+    "dd_trigger_pct": {
+      "label": "Drawdown Circuit Breaker",
+      "group": "Risk Management",
+      "type": "range",
+      "default": 15,
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "unit": "%"
+    },
+    "crash_protect_cooldown": {
+      "label": "Crash Protect Cooldown",
+      "group": "Risk Management",
+      "type": "range",
+      "default": 20,
+      "min": 5,
+      "max": 40,
+      "step": 1,
+      "unit": " days"
+    },
+    "capital": {
+      "label": "Initial Capital",
+      "group": "Portfolio Allocation",
+      "type": "range",
+      "default": 100000,
+      "min": 10000,
+      "max": 1000000,
+      "step": 10000,
+      "unit": "$"
+    }
+  }
+}

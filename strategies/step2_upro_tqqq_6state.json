@@ -1,0 +1,152 @@
+{
+  "id": "step2_upro_tqqq_6state",
+  "name": "Step 2 — UPRO + TQQQ (6-State)",
+  "version": "2",
+  "description": "6-state machine with two independent sleeves: UPRO (3x SPY) and TQQQ (3x QQQ). Defensive states are triggered independently per index, allowing partial defense. Kill switch exits both sleeves to cash. This is the primary production strategy.",
+  "engine": "step2",
+  "instruments": ["UPRO", "TQQQ"],
+  "signal_source": "SPY + QQQ + VIX",
+  "states": ["BULL_FULL", "BULL_TRIMMED", "DEF_SPY", "DEF_QQQ", "DEF_BOTH", "CASH"],
+  "allocations": {
+    "BULL_FULL": "74.25% UPRO + 24.75% TQQQ",
+    "BULL_TRIMMED": "56.25% UPRO + 18.75% TQQQ (25% RSI trim)",
+    "DEF_SPY": "37.5% UPRO + 24.75% TQQQ (UPRO sleeve halved)",
+    "DEF_QQQ": "74.25% UPRO + 12.5% TQQQ (TQQQ sleeve halved)",
+    "DEF_BOTH": "37.5% UPRO + 12.5% TQQQ (both halved)",
+    "CASH": "0% (all cash)"
+  },
+  "data_period": "2020-2025 (DataBento)",
+  "benchmark_results": {
+    "cagr_pct": 21.77,
+    "sharpe": 0.663,
+    "sortino": 0.861,
+    "calmar": 0.555,
+    "max_drawdown_pct": -39.24,
+    "total_return_pct": 178.74,
+    "final_value": 278743.93,
+    "total_trades": 180,
+    "years": 5.2
+  },
+  "params": {
+    "vixThreshold": {
+      "label": "VIX Kill Switch",
+      "group": "Kill Switch (Priority 1)",
+      "type": "range",
+      "default": 30,
+      "min": 20,
+      "max": 45,
+      "step": 1,
+      "unit": ""
+    },
+    "smaKill": {
+      "label": "SMA Period (Kill)",
+      "group": "Kill Switch (Priority 1)",
+      "type": "range",
+      "default": 200,
+      "min": 100,
+      "max": 300,
+      "step": 10,
+      "unit": ""
+    },
+    "cooldown": {
+      "label": "Cooldown Days",
+      "group": "Kill Switch (Priority 1)",
+      "type": "range",
+      "default": 5,
+      "min": 1,
+      "max": 15,
+      "step": 1,
+      "unit": " days"
+    },
+    "smaDef": {
+      "label": "SMA Period (Defense)",
+      "group": "Defensive Trim (Priority 2)",
+      "type": "range",
+      "default": 50,
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": ""
+    },
+    "confirmDays": {
+      "label": "Confirm Days",
+      "group": "Defensive Trim (Priority 2)",
+      "type": "range",
+      "default": 2,
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "unit": " days"
+    },
+    "defSell": {
+      "label": "Defensive Sell %",
+      "group": "Defensive Trim (Priority 2)",
+      "type": "range",
+      "default": 50,
+      "min": 25,
+      "max": 75,
+      "step": 5,
+      "unit": "%"
+    },
+    "rsiPeriod": {
+      "label": "RSI Period",
+      "group": "RSI Trim (Priority 3)",
+      "type": "range",
+      "default": 14,
+      "min": 7,
+      "max": 28,
+      "step": 1,
+      "unit": ""
+    },
+    "rsiOB": {
+      "label": "RSI Overbought (Trim)",
+      "group": "RSI Trim (Priority 3)",
+      "type": "range",
+      "default": 75,
+      "min": 65,
+      "max": 85,
+      "step": 1,
+      "unit": ""
+    },
+    "rsiRe": {
+      "label": "RSI Rebuy Level",
+      "group": "RSI Trim (Priority 3)",
+      "type": "range",
+      "default": 60,
+      "min": 40,
+      "max": 70,
+      "step": 1,
+      "unit": ""
+    },
+    "rsiTrim": {
+      "label": "RSI Trim %",
+      "group": "RSI Trim (Priority 3)",
+      "type": "range",
+      "default": 25,
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "unit": "%"
+    },
+    "uproSplit": {
+      "label": "UPRO Split",
+      "group": "Portfolio Allocation",
+      "type": "range",
+      "default": 75,
+      "min": 50,
+      "max": 90,
+      "step": 5,
+      "unit": "%"
+    },
+    "capital": {
+      "label": "Initial Capital",
+      "group": "Portfolio Allocation",
+      "type": "range",
+      "default": 100000,
+      "min": 10000,
+      "max": 1000000,
+      "step": 10000,
+      "unit": "$"
+    }
+  }
+}

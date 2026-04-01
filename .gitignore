@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Data files (large — use DataBento source or yfinance fallback)
+data/
+*.csv
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+uvicorn.log
+
+# Environment variables
+.env
+.env.*
+
+# yfinance marker file (generated at runtime)
+data/databento/equities/.yfinance_source

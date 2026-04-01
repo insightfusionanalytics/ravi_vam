@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAVI VAM — Strategy Dashboard</title>
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a0a; --card: #171717; --card-border: #262626;
+      --text: #e5e5e5; --text-dim: #a3a3a3; --text-muted: #737373;
+      --accent: #3b82f6; --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+    }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+    .container { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto auto 1fr auto; height: 100vh; transition: grid-template-columns 0.3s ease; }
+    .header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; border-bottom: 1px solid var(--card-border); background: var(--card); }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .back-link { font-size: 11px; color: var(--accent); text-decoration: none; padding: 4px 10px; border: 1px solid #1a2a3a; border-radius: 4px; background: rgba(59,130,246,0.05); transition: all 0.15s; }
+    .back-link:hover { background: rgba(59,130,246,0.15); }
+    .logo { font-size: 14px; font-weight: 800; color: var(--accent); letter-spacing: 1.5px; }
+    .strategy-name { font-size: 13px; color: var(--text-dim); padding-left: 12px; border-left: 1px solid var(--card-border); }
+    .data-source-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 600; letter-spacing: 0.5px; }
+    .data-source-badge.databento { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+    .data-source-badge.yahoo { background: rgba(234,179,8,0.12); color: var(--yellow); border: 1px solid rgba(234,179,8,0.25); }
+    .data-source-badge.unknown { background: rgba(163,163,163,0.12); color: var(--text-muted); border: 1px solid rgba(163,163,163,0.25); }
+    .metrics-bar { grid-column: 1 / -1; display: flex; gap: 20px; padding: 12px 24px; background: var(--card); border-bottom: 1px solid var(--card-border); flex-wrap: wrap; }
+    .metric { display: flex; flex-direction: column; gap: 2px; }
+    .metric-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .metric-value { font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .metric-value.positive { color: var(--green); }
+    .metric-value.negative { color: var(--red); }
+    .metric-value.neutral { color: var(--accent); }
+    .controls { grid-column: 1 / -1; padding: 10px 24px; background: var(--card); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--card-border); }
+    .sidebar { border-right: 1px solid var(--card-border); overflow-y: auto; padding: 12px; background: var(--card); width: 320px; transition: all 0.3s ease; position: relative; }
+    .sidebar.collapsed { width: 0; padding: 0; overflow: hidden; }
+    .sidebar-toggle { position: fixed; left: 320px; top: 50%; transform: translateY(-50%); width: 24px; height: 48px; background: var(--accent); border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; z-index: 1000; transition: all 0.3s; }
+    .sidebar-toggle:hover { background: #6BB3FF; }
+    .section { margin-bottom: 16px; }
+    .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #1a1a2e; }
+    .param-row { margin-bottom: 8px; }
+    .param-label { display: flex; justify-content: space-between; margin-bottom: 3px; }
+    .param-name { color: #999; font-size: 11px; }
+    .param-value { color: var(--accent); font-size: 11px; font-weight: 600; }
+    input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: #222; border-radius: 2px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--accent); border-radius: 50%; cursor: pointer; }
+    input[type="range"]::-webkit-slider-thumb:hover { background: #6BB3FF; }
+    .segmented-control { display: flex; gap: 0; border: 1px solid #333; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .segmented-control input[type="radio"] { display: none; }
+    .segmented-control label { flex: 1; padding: 5px 4px; text-align: center; font-size: 10px; color: #888; background: #111; cursor: pointer; border-right: 1px solid #333; transition: all 0.2s ease; white-space: nowrap; }
+    .segmented-control label:last-of-type { border-right: none; }
+    .segmented-control input[type="radio"]:checked + label { background: #1a2a3a; color: var(--accent); font-weight: 600; }
+    .controls .group-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-right: 4px; }
+    .btn { padding: 6px 14px; border-radius: 6px; border: 1px solid #333; background: #1a1a24; color: #ccc; font-size: 12px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .btn:hover { background: #2a2a3a; }
+    .btn.active { border-color: var(--accent); color: var(--accent); background: rgba(59, 130, 246, 0.1); }
+    .sep { width: 1px; height: 24px; background: #333; margin: 0 8px; }
+    .main-container { padding: 16px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+    .trade-panel { border-left: 1px solid var(--card-border); overflow-y: auto; padding: 16px; background: var(--card); width: 280px; transition: all 0.3s ease; position: relative; }
+    .trade-panel.collapsed { width: 0; padding: 0; overflow: hidden; }
+    .trade-panel-toggle { position: fixed; right: 280px; top: 50%; transform: translateY(-50%); width: 24px; height: 48px; background: var(--accent); border-radius: 6px 0 0 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; z-index: 1000; transition: all 0.3s; }
+    .trade-panel-toggle:hover { background: #6BB3FF; }
+    .trade-panel-title { font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .trade-summary { background: #0a0a0a; border: 1px solid var(--card-border); border-radius: 6px; padding: 12px; margin-bottom: 16px; }
+    .trade-summary-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; }
+    .trade-summary-label { color: var(--text-muted); }
+    .trade-summary-value { color: var(--text); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+    .trade-summary-value.positive { color: var(--green); }
+    .trade-summary-value.negative { color: var(--red); }
+    .trade-list { display: flex; flex-direction: column; gap: 8px; }
+    .trade-item { background: #0a0a0a; border: 1px solid var(--card-border); border-radius: 4px; padding: 8px; font-size: 11px; transition: all 0.2s; }
+    .trade-item:hover { border-color: var(--accent); background: #0f0f0f; }
+    .trade-item-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .trade-number { color: var(--text-muted); font-weight: 600; }
+    .trade-action { font-weight: 700; }
+    .trade-action.buy { color: var(--green); }
+    .trade-action.sell { color: var(--red); }
+    .trade-date { color: var(--text-muted); font-size: 10px; }
+    .trade-details { color: var(--text-dim); font-size: 10px; }
+    .state-timeline { grid-column: 1 / -1; height: 40px; background: var(--card); border-top: 1px solid var(--card-border); display: flex; align-items: center; padding: 0 16px; position: relative; }
+    .timeline-bar { flex: 1; height: 20px; display: flex; border-radius: 4px; overflow: hidden; }
+    .timeline-segment { height: 100%; transition: all 0.3s; cursor: pointer; }
+    .timeline-segment.BULL_FULL, .timeline-segment.BULL_100 { background: var(--green); }
+    .timeline-segment.BULL_TRIMMED { background: var(--yellow); }
+    .timeline-segment.DEFENSIVE, .timeline-segment.DEF_SPY, .timeline-segment.DEF_QQQ, .timeline-segment.DEF_BOTH { background: #f59e0b; }
+    .timeline-segment.AGGRESSIVE { background: var(--green); }
+    .timeline-segment.CASH { background: var(--red); }
+    .timeline-segment.CRASH_PROTECT { background: #a855f7; }
+    .state-badge { position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 2px solid; z-index: 10; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .state-badge.BULL_FULL, .state-badge.BULL_100, .state-badge.AGGRESSIVE { background: rgba(34, 197, 94, 0.15); border-color: var(--green); color: var(--green); }
+    .state-badge.BULL_TRIMMED { background: rgba(234, 179, 8, 0.15); border-color: var(--yellow); color: var(--yellow); }
+    .state-badge.DEF_SPY, .state-badge.DEF_QQQ, .state-badge.DEF_BOTH, .state-badge.DEFENSIVE { background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #f59e0b; }
+    .state-badge.CASH, .state-badge.CRASH_PROTECT { background: rgba(239, 68, 68, 0.15); border-color: var(--red); color: var(--red); }
+    .chart-container { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; margin-bottom: 20px; position: relative; }
+    .chart-label { font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 12px; }
+    .chart-canvas { width: 100%; height: 400px; }
+    .chart-canvas.tall { height: 500px; }
+    .chart-canvas.short { height: 180px; }
+    .state-machine { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 20px; }
+    .state-machine-title { font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 16px; }
+    .states-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .state-node { padding: 12px 16px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 2px solid; text-align: center; transition: all 0.3s ease; }
+    .state-node.active { transform: scale(1.05); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    .state-bull { background: rgba(34, 197, 94, 0.1); border-color: var(--green); color: var(--green); }
+    .state-trimmed { background: rgba(234, 179, 8, 0.1); border-color: var(--yellow); color: var(--yellow); }
+    .state-defensive { background: rgba(245, 158, 11, 0.1); border-color: #f59e0b; color: #f59e0b; }
+    .state-cash { background: rgba(239, 68, 68, 0.1); border-color: var(--red); color: var(--red); }
+    .error { color: var(--red); padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; margin: 20px; }
+    .chart-tooltip { position: absolute; top: 40px; left: 16px; z-index: 50; background: rgba(10, 10, 15, 0.95); border: 1px solid var(--card-border); border-radius: 8px; padding: 12px 16px; pointer-events: none; font-size: 11px; line-height: 1.7; min-width: 260px; backdrop-filter: blur(12px); box-shadow: 0 8px 32px rgba(0,0,0,0.5); display: none; }
+    .chart-tooltip.visible { display: block; }
+    .tooltip-date { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .tooltip-state-badge { padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tooltip-state-badge.BULL_FULL, .tooltip-state-badge.BULL_100, .tooltip-state-badge.AGGRESSIVE { background: rgba(34,197,94,0.2); color: var(--green); }
+    .tooltip-state-badge.BULL_TRIMMED { background: rgba(234,179,8,0.2); color: var(--yellow); }
+    .tooltip-state-badge.DEF_SPY, .tooltip-state-badge.DEF_QQQ, .tooltip-state-badge.DEF_BOTH, .tooltip-state-badge.DEFENSIVE { background: rgba(245,158,11,0.2); color: #f59e0b; }
+    .tooltip-state-badge.CASH, .tooltip-state-badge.CRASH_PROTECT { background: rgba(239,68,68,0.2); color: var(--red); }
+    .tooltip-row { display: flex; justify-content: space-between; gap: 24px; }
+    .tooltip-label { color: var(--text-muted); }
+    .tooltip-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text); text-align: right; }
+    .tooltip-val.green { color: var(--green); }
+    .tooltip-val.red { color: var(--red); }
+    .tooltip-divider { border: none; border-top: 1px solid #222; margin: 6px 0; }
+    /* API mode */
+    .run-btn { width: 100%; margin-top: 12px; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s; letter-spacing: 0.5px; }
+    .run-btn:hover { background: #6BB3FF; }
+    .run-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .api-mode-notice { background: rgba(168,85,247,0.1); border: 1px solid #a855f7; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; font-size: 10px; color: #a855f7; line-height: 1.5; }
+    .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+    .loading-overlay.visible { display: flex; }
+    .loading-spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--text-dim); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loading-text">Running backtest...</div>
+  </div>
+
+  <div class="container">
+  <div class="header">
+    <div class="header-left">
+      <a href="/" class="back-link">← Strategies</a>
+      <div class="logo">RAVI VAM</div>
+      <div class="strategy-name" id="strategy-name-header">Loading...</div>
+      <span class="data-source-badge unknown" id="data-source-badge" title="Data source not yet determined">DATA: ...</span>
+    </div>
+  </div>
+
+  <div class="metrics-bar">
+    <div class="metric"><div class="metric-label">Final Value</div><div class="metric-value positive" id="metric-final">Loading...</div></div>
+    <div class="metric"><div class="metric-label">CAGR</div><div class="metric-value positive" id="metric-cagr">—</div></div>
+    <div class="metric"><div class="metric-label">Sharpe</div><div class="metric-value neutral" id="metric-sharpe">—</div></div>
+    <div class="metric"><div class="metric-label">Max DD</div><div class="metric-value negative" id="metric-dd">—</div></div>
+    <div class="metric"><div class="metric-label">Trades</div><div class="metric-value neutral" id="metric-trades">—</div></div>
+    <div class="metric"><div class="metric-label">Alpha vs SPY</div><div class="metric-value positive" id="metric-alpha">—</div></div>
+  </div>
+
+  <div class="controls">
+    <span class="group-label">Signals:</span>
+    <button class="btn active" id="btn-sma50" onclick="toggleSMA50()">SMA-50</button>
+    <button class="btn active" id="btn-sma200" onclick="toggleSMA200()">SMA-200</button>
+    <button class="btn active" id="btn-vix" onclick="toggleVixPanel()">VIX Panel</button>
+    <button class="btn active" id="btn-rsi" onclick="toggleRsiPanel()">RSI Panel</button>
+    <div class="sep"></div>
+    <span class="group-label">Trades:</span>
+    <button class="btn active" id="btn-buys" onclick="toggleBuys()">Buys</button>
+    <button class="btn active" id="btn-sells" onclick="toggleSells()">Sells</button>
+  </div>
+
+  <div id="sidebar-toggle-btn" class="sidebar-toggle" onclick="toggleSidebar()">◀</div>
+  <div class="sidebar">
+    <div id="sidebar-params">
+      <div style="color:var(--text-muted);font-size:11px;padding:20px 0;text-align:center;">Loading parameters...</div>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="chart-container">
+      <div class="chart-label">Equity Curve — Strategy vs Buy & Hold</div>
+      <div id="chart-equity" class="chart-canvas tall"></div>
+    </div>
+
+    <div class="chart-container" style="position: relative;">
+      <div class="chart-label">SPY Daily + SMA(50) / SMA(200) + Trade Markers</div>
+      <div id="state-badge" class="state-badge">LOADING...</div>
+      <div id="spy-tooltip" class="chart-tooltip"></div>
+      <div id="chart-spy" class="chart-canvas tall"></div>
+    </div>
+
+    <div class="state-machine">
+      <div class="state-machine-title">State Machine — Current State & Transitions</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">CURRENT STATE</div>
+      <div id="current-state" style="font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 20px;">LOADING...</div>
+      <div class="states-grid" id="states-grid">
+        <!-- Populated dynamically from strategy config -->
+      </div>
+    </div>
+
+    <div class="chart-container" id="vix-container">
+      <div class="chart-label" id="vix-label">VIX Kill Switch (Threshold: 30)</div>
+      <div id="chart-vix" class="chart-canvas short"></div>
+    </div>
+
+    <div class="chart-container" id="rsi-container">
+      <div class="chart-label" id="rsi-label">RSI-14 (Sell &gt;75, Rebuy &lt;60)</div>
+      <div id="chart-rsi" class="chart-canvas short"></div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-label">Portfolio Value ($)</div>
+      <div id="chart-portfolio" class="chart-canvas"></div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-label">Drawdown from Peak (%)</div>
+      <div id="chart-drawdown" class="chart-canvas short"></div>
+    </div>
+  </div>
+
+  <div id="trade-panel-toggle-btn" class="trade-panel-toggle" onclick="toggleTradePanel()">▶</div>
+  <div class="trade-panel">
+    <div class="trade-panel-title">Trade History & Stats</div>
+    <div class="trade-summary">
+      <div class="trade-summary-row"><span class="trade-summary-label">Final Portfolio</span><span class="trade-summary-value positive" id="trade-final">Loading...</span></div>
+      <div class="trade-summary-row"><span class="trade-summary-label">Total Return</span><span class="trade-summary-value positive" id="trade-return">Loading...</span></div>
+      <div class="trade-summary-row"><span class="trade-summary-label">SPY Buy & Hold</span><span class="trade-summary-value" id="trade-spy">Loading...</span></div>
+      <div class="trade-summary-row"><span class="trade-summary-label">Win Rate</span><span class="trade-summary-value" id="trade-winrate">—</span></div>
+      <div class="trade-summary-row"><span class="trade-summary-label">Best Trade</span><span class="trade-summary-value positive" id="trade-best">—</span></div>
+      <div class="trade-summary-row"><span class="trade-summary-label">Worst Trade</span><span class="trade-summary-value negative" id="trade-worst">—</span></div>
+    </div>
+    <div class="trade-panel-title" style="margin-top: 8px;">Major Decisions</div>
+    <div class="trade-list" id="trade-list">
+      <div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 20px;">Loading trades...</div>
+    </div>
+  </div>
+
+  <div class="state-timeline">
+    <span style="font-size: 10px; color: var(--text-muted); margin-right: 10px; white-space: nowrap;">STATE TIMELINE:</span>
+    <div class="timeline-bar" id="timeline-bar"></div>
+    <div style="display: flex; gap: 12px; margin-left: 10px; font-size: 9px;">
+      <span style="color: var(--green);">● BULL</span>
+      <span style="color: var(--yellow);">● TRIMMED</span>
+      <span style="color: #f59e0b;">● DEFENSIVE</span>
+      <span style="color: var(--red);">● CASH</span>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // GLOBALS
+    // =========================================================================
+    let rawData = [];
+    let portfolioData = [];
+    let tradeLogData = [];
+    let metricsData = {};
+    let charts = {};
+    let series = {};
+    let showBuys = true;
+    let showSells = true;
+    let dataByDate = {};
+    let csvIndicators = null;
+    let strategyConfig = null;
+    let currentStrategyId = null;
+    let isApiMode = false;
+
+    // Strategies that have a JS browser engine (others use API)
+    const BROWSER_ENGINE_STRATEGIES = new Set(['step1_upro_4state', 'step2_upro_tqqq_6state']);
+
+    // =========================================================================
+    // INIT — reads ?strategy= URL param and bootstraps everything
+    // =========================================================================
+    async function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      currentStrategyId = urlParams.get('strategy') || 'step2_upro_tqqq_6state';
+      isApiMode = !BROWSER_ENGINE_STRATEGIES.has(currentStrategyId);
+
+      try {
+        const resp = await fetch(`/api/strategies/${currentStrategyId}`);
+        if (!resp.ok) throw new Error(`Strategy not found: ${currentStrategyId}`);
+        strategyConfig = await resp.json();
+      } catch (err) {
+        document.querySelector('.main-container').innerHTML = `<div class="error">Failed to load strategy config: ${err.message}</div>`;
+        return;
+      }
+
+      document.getElementById('strategy-name-header').textContent = strategyConfig.name;
+      document.title = `RAVI VAM — ${strategyConfig.name}`;
+
+      // Fetch and display active data source
+      fetchDataSource();
+
+      buildSidebar(strategyConfig);
+      buildStateMachineView(strategyConfig.states);
+      createAllCharts();
+
+      if (isApiMode) {
+        // API mode: run Python backtest with default params
+        await runBacktestViaAPI(getDefaultParams(strategyConfig));
+      } else {
+        // Browser mode: load pre-computed CSV then run JS engine
+        await loadData();
+      }
+
+      wireSliders();
+    }
+
+    // =========================================================================
+    // SIDEBAR BUILDER — dynamic from strategy config.params
+    // =========================================================================
+    function buildSidebar(config) {
+      const groups = {};
+      for (const [key, p] of Object.entries(config.params)) {
+        if (!groups[p.group]) groups[p.group] = [];
+        groups[p.group].push({ key, ...p });
+      }
+
+      let html = '';
+
+      if (isApiMode) {
+        html += `<div class="api-mode-notice">
+          API Mode — parameters are sent to the Python engine.<br>
+          Adjust sliders then click <strong>Run Backtest</strong>.
+        </div>`;
+      }
+
+      for (const [group, params] of Object.entries(groups)) {
+        html += `<div class="section"><div class="section-title">${group}</div>`;
+        for (const p of params) {
+          const displayVal = formatParamValue(p.key, p.default, p.unit);
+          html += `
+            <div class="param-row" data-param-key="${p.key}">
+              <div class="param-label">
+                <span class="param-name">${p.label}</span>
+                <span class="param-value" id="val-${p.key}">${displayVal}</span>
+              </div>
+              <input type="range" id="param-${p.key}"
+                min="${p.min}" max="${p.max}" step="${p.step}" value="${p.default}"
+                oninput="onParamChange('${p.key}', this.value, '${p.unit}')">
+            </div>`;
+        }
+        html += '</div>';
+      }
+
+      // Confirm direction control (step2 specific)
+      if (config.params.confirmDays !== undefined) {
+        html += `<div class="section"><div class="section-title">Confirm Direction</div>
+          <div class="segmented-control">
+            <input type="radio" name="confirmDir" id="cd-recovery" value="recovery">
+            <label for="cd-recovery">Recovery Only</label>
+            <input type="radio" name="confirmDir" id="cd-entry" value="entry">
+            <label for="cd-entry">Entry Only</label>
+            <input type="radio" name="confirmDir" id="cd-both" value="both" checked>
+            <label for="cd-both">Both</label>
+          </div></div>`;
+      }
+
+      if (isApiMode) {
+        html += `<button class="run-btn" id="run-btn" onclick="runBacktestViaAPI(readParams())">▶ Run Backtest</button>`;
+      }
+
+      document.getElementById('sidebar-params').innerHTML = html;
+    }
+
+    function formatParamValue(key, value, unit) {
+      if (key === 'capital' || unit === '$') return `$${(value / 1000).toFixed(0)}K`;
+      if (unit === '%') return `${value}%`;
+      if (unit === ' days') return `${value} days`;
+      return `${value}${unit || ''}`;
+    }
+
+    function onParamChange(key, value, unit) {
+      document.getElementById(`val-${key}`).textContent = formatParamValue(key, +value, unit);
+      if (!isApiMode) scheduleRecalc();
+    }
+
+    // =========================================================================
+    // DATA SOURCE INDICATOR
+    // =========================================================================
+    function updateDataSourceBadge(source, label, isFallback) {
+      const badge = document.getElementById('data-source-badge');
+      if (!badge) return;
+      badge.className = 'data-source-badge ' + (source === 'databento' ? 'databento' : source === 'yahoo_fallback' ? 'yahoo' : 'unknown');
+      badge.textContent = 'DATA: ' + label;
+      badge.title = isFallback
+        ? 'DataBento CSVs not available — using Yahoo Finance as fallback'
+        : 'Using DataBento market data';
+    }
+
+    async function fetchDataSource() {
+      try {
+        const resp = await fetch('/api/data-source');
+        if (!resp.ok) return;
+        const info = await resp.json();
+        updateDataSourceBadge(info.source, info.label, info.is_fallback);
+      } catch (e) { /* silent — badge stays as "..." */ }
+    }
+
+    function getDefaultParams(config) {
+      const p = {};
+      for (const [key, def] of Object.entries(config.params)) {
+        p[key] = def.default;
+      }
+      return p;
+    }
+
+    function readParams() {
+      const params = {};
+      document.querySelectorAll('[data-param-key]').forEach(row => {
+        const key = row.dataset.paramKey;
+        const input = document.getElementById(`param-${key}`);
+        if (input) params[key] = +input.value;
+      });
+      // confirmDir for step2
+      const confirmDirInput = document.querySelector('input[name="confirmDir"]:checked');
+      if (confirmDirInput) params.confirmDir = confirmDirInput.value;
+      return params;
+    }
+
+    // =========================================================================
+    // STATE MACHINE VIEW — builds from strategy config.states
+    // =========================================================================
+    function buildStateMachineView(states) {
+      const stateColorClass = (s) => {
+        if (s.includes('BULL') || s === 'BULL_100' || s === 'AGGRESSIVE') return 'state-bull';
+        if (s.includes('TRIMMED')) return 'state-trimmed';
+        if (s.includes('DEF') || s === 'DEFENSIVE') return 'state-defensive';
+        if (s === 'CASH' || s.includes('CRASH') || s.includes('PROTECT')) return 'state-cash';
+        return 'state-defensive';
+      };
+      const alloc = strategyConfig.allocations || {};
+      document.getElementById('states-grid').innerHTML = states.map(s => `
+        <div class="state-node ${stateColorClass(s)}" id="state-${s}">
+          <div style="font-size: 12px; margin-bottom: 4px;">${s.replace(/_/g, '_\u200b')}</div>
+          <div style="font-size: 9px; opacity: 0.7;">${alloc[s] ? alloc[s].substring(0, 20) : '—'}</div>
+        </div>`).join('');
+    }
+
+    // =========================================================================
+    // CSV PARSER (RFC 4180)
+    // =========================================================================
+    function parseCSV(text) {
+      function parseLine(line) {
+        const fields = []; let i = 0;
+        while (i < line.length) {
+          if (line[i] === '"') {
+            let field = ''; i++;
+            while (i < line.length) {
+              if (line[i] === '"' && line[i+1] === '"') { field += '"'; i += 2; }
+              else if (line[i] === '"') { i++; break; }
+              else { field += line[i++]; }
+            }
+            fields.push(field);
+            if (line[i] === ',') i++;
+          } else {
+            const end = line.indexOf(',', i);
+            if (end === -1) { fields.push(line.slice(i)); break; }
+            fields.push(line.slice(i, end));
+            i = end + 1;
+          }
+        }
+        return fields;
+      }
+      const lines = text.trim().split('\n');
+      const headers = parseLine(lines[0]).map(h => h.trim());
+      return lines.slice(1).map(line => {
+        const values = parseLine(line);
+        const row = {};
+        headers.forEach((h, i) => { row[h] = values[i] !== undefined ? values[i].trim() : ''; });
+        return row;
+      });
+    }
+
+    // =========================================================================
+    // EXTRACT RAW PRICES & INDICATORS (for browser-mode JS engine)
+    // =========================================================================
+    function extractRawPrices(csvRows) {
+      return csvRows.map(r => ({
+        date: r.date,
+        spy: +r.spy_close,
+        qqq: +(r.qqq_close || r.spy_close),
+        uproOpen: +(r.upro_open || 0),
+        uproClose: +(r.upro_close || 0),
+        tqqqOpen: +(r.tqqq_open || 0),
+        tqqqClose: +(r.tqqq_close || 0),
+        vix: +(r.vix || 0)
+      }));
+    }
+
+    function extractCSVIndicators(csvRows) {
+      const n = csvRows.length;
+      const spySMADef = new Float64Array(n), spySMAKill = new Float64Array(n);
+      const qqqSMADef = new Float64Array(n), spyRSI = new Float64Array(n);
+      const spyBelowStreak = new Int32Array(n), spyAboveStreak = new Int32Array(n);
+      const qqqBelowStreak = new Int32Array(n), qqqAboveStreak = new Int32Array(n);
+      for (let i = 0; i < n; i++) {
+        const r = csvRows[i];
+        spySMADef[i]  = +(r.spy_sma50 || r.spy_sma_def || NaN);
+        spySMAKill[i] = +(r.spy_sma200 || r.spy_sma_kill || NaN);
+        qqqSMADef[i]  = +(r.qqq_sma50 || NaN);
+        spyRSI[i]     = +(r.spy_rsi_14 || NaN);
+        spyBelowStreak[i] = +(r.days_below_sma50_spy || r.days_below_sma50 || 0);
+        spyAboveStreak[i] = +(r.days_above_sma50_spy || r.days_above_sma50 || 0);
+        qqqBelowStreak[i] = +(r.days_below_sma50_qqq || 0);
+        qqqAboveStreak[i] = +(r.days_above_sma50_qqq || 0);
+      }
+      return { spySMADef, spySMAKill, qqqSMADef, spyRSI, spyBelowStreak, spyAboveStreak, qqqBelowStreak, qqqAboveStreak };
+    }
+
+    // =========================================================================
+    // INDICATOR ENGINE (browser-mode only)
+    // =========================================================================
+    function computeSMA(prices, period) {
+      const n = prices.length, out = new Float64Array(n); out.fill(NaN);
+      if (period > n) return out;
+      let sum = 0;
+      for (let i = 0; i < period; i++) sum += prices[i];
+      out[period-1] = sum / period;
+      for (let i = period; i < n; i++) { sum += prices[i] - prices[i-period]; out[i] = sum / period; }
+      return out;
+    }
+
+    function computeRSI(prices, period) {
+      const n = prices.length, out = new Float64Array(n); out.fill(NaN);
+      if (n < period+1) return out;
+      const alpha = 1.0 / period;
+      let avgGain = 0, avgLoss = 0;
+      for (let i = 1; i <= period; i++) {
+        const d = prices[i] - prices[i-1];
+        if (d > 0) avgGain += d; else avgLoss += -d;
+      }
+      avgGain /= period; avgLoss /= period;
+      out[period] = avgLoss === 0 ? 100 : 100 - (100 / (1 + avgGain / avgLoss));
+      for (let i = period+1; i < n; i++) {
+        const d = prices[i] - prices[i-1];
+        avgGain = alpha * (d > 0 ? d : 0) + (1-alpha) * avgGain;
+        avgLoss = alpha * (d < 0 ? -d : 0) + (1-alpha) * avgLoss;
+        out[i] = avgLoss === 0 ? 100 : 100 - (100 / (1 + avgGain / avgLoss));
+      }
+      return out;
+    }
+
+    function computeStreak(condition) {
+      const n = condition.length, out = new Int32Array(n);
+      out[0] = condition[0] ? 1 : 0;
+      for (let i = 1; i < n; i++) out[i] = condition[i] ? out[i-1] + 1 : 0;
+      return out;
+    }
+
+    function computeIndicators(raw, params) {
+      const DEFAULT_SMA_KILL = 200, DEFAULT_SMA_DEF = 50, DEFAULT_RSI_PERIOD = 14;
+      const useCSVKill = csvIndicators && params.smaKill === DEFAULT_SMA_KILL;
+      const useCSVDef  = csvIndicators && params.smaDef  === DEFAULT_SMA_DEF;
+      const useCSVRsi  = csvIndicators && params.rsiPeriod === DEFAULT_RSI_PERIOD;
+      const n = raw.length;
+      const spyPrices = new Float64Array(n), qqqPrices = new Float64Array(n);
+      for (let i = 0; i < n; i++) { spyPrices[i] = raw[i].spy; qqqPrices[i] = raw[i].qqq; }
+      const spySMAKill = useCSVKill ? csvIndicators.spySMAKill : computeSMA(spyPrices, params.smaKill);
+      const spySMADef  = useCSVDef  ? csvIndicators.spySMADef  : computeSMA(spyPrices, params.smaDef);
+      const qqqSMADef  = useCSVDef  ? csvIndicators.qqqSMADef  : computeSMA(qqqPrices, params.smaDef);
+      const spyRSI     = useCSVRsi  ? csvIndicators.spyRSI     : computeRSI(spyPrices, params.rsiPeriod);
+      let spyBelowStreak, spyAboveStreak, qqqBelowStreak, qqqAboveStreak;
+      if (useCSVDef) {
+        spyBelowStreak = csvIndicators.spyBelowStreak; spyAboveStreak = csvIndicators.spyAboveStreak;
+        qqqBelowStreak = csvIndicators.qqqBelowStreak; qqqAboveStreak = csvIndicators.qqqAboveStreak;
+      } else {
+        spyBelowStreak = computeStreak(Array.from({length:n}, (_, i) => !isNaN(spySMADef[i]) && spyPrices[i] < spySMADef[i]));
+        spyAboveStreak = computeStreak(Array.from({length:n}, (_, i) => !isNaN(spySMADef[i]) && spyPrices[i] > spySMADef[i]));
+        qqqBelowStreak = computeStreak(Array.from({length:n}, (_, i) => !isNaN(qqqSMADef[i]) && qqqPrices[i] < qqqSMADef[i]));
+        qqqAboveStreak = computeStreak(Array.from({length:n}, (_, i) => !isNaN(qqqSMADef[i]) && qqqPrices[i] > qqqSMADef[i]));
+      }
+      return { spySMADef, spySMAKill, qqqSMADef, spyRSI, spyBelowStreak, spyAboveStreak, qqqBelowStreak, qqqAboveStreak };
+    }
+
+    // =========================================================================
+    // STATE MACHINE (browser-mode)
+    // =========================================================================
+    function getAllocations(params) {
+      const uBase = (params.uproSplit || 75) / 100;
+      const tBase = 1 - uBase;
+      const trimFactor = 1 - (params.rsiTrim || 25) / 100;
+      const defFactor  = 1 - (params.defSell || 50) / 100;
+      return {
+        BULL_FULL: { upro: uBase*0.99, tqqq: tBase*0.99 },
+        BULL_100:  { upro: uBase*0.99, tqqq: 0 },
+        BULL_TRIMMED: { upro: uBase*trimFactor, tqqq: tBase*trimFactor },
+        DEF_SPY:  { upro: uBase*defFactor, tqqq: tBase },
+        DEF_QQQ:  { upro: uBase, tqqq: tBase*defFactor },
+        DEF_BOTH: { upro: uBase*defFactor, tqqq: tBase*defFactor },
+        DEFENSIVE:{ upro: uBase*defFactor, tqqq: 0 },
+        CASH:     { upro: 0, tqqq: 0 }
+      };
+    }
+
+    function nextState(current, ind, i, params) {
+      const spy = rawData[i].spy, qqq = rawData[i].qqq, vix = rawData[i].vix;
+      const spySMAKill = ind.spySMAKill[i], spySMADef = ind.spySMADef[i];
+      const qqqSMADef = ind.qqqSMADef[i], rsi = ind.spyRSI[i];
+      const confirmDays = params.confirmDays || 2;
+      const confirmDir = params.confirmDir || 'both';
+      const entryConf = confirmDir === 'recovery' ? 1 : confirmDays;
+      const recovConf = confirmDir === 'entry' ? 1 : confirmDays;
+      const vt = params.vixThreshold || 30;
+
+      if (current !== 'CASH') {
+        if (vix > vt || (!isNaN(spySMAKill) && spy < spySMAKill))
+          return ['CASH', `KILL: VIX=${vix.toFixed(1)}`];
+      }
+      if (current === 'BULL_FULL' || current === 'BULL_100' || current === 'BULL_TRIMMED') {
+        const spyBelow = ind.spyBelowStreak[i] >= entryConf;
+        const qqqBelow = ind.qqqBelowStreak[i] >= entryConf;
+        if (spyBelow && qqqBelow) return ['DEF_BOTH', 'DEFENSIVE BOTH'];
+        if (spyBelow) return [current === 'BULL_100' ? 'DEFENSIVE' : 'DEF_SPY', 'DEFENSIVE SPY'];
+        if (qqqBelow) return ['DEF_QQQ', 'DEFENSIVE QQQ'];
+        const bullBase = current === 'BULL_100' ? 'BULL_100' : 'BULL_FULL';
+        const trimmed = current === 'BULL_100' ? 'BULL_TRIMMED' : 'BULL_TRIMMED';
+        if ((current === 'BULL_FULL' || current === 'BULL_100') && !isNaN(rsi) && rsi > (params.rsiOB||75))
+          return [trimmed, `RSI TRIM: ${rsi.toFixed(1)}`];
+        if (current === 'BULL_TRIMMED' && !isNaN(rsi) && rsi < (params.rsiRe||60))
+          return [bullBase, `RSI RECOVERY`];
+        return [current, 'HOLD'];
+      }
+      if (current === 'DEF_SPY' || current === 'DEFENSIVE') {
+        const spyAbove = ind.spyAboveStreak[i] >= recovConf;
+        const qqqBelow = ind.qqqBelowStreak[i] >= entryConf;
+        if (qqqBelow && current === 'DEF_SPY') return ['DEF_BOTH', 'WORSENING'];
+        if (spyAbove && vix < vt) return ['BULL_FULL', 'RECOVERY SPY'];
+        return [current, 'HOLD'];
+      }
+      if (current === 'DEF_QQQ') {
+        const spyBelow = ind.spyBelowStreak[i] >= entryConf;
+        const qqqAbove = ind.qqqAboveStreak[i] >= recovConf;
+        if (spyBelow) return ['DEF_BOTH', 'WORSENING'];
+        if (qqqAbove && vix < vt) return ['BULL_FULL', 'RECOVERY QQQ'];
+        return [current, 'HOLD'];
+      }
+      if (current === 'DEF_BOTH') {
+        const spyAbove = ind.spyAboveStreak[i] >= recovConf;
+        const qqqAbove = ind.qqqAboveStreak[i] >= recovConf;
+        if (spyAbove && qqqAbove && vix < vt) return ['BULL_FULL', 'FULL RECOVERY'];
+        if (spyAbove && !qqqAbove) return ['DEF_QQQ', 'PARTIAL'];
+        if (qqqAbove && !spyAbove) return ['DEF_SPY', 'PARTIAL'];
+        return ['DEF_BOTH', 'HOLD'];
+      }
+      if (current === 'CASH') {
+        if (!isNaN(spySMAKill) && spy > spySMAKill && vix < vt
+            && !isNaN(spySMADef) && spy > spySMADef
+            && !isNaN(qqqSMADef) && qqq > qqqSMADef)
+          return [currentStrategyId === 'step1_upro_4state' ? 'BULL_100' : 'BULL_FULL', 'RE-ENTRY'];
+        return ['CASH', 'HOLD'];
+      }
+      return [current, 'HOLD'];
+    }
+
+    // =========================================================================
+    // BACKTEST LOOP (browser-mode)
+    // =========================================================================
+    function runBacktest(raw, ind, params) {
+      const n = raw.length, allocs = getAllocations(params);
+      const dailyLog = [], trades = [];
+      let cash = params.capital, uproShares = 0, tqqqShares = 0;
+      let state = 'CASH', pendingTrade = null;
+      const initState = currentStrategyId === 'step1_upro_4state' ? 'BULL_100' : 'BULL_FULL';
+
+      for (let i = 0; i < n; i++) {
+        const d = raw[i];
+        if (pendingTrade !== null) {
+          const [newState, reason] = pendingTrade; pendingTrade = null;
+          const pv = cash + uproShares*d.uproOpen + tqqqShares*d.tqqqOpen;
+          const alloc = allocs[newState] || { upro: 0, tqqq: 0 };
+          const isKill = reason.includes('KILL');
+          const slip = (isKill || d.vix > 25) ? 20 : 5;
+          const tU = d.uproOpen > 0 ? (pv * alloc.upro) / d.uproOpen : 0;
+          const tT = d.tqqqOpen > 0 ? (pv * alloc.tqqq) / d.tqqqOpen : 0;
+          const uDelta = tU - uproShares, tDelta = tT - tqqqShares;
+          const uVal = Math.abs(uDelta*d.uproOpen), tVal = Math.abs(tDelta*d.tqqqOpen);
+          const cost = (uVal>0?1:0) + uVal*(slip/10000) + (tVal>0?1:0) + tVal*(slip/10000);
+          const oldState = state;
+          uproShares = tU; tqqqShares = tT;
+          cash = pv - tU*d.uproOpen - tT*d.tqqqOpen - cost;
+          state = newState;
+          if (uVal > 0) trades.push({ execution_date:d.date, action:uDelta>0?'BUY':'SELL', instrument:'UPRO', state_from:oldState, state_to:newState, exec_price:d.uproOpen, shares_delta:uDelta, reason });
+          if (tVal > 0) trades.push({ execution_date:d.date, action:tDelta>0?'BUY':'SELL', instrument:'TQQQ', state_from:oldState, state_to:newState, exec_price:d.tqqqOpen, shares_delta:tDelta, reason });
+        }
+
+        if (!isNaN(ind.spySMAKill[i]) && !isNaN(ind.spyRSI[i])) {
+          const [newSt, reason] = nextState(state, ind, i, params);
+          if (newSt !== state) pendingTrade = [newSt, reason];
+        }
+
+        const pv = cash + uproShares*d.uproClose + tqqqShares*d.tqqqClose;
+        const uVal = uproShares*d.uproClose, tVal = tqqqShares*d.tqqqClose;
+        const stateChanged = trades.length > 0 && trades[trades.length-1].execution_date === d.date;
+        dailyLog.push({
+          date: d.date, state, state_changed_today: stateChanged ? 'YES' : 'NO',
+          spy_close: d.spy, qqq_close: d.qqq,
+          upro_open: d.uproOpen, upro_close: d.uproClose,
+          tqqq_open: d.tqqqOpen, tqqq_close: d.tqqqClose,
+          vix: d.vix, vix_threshold: params.vixThreshold || 30,
+          spy_sma_def: ind.spySMADef[i], spy_sma_kill: ind.spySMAKill[i],
+          spy_rsi: ind.spyRSI[i],
+          portfolio_value: pv,
+          upro_allocation_pct: pv > 0 ? (uVal/pv*100) : 0,
+          tqqq_allocation_pct: pv > 0 ? (tVal/pv*100) : 0,
+          cash_allocation_pct: pv > 0 ? (cash/pv*100) : 0,
+          cumulative_return_pct: ((pv / params.capital) - 1) * 100
+        });
+      }
+      return { dailyLog, trades };
+    }
+
+    // =========================================================================
+    // METRICS CALCULATOR (browser-mode)
+    // =========================================================================
+    function computeMetrics(dailyLog, trades, params) {
+      if (dailyLog.length < 2) return {};
+      const first = dailyLog[1], last = dailyLog[dailyLog.length-1];
+      const d0 = new Date(first.date), d1 = new Date(last.date);
+      const years = (d1-d0) / (1000*86400*365.25);
+      const startVal = params.capital, endVal = last.portfolio_value;
+      const cagr = years > 0 ? Math.pow(endVal/startVal, 1/years) - 1 : 0;
+      const dailyRets = [];
+      for (let i = 1; i < dailyLog.length; i++) {
+        const prev = dailyLog[i-1].portfolio_value;
+        if (prev > 0) dailyRets.push(dailyLog[i].portfolio_value / prev - 1);
+      }
+      const dailyRf = 0.04/252;
+      const excess = dailyRets.map(r => r-dailyRf);
+      const meanEx = excess.reduce((a,b)=>a+b,0)/excess.length;
+      const stdEx = Math.sqrt(excess.reduce((a,b)=>a+b*b,0)/excess.length - meanEx*meanEx);
+      const sharpe = stdEx > 0 ? (meanEx/stdEx)*Math.sqrt(252) : 0;
+      const downside = excess.filter(r=>r<0);
+      const dsMean = downside.length ? downside.reduce((a,b)=>a+b,0)/downside.length : 0;
+      const dsStd = downside.length > 1 ? Math.sqrt(downside.reduce((a,b)=>a+(b-dsMean)**2,0)/(downside.length-1)) : 0;
+      const sortino = dsStd > 0 ? (meanEx/dsStd)*Math.sqrt(252) : 0;
+      let peak = 0, maxDD = 0;
+      dailyLog.forEach(row => {
+        if (row.portfolio_value > peak) peak = row.portfolio_value;
+        const dd = (row.portfolio_value-peak)/peak;
+        if (dd < maxDD) maxDD = dd;
+      });
+      const calmar = maxDD !== 0 ? cagr / Math.abs(maxDD) : 0;
+      const spyStart = first.spy_close, spyEnd = last.spy_close;
+      const spyCagr = years > 0 ? Math.pow(spyEnd/spyStart, 1/years)-1 : 0;
+      return {
+        final_value: Math.round(endVal*100)/100,
+        total_return_pct: Math.round((endVal/startVal-1)*10000)/100,
+        cagr_pct: Math.round(cagr*10000)/100,
+        sharpe: Math.round(sharpe*1000)/1000,
+        sortino: Math.round(sortino*1000)/1000,
+        calmar: Math.round(calmar*1000)/1000,
+        max_drawdown_pct: Math.round(maxDD*10000)/100,
+        total_trades: trades.length,
+        benchmark_spy_cagr_pct: Math.round(spyCagr*10000)/100,
+        alpha_vs_spy_pct: Math.round((cagr-spyCagr)*10000)/100
+      };
+    }
+
+    // =========================================================================
+    // RECALC (browser-mode)
+    // =========================================================================
+    let recalcTimer = null;
+    function scheduleRecalc() {
+      clearTimeout(recalcTimer);
+      recalcTimer = setTimeout(executeRecalc, 80);
+    }
+    function executeRecalc() {
+      if (!rawData.length || isApiMode) return;
+      const params = readParams();
+      const ind = computeIndicators(rawData, params);
+      const result = runBacktest(rawData, ind, params);
+      metricsData = computeMetrics(result.dailyLog, result.trades, params);
+      portfolioData = result.dailyLog;
+      tradeLogData = result.trades;
+      updateAllVisuals(params);
+    }
+
+    // =========================================================================
+    // DATA LOADING
+    // =========================================================================
+    async function loadData() {
+      try {
+        const resp = await fetch(`/api/strategies/${currentStrategyId}/precomputed`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const csvRows = parseCSV(await resp.text());
+        rawData = extractRawPrices(csvRows);
+        csvIndicators = extractCSVIndicators(csvRows);
+        executeRecalc();
+      } catch (error) {
+        document.querySelector('.main-container').innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+      }
+    }
+
+    // =========================================================================
+    // API MODE — run Python backtest
+    // =========================================================================
+    async function runBacktestViaAPI(params) {
+      showLoading('Running Python backtest...');
+      const btn = document.getElementById('run-btn');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Running...'; }
+
+      try {
+        const resp = await fetch('/api/backtest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            strategy_id: currentStrategyId,
+            params,
+            initial_capital: params.capital || 100000
+          })
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.detail || `HTTP ${resp.status}`);
+        }
+
+        const result = await resp.json();
+        portfolioData = result.daily_log;
+        tradeLogData = result.trades;
+        metricsData = result.metrics;
+
+        // Update data source badge from backtest response
+        if (result.data_source) {
+          const labels = { databento: 'DataBento', yahoo_fallback: 'Yahoo Finance (fallback)', unknown: 'Not yet determined' };
+          updateDataSourceBadge(result.data_source, labels[result.data_source] || result.data_source, result.data_source === 'yahoo_fallback');
+        }
+
+        if (!Object.keys(charts).length) createAllCharts();
+        updateAllVisuals(params);
+      } catch (err) {
+        showError(`Backtest failed: ${err.message}`);
+      } finally {
+        hideLoading();
+        if (btn) { btn.disabled = false; btn.textContent = '▶ Run Backtest'; }
+      }
+    }
+
+    function showLoading(msg) {
+      document.getElementById('loading-text').textContent = msg || 'Loading...';
+      document.getElementById('loading-overlay').classList.add('visible');
+    }
+    function hideLoading() { document.getElementById('loading-overlay').classList.remove('visible'); }
+    function showError(msg) {
+      hideLoading();
+      alert(msg); // Simple fallback; could be a toast
+    }
+
+    // =========================================================================
+    // CHART CREATION
+    // =========================================================================
+    const CHART_OPTS = () => ({
+      layout: { background: { color: '#0a0a0f' }, textColor: '#a3a3a3' },
+      grid: { vertLines: { color: '#1a1a2e' }, horzLines: { color: '#1a1a2e' } },
+      timeScale: { borderColor: '#2a2a3a' }, rightPriceScale: { borderColor: '#2a2a3a' }
+    });
+
+    function createAllCharts() {
+      let c, el;
+      el = document.getElementById('chart-equity');
+      c = LightweightCharts.createChart(el, { width: el.clientWidth, height: 500, ...CHART_OPTS() });
+      series.strategy = c.addLineSeries({ color: '#3b82f6', lineWidth: 3, title: 'Strategy' });
+      series.buyHold = c.addLineSeries({ color: '#737373', lineWidth: 2, lineStyle: 2, title: 'SPY B&H' });
+      charts.equity = c;
+
+      el = document.getElementById('chart-spy');
+      c = LightweightCharts.createChart(el, { width: el.clientWidth, height: 500, ...CHART_OPTS(), crosshair: { mode: LightweightCharts.CrosshairMode.Normal } });
+      series.spy = c.addLineSeries({ color: '#ffffff', lineWidth: 3, title: 'SPY' });
+      series.sma50 = c.addLineSeries({ color: '#eab308', lineWidth: 2, title: 'SMA-Def' });
+      series.sma200 = c.addLineSeries({ color: '#ef4444', lineWidth: 2, title: 'SMA-Kill' });
+      charts.spy = c;
+      setupSpyTooltip(c);
+
+      el = document.getElementById('chart-vix');
+      c = LightweightCharts.createChart(el, { width: el.clientWidth, height: 180, ...CHART_OPTS() });
+      series.vixLine = c.addLineSeries({ color: '#a855f7', lineWidth: 3 });
+      series.vixThreshold = c.addLineSeries({ color: '#ef4444', lineWidth: 2, lineStyle: 2 });
+      charts.vix = c;
+
+      el = document.getElementById('chart-rsi');
+      c = LightweightCharts.createChart(el, { width: el.clientWidth, height: 180, ...CHART_OPTS() });
+      series.rsiLine = c.addLineSeries({ color: '#3b82f6', lineWidth: 3 });
+      series.rsiOB = c.addLineSeries({ color: '#ef4444', lineWidth: 2, lineStyle: 2 });
+      series.rsiRebuy = c.addLineSeries({ color: '#22c55e', lineWidth: 2, lineStyle: 2 });
+      charts.rsi = c;
+
+      el = document.getElementById('chart-portfolio');
+      c = LightweightCharts.createChart(el, { width: el.clientWidth, height: 400, ...CHART_OPTS() });
+      series.portfolioLine = c.addAreaSeries({ lineColor: '#3b82f6', topColor: 'rgba(59,130,246,0.4)', bottomColor: 'rgba(59,130,246,0.0)', lineWidth: 3 });
+      charts.portfolio = c;
+
+      el = document.getElementById('chart-drawdown');
+      c = LightweightCharts.createChart(el, { width: el.clientWidth, height: 180, ...CHART_OPTS() });
+      series.drawdownLine = c.addAreaSeries({ lineColor: '#ef4444', topColor: 'rgba(239,68,68,0.0)', bottomColor: 'rgba(239,68,68,0.35)', lineWidth: 2 });
+      charts.drawdown = c;
+
+      // Crosshair sync
+      const allCharts = Object.values(charts);
+      allCharts.forEach(src => src.subscribeCrosshairMove(param => {
+        if (!param.time) return;
+        allCharts.forEach(tgt => { if (tgt !== src) tgt.setCrosshairPosition(undefined, undefined, param.time); });
+      }));
+    }
+
+    function setupSpyTooltip(chart) {
+      const tooltip = document.getElementById('spy-tooltip');
+      chart.subscribeCrosshairMove(param => {
+        if (!param.time) { tooltip.classList.remove('visible'); return; }
+        const row = dataByDate[param.time];
+        if (!row) { tooltip.classList.remove('visible'); return; }
+        const spy = row.spy_close || 0, vix = row.vix || 0, vt = row.vix_threshold || 30;
+        const rsi = row.spy_rsi || row.spy_rsi_14 || 0;
+        const sma50v = row.spy_sma_def || row.spy_sma50 || 0;
+        const sma200v = row.spy_sma_kill || row.spy_sma200 || 0;
+        const pv = row.portfolio_value || 0, ret = row.cumulative_return_pct || 0;
+        const vixC = vix >= vt ? 'red' : 'purple';
+        const s50C = spy >= sma50v ? 'green' : 'red';
+        const s200C = spy >= sma200v ? 'green' : 'red';
+        const rZ = rsi >= 75 ? 'HOT' : rsi <= 60 ? 'COOL' : 'NEUTRAL';
+        const rC = rsi >= 75 ? 'red' : rsi <= 60 ? 'green' : '';
+        const retC = ret >= 0 ? 'green' : 'red';
+        const stateClass = (row.state || '').replace(/\s/g, '_');
+        tooltip.innerHTML = `
+          <div class="tooltip-date">${row.date} <span class="tooltip-state-badge ${stateClass}">${(row.state||'').replace(/_/g,' ')}</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">SPY</span><span class="tooltip-val">${spy.toFixed(2)}</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">VIX</span><span class="tooltip-val ${vixC}">${vix.toFixed(1)}${vix>=vt?' ▲ KILL':''}</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">RSI</span><span class="tooltip-val ${rC}">${isNaN(rsi)?'—':rsi.toFixed(1)+' ('+rZ+')'}</span></div>
+          <hr class="tooltip-divider">
+          <div class="tooltip-row"><span class="tooltip-label">SMA-Def</span><span class="tooltip-val ${s50C}">${isNaN(sma50v)?'—':sma50v.toFixed(1)+' ('+(spy>=sma50v?'ABOVE':'BELOW')+')'}</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">SMA-Kill</span><span class="tooltip-val ${s200C}">${isNaN(sma200v)?'—':sma200v.toFixed(1)+' ('+(spy>=sma200v?'ABOVE':'BELOW')+')'}</span></div>
+          <hr class="tooltip-divider">
+          <div class="tooltip-row"><span class="tooltip-label">Portfolio</span><span class="tooltip-val">$${pv.toLocaleString('en-US',{maximumFractionDigits:0})}</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">Return</span><span class="tooltip-val ${retC}">${ret>=0?'+':''}${ret.toFixed(1)}%</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">UPRO/TQQQ/Cash</span><span class="tooltip-val">${(row.upro_allocation_pct||0).toFixed(0)}/${(row.tqqq_allocation_pct||0).toFixed(0)}/${(row.cash_allocation_pct||0).toFixed(0)}%</span></div>`;
+        tooltip.classList.add('visible');
+      });
+    }
+
+    // =========================================================================
+    // UPDATE ALL VISUALS
+    // =========================================================================
+    function updateAllVisuals(params) {
+      if (!portfolioData || !portfolioData.length) return;
+      params = params || readParams();
+      const capital = params.capital || 100000;
+
+      dataByDate = {};
+      portfolioData.forEach(row => { dataByDate[row.date] = row; });
+
+      const startSPY = portfolioData[0].spy_close;
+      const stateColors = { BULL_FULL:'#22c55e', BULL_100:'#22c55e', AGGRESSIVE:'#22c55e', BULL_TRIMMED:'#eab308', DEF_SPY:'#f59e0b', DEF_QQQ:'#f59e0b', DEF_BOTH:'#f59e0b', DEFENSIVE:'#f59e0b', CASH:'#ef4444', CRASH_PROTECT:'#a855f7' };
+
+      // Equity curve
+      const stratData = [], bhData = [], eqMarkers = [];
+      portfolioData.forEach(row => {
+        stratData.push({ time: row.date, value: row.portfolio_value });
+        bhData.push({ time: row.date, value: capital * (row.spy_close / startSPY) });
+        if (row.state_changed_today === 'YES')
+          eqMarkers.push({ time: row.date, position: 'belowBar', color: stateColors[row.state]||'#666', shape: 'circle', text: row.state.replace(/_/g,' '), size: 0.5 });
+      });
+      series.strategy.setData(stratData);
+      series.buyHold.setData(bhData);
+      series.strategy.setMarkers(eqMarkers);
+      charts.equity.timeScale().fitContent();
+
+      // SPY + SMAs
+      const spyData = [], sma50Data = [], sma200Data = [];
+      portfolioData.forEach(row => {
+        spyData.push({ time: row.date, value: row.spy_close });
+        const s50 = row.spy_sma_def || row.spy_sma50;
+        const s200 = row.spy_sma_kill || row.spy_sma200;
+        if (!isNaN(s50) && s50) sma50Data.push({ time: row.date, value: +s50 });
+        if (!isNaN(s200) && s200) sma200Data.push({ time: row.date, value: +s200 });
+      });
+      series.spy.setData(spyData);
+      series.sma50.setData(sma50Data);
+      series.sma200.setData(sma200Data);
+      updateTradeMarkers();
+      charts.spy.timeScale().fitContent();
+
+      // VIX
+      const vt = params.vixThreshold || 30;
+      const vixData = [], vixThreshData = [];
+      portfolioData.forEach(row => {
+        if (row.vix) vixData.push({ time: row.date, value: +row.vix });
+        vixThreshData.push({ time: row.date, value: vt });
+      });
+      series.vixLine.setData(vixData);
+      series.vixThreshold.setData(vixThreshData);
+      charts.vix.timeScale().fitContent();
+
+      // RSI
+      const rsiOB = params.rsiOB || 75, rsiRe = params.rsiRe || 60;
+      const rsiData = [], rsiOBData = [], rsiRebuyData = [];
+      portfolioData.forEach(row => {
+        const rsi = row.spy_rsi || row.spy_rsi_14;
+        if (rsi && !isNaN(rsi)) rsiData.push({ time: row.date, value: +rsi });
+        rsiOBData.push({ time: row.date, value: rsiOB });
+        rsiRebuyData.push({ time: row.date, value: rsiRe });
+      });
+      series.rsiLine.setData(rsiData);
+      series.rsiOB.setData(rsiOBData);
+      series.rsiRebuy.setData(rsiRebuyData);
+      charts.rsi.timeScale().fitContent();
+
+      // Portfolio value
+      series.portfolioLine.setData(portfolioData.map(r => ({ time: r.date, value: r.portfolio_value })));
+      charts.portfolio.timeScale().fitContent();
+
+      // Drawdown
+      let peakDD = 0;
+      const ddData = portfolioData.map(r => {
+        if (r.portfolio_value > peakDD) peakDD = r.portfolio_value;
+        return { time: r.date, value: peakDD > 0 ? ((r.portfolio_value - peakDD) / peakDD * 100) : 0 };
+      });
+      series.drawdownLine.setData(ddData);
+      charts.drawdown.timeScale().fitContent();
+
+      // Metrics bar
+      const m = metricsData;
+      document.getElementById('metric-final').textContent = `$${(m.final_value||0).toLocaleString('en-US',{maximumFractionDigits:0})}`;
+      const cagrVal = m.cagr_pct || 0;
+      document.getElementById('metric-cagr').textContent = `${cagrVal>=0?'+':''}${cagrVal.toFixed(1)}%`;
+      document.getElementById('metric-cagr').className = `metric-value ${cagrVal>=0?'positive':'negative'}`;
+      document.getElementById('metric-sharpe').textContent = (m.sharpe||0).toFixed(3);
+      document.getElementById('metric-dd').textContent = `${(m.max_drawdown_pct||0).toFixed(1)}%`;
+      document.getElementById('metric-trades').textContent = m.total_trades || 0;
+      const alphaVal = m.alpha_vs_spy_pct || 0;
+      document.getElementById('metric-alpha').textContent = `${alphaVal>=0?'+':''}${alphaVal.toFixed(1)}%`;
+      document.getElementById('metric-alpha').className = `metric-value ${alphaVal>=0?'positive':'negative'}`;
+
+      // Current state badge
+      const lastState = portfolioData[portfolioData.length-1].state;
+      document.getElementById('current-state').textContent = lastState;
+      const badge = document.getElementById('state-badge');
+      if (badge) { badge.textContent = lastState.replace(/_/g,' '); badge.className = `state-badge ${lastState}`; }
+      document.querySelectorAll('.state-node').forEach(n => n.classList.remove('active'));
+      const node = document.getElementById(`state-${lastState}`);
+      if (node) node.classList.add('active');
+
+      // Dynamic chart labels
+      document.getElementById('vix-label').textContent = `VIX Kill Switch (Threshold: ${vt})`;
+      document.getElementById('rsi-label').textContent = `RSI-${params.rsiPeriod||14} (Sell >${rsiOB}, Rebuy <${rsiRe})`;
+
+      populateTradePanel(params);
+      createStateTimeline();
+    }
+
+    // =========================================================================
+    // TRADE MARKERS
+    // =========================================================================
+    function updateTradeMarkers() {
+      if (!series.spy) return;
+      const markers = [];
+      tradeLogData.forEach(trade => {
+        const date = trade.execution_date;
+        if (!date) return;
+        if ((trade.action === 'BUY' && showBuys) || (trade.action === 'SELL' && showSells)) {
+          markers.push({
+            time: date, position: trade.action === 'BUY' ? 'belowBar' : 'aboveBar',
+            color: trade.action === 'BUY' ? '#22c55e' : '#ef4444',
+            shape: trade.action === 'BUY' ? 'arrowUp' : 'arrowDown',
+            text: `${trade.action} → ${trade.state_to || ''}`, size: 2
+          });
+        }
+      });
+      series.spy.setMarkers(markers);
+    }
+
+    // =========================================================================
+    // TRADE PANEL
+    // =========================================================================
+    function populateTradePanel(params) {
+      const capital = params.capital || 100000;
+      const finalPV = portfolioData[portfolioData.length-1].portfolio_value;
+      const totalRet = ((finalPV - capital) / capital * 100).toFixed(2);
+      const startSPY = portfolioData[0].spy_close;
+      const endSPY = portfolioData[portfolioData.length-1].spy_close;
+      const spyRet = ((endSPY - startSPY) / startSPY * 100).toFixed(2);
+
+      document.getElementById('trade-final').textContent = `$${finalPV.toLocaleString('en-US',{maximumFractionDigits:0})}`;
+      document.getElementById('trade-return').textContent = `${totalRet>=0?'+':''}${totalRet}%`;
+      document.getElementById('trade-spy').textContent = `+${spyRet}%`;
+
+      const lastBuy = {}; let wins = 0, total = 0, best = -Infinity, worst = Infinity;
+      tradeLogData.forEach(t => {
+        if (t.action === 'BUY') lastBuy[t.instrument||'X'] = t.exec_price;
+        else if (t.action === 'SELL' && lastBuy[t.instrument||'X'] != null) {
+          const ret = ((t.exec_price - lastBuy[t.instrument||'X']) / lastBuy[t.instrument||'X']) * 100;
+          if (ret > 0) wins++; total++;
+          if (ret > best) best = ret;
+          if (ret < worst) worst = ret;
+          delete lastBuy[t.instrument||'X'];
+        }
+      });
+      document.getElementById('trade-winrate').textContent = total > 0 ? `${((wins/total)*100).toFixed(1)}%` : '—';
+      document.getElementById('trade-best').textContent = best > -Infinity ? `+${best.toFixed(2)}%` : '—';
+      document.getElementById('trade-worst').textContent = worst < Infinity ? `${worst.toFixed(2)}%` : '—';
+
+      const listEl = document.getElementById('trade-list');
+      listEl.innerHTML = '';
+      tradeLogData.slice(-30).reverse().forEach((trade, idx, arr) => {
+        const div = document.createElement('div');
+        div.className = 'trade-item';
+        const execDate = trade.execution_date || trade.date || '';
+        const instrument = trade.instrument || 'UPRO';
+        const execPrice = trade.exec_price || 0;
+        const stateTo = trade.state_to || '';
+        div.innerHTML = `<div class="trade-item-header"><span class="trade-number">#${arr.length-idx}</span><span class="trade-action ${(trade.action||'').toLowerCase()}">${trade.action}</span><span class="trade-date">${execDate}</span></div><div class="trade-details">${instrument} @ $${execPrice.toFixed(2)} → ${stateTo}</div>`;
+        listEl.appendChild(div);
+      });
+    }
+
+    // =========================================================================
+    // STATE TIMELINE
+    // =========================================================================
+    function createStateTimeline() {
+      const el = document.getElementById('timeline-bar');
+      el.innerHTML = '';
+      if (!portfolioData.length) return;
+      const groups = [];
+      let cur = portfolioData[0].state, start = 0;
+      for (let i = 1; i < portfolioData.length; i++) {
+        if (portfolioData[i].state !== cur) {
+          groups.push({ state: cur, count: i - start });
+          cur = portfolioData[i].state; start = i;
+        }
+      }
+      groups.push({ state: cur, count: portfolioData.length - start });
+      const total = portfolioData.length;
+      groups.forEach(g => {
+        const seg = document.createElement('div');
+        seg.className = `timeline-segment ${g.state}`;
+        seg.style.width = `${(g.count/total)*100}%`;
+        seg.title = `${g.state}: ${((g.count/total)*100).toFixed(1)}% of time`;
+        el.appendChild(seg);
+      });
+    }
+
+    // =========================================================================
+    // WIRE SLIDERS
+    // =========================================================================
+    function wireSliders() {
+      document.querySelectorAll('#sidebar-params input[type="range"]').forEach(slider => {
+        slider.addEventListener('input', function() {
+          const key = this.closest('[data-param-key]')?.dataset?.paramKey;
+          if (!key) return;
+          const p = strategyConfig?.params?.[key];
+          if (p) document.getElementById(`val-${key}`).textContent = formatParamValue(key, +this.value, p.unit);
+          if (!isApiMode) scheduleRecalc();
+        });
+      });
+      document.querySelectorAll('input[name="confirmDir"]').forEach(r => r.addEventListener('change', () => {
+        if (!isApiMode) scheduleRecalc();
+      }));
+    }
+
+    // =========================================================================
+    // TOGGLE FUNCTIONS
+    // =========================================================================
+    function toggleSMA50() { const b = document.getElementById('btn-sma50'); b.classList.toggle('active'); if (series.sma50) series.sma50.applyOptions({ visible: b.classList.contains('active') }); }
+    function toggleSMA200() { const b = document.getElementById('btn-sma200'); b.classList.toggle('active'); if (series.sma200) series.sma200.applyOptions({ visible: b.classList.contains('active') }); }
+    function toggleVixPanel() { const b = document.getElementById('btn-vix'); b.classList.toggle('active'); document.getElementById('vix-container').style.display = b.classList.contains('active') ? 'block' : 'none'; }
+    function toggleRsiPanel() { const b = document.getElementById('btn-rsi'); b.classList.toggle('active'); document.getElementById('rsi-container').style.display = b.classList.contains('active') ? 'block' : 'none'; }
+    function toggleBuys() { document.getElementById('btn-buys').classList.toggle('active'); showBuys = document.getElementById('btn-buys').classList.contains('active'); updateTradeMarkers(); }
+    function toggleSells() { document.getElementById('btn-sells').classList.toggle('active'); showSells = document.getElementById('btn-sells').classList.contains('active'); updateTradeMarkers(); }
+    function toggleSidebar() {
+      const sb = document.querySelector('.sidebar'); const btn = document.getElementById('sidebar-toggle-btn');
+      sb.classList.toggle('collapsed');
+      btn.textContent = sb.classList.contains('collapsed') ? '▶' : '◀';
+      btn.style.left = sb.classList.contains('collapsed') ? '0' : '320px';
+      setTimeout(resizeAllCharts, 350);
+    }
+    function toggleTradePanel() {
+      const tp = document.querySelector('.trade-panel'); const btn = document.getElementById('trade-panel-toggle-btn');
+      tp.classList.toggle('collapsed');
+      btn.textContent = tp.classList.contains('collapsed') ? '◀' : '▶';
+      btn.style.right = tp.classList.contains('collapsed') ? '0' : '280px';
+      setTimeout(resizeAllCharts, 350);
+    }
+    function resizeAllCharts() {
+      Object.values(charts).forEach(chart => {
+        const el = chart.chartElement();
+        if (el && el.parentElement) chart.applyOptions({ width: el.parentElement.clientWidth });
+      });
+    }
+    window.addEventListener('resize', resizeAllCharts);
+
+    // =========================================================================
+    // BOOT
+    // =========================================================================
+    init();
+  </script>
+  </div>
+</body>
+</html>
