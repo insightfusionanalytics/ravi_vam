@@ -646,9 +646,11 @@
         return ['DEF_BOTH', 'HOLD'];
       }
       if (current === 'CASH') {
+        // qqqSMADef may be NaN for step1 (SPY-only strategy) — skip QQQ check when missing
+        const qqqOk = isNaN(qqqSMADef) || qqq > qqqSMADef;
         if (!isNaN(spySMAKill) && spy > spySMAKill && vix < vt
             && !isNaN(spySMADef) && spy > spySMADef
-            && !isNaN(qqqSMADef) && qqq > qqqSMADef)
+            && qqqOk)
           return [currentStrategyId === 'step1_upro_4state' ? 'BULL_100' : 'BULL_FULL', 'RE-ENTRY'];
         return ['CASH', 'HOLD'];
       }
@@ -662,8 +664,8 @@
       const n = raw.length, allocs = getAllocations(params);
       const dailyLog = [], trades = [];
       let cash = params.capital, uproShares = 0, tqqqShares = 0;
-      let state = 'CASH', pendingTrade = null;
       const initState = currentStrategyId === 'step1_upro_4state' ? 'BULL_100' : 'BULL_FULL';
+      let state = initState, pendingTrade = null;
 
       for (let i = 0; i < n; i++) {
         const d = raw[i];
