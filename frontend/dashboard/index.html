@@ -341,6 +341,7 @@
     let strategyConfig = null;
     let currentStrategyId = null;
     let isApiMode = false;
+    let browserFallbackToApi = false; // true when browser-mode strategy has no CSV and fell back to API
     const INITIAL_API_BACKTEST_TIMEOUT_MS = 8000;
 
     // API base URL — empty string for same-origin (local dev), full URL for split deployment
@@ -525,7 +526,21 @@
 
     function onParamChange(key, value, unit) {
       document.getElementById(`val-${key}`).textContent = formatParamValue(key, +value, unit);
-      if (!isApiMode) scheduleRecalc();
+      if (!isApiMode) {
+        if (browserFallbackToApi) {
+          // No raw CSV data — debounce an API backtest call instead
+          scheduleApiFallbackRecalc();
+        } else {
+          scheduleRecalc();
+        }
+      }
+    }
+
+    // Debounced API backtest for browser-mode strategies that lack CSV data
+    let apiFallbackTimer = null;
+    function scheduleApiFallbackRecalc() {
+      clearTimeout(apiFallbackTimer);
+      apiFallbackTimer = setTimeout(() => runBacktestViaAPI(readParams()), 500);
     }
 
     // =========================================================================
@@ -947,8 +962,9 @@
         try {
           const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}/precomputed`);
           if (resp.status === 404) {
-            // No precomputed file exists — fall back to API backtest once
+            // No precomputed file exists — fall back to API backtest
             console.warn('Precomputed CSV not found (404), falling back to API backtest...');
+            browserFallbackToApi = true;
             hideLoading();
             await runBacktestViaAPI(readParams());
             return;
@@ -966,6 +982,7 @@
       }
       // All retries exhausted — try API backtest as last resort
       console.warn('All CSV fetch retries failed, falling back to API backtest...');
+      browserFallbackToApi = true;
       hideLoading();
       await runBacktestViaAPI(readParams());
     }
