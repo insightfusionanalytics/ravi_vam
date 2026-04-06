@@ -3,6 +3,8 @@ Strategy config loader — discovers all strategy JSON files in strategies/.
 No hardcoded strategy list: add a new .json file to register a new strategy.
 """
 
+from __future__ import annotations
+
 import json
 import os
 from pathlib import Path
