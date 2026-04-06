@@ -976,6 +976,8 @@
           if (!Object.keys(charts).length) createAllCharts();
           updateAllVisuals(params);
           setApiStatus('Live result loaded.');
+          if (showOverlay) hideLoading();
+          if (btn) { btn.disabled = false; btn.textContent = '▶ Run Backtest'; }
           return; // success — exit retry loop
         } catch (err) {
           if (timeoutId) clearTimeout(timeoutId);
