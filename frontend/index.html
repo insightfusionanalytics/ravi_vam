@@ -254,6 +254,110 @@
   <script>
     // API base URL — empty string for same-origin (local dev), full URL for split deployment
     const API_BASE = window.location.hostname === 'localhost' ? '' : (window.__RAVI_API_BASE || 'https://ravi-vam-api.onrender.com');
+    const API_FETCH_TIMEOUT_MS = 7000;
+
+    // Static fallback so first paint is instant even when Render is cold.
+    const FALLBACK_STRATEGIES = {
+      step1_upro_4state: {
+        id: 'step1_upro_4state',
+        name: 'Step 1 — UPRO Only (4-State)',
+        description: '4-state machine using only UPRO (3x S&P 500). States: BULL_100, BULL_TRIMMED, DEFENSIVE, CASH. Signal source: SPY SMA-50/200, RSI-14, VIX.',
+        instruments: ['UPRO'],
+        states: ['BULL_100', 'BULL_TRIMMED', 'DEFENSIVE', 'CASH'],
+        data_period: '2020-2025 (DataBento)',
+        benchmark_results: {
+          cagr_pct: 21.44,
+          sharpe: 0.676,
+          calmar: 0.559,
+          max_drawdown_pct: -38.34,
+          total_return_pct: 174.82,
+          total_trades: 67
+        },
+        param_count: 9,
+        params: {}
+      },
+      step2_upro_tqqq_6state: {
+        id: 'step2_upro_tqqq_6state',
+        name: 'Step 2 — UPRO + TQQQ (6-State)',
+        description: '6-state machine with two independent sleeves for UPRO and TQQQ. Defensive states are triggered independently per index, plus kill switch.',
+        instruments: ['UPRO', 'TQQQ'],
+        states: ['BULL_FULL', 'BULL_TRIMMED', 'DEF_SPY', 'DEF_QQQ', 'DEF_BOTH', 'CASH'],
+        data_period: '2020-2025 (DataBento)',
+        benchmark_results: {
+          cagr_pct: 21.77,
+          sharpe: 0.663,
+          calmar: 0.555,
+          max_drawdown_pct: -39.24,
+          total_return_pct: 178.74,
+          total_trades: 180
+        },
+        param_count: 12,
+        params: {}
+      },
+      v3_7state_optimized: {
+        id: 'v3_7state_optimized',
+        name: 'v3 — 7-State Leveraged Rotation',
+        description: '7-state adaptive regime rotation with SMA golden/death cross signals. UPRO in bull regime, SHY in bear. Leveraged and higher-volatility.',
+        instruments: ['UPRO', 'SHY'],
+        states: ['BULL_FULL', 'BULL_CAUTION', 'MOMENTUM', 'NEUTRAL', 'RECOVERY', 'BEAR_HEDGE', 'CRASH'],
+        data_period: '2020-2025 (DataBento)',
+        api_mode: true,
+        benchmark_results: {
+          cagr_pct: -1.08,
+          sharpe: 0.215,
+          calmar: -0.015,
+          max_drawdown_pct: -74.23,
+          total_return_pct: -6.32,
+          total_trades: 176
+        },
+        param_count: 8,
+        params: {}
+      },
+      v5_leveraged: {
+        id: 'v5_leveraged',
+        name: 'v5 — Adaptive Regime (Leveraged)',
+        description: '5-state adaptive regime rotation with ATR volatility guard and drawdown circuit breaker. Leveraged ETFs in aggressive regime.',
+        instruments: ['UPRO', 'TQQQ', 'SHY', 'GLD'],
+        states: ['AGGRESSIVE', 'DEFENSIVE', 'CRASH_PROTECT'],
+        data_period: '2020-2025 (DataBento)',
+        api_mode: true,
+        benchmark_results: {
+          cagr_pct: -6.54,
+          sharpe: -0.099,
+          calmar: -0.143,
+          max_drawdown_pct: -45.81,
+          total_return_pct: -33.33,
+          total_trades: 27
+        },
+        param_count: 8,
+        params: {}
+      },
+      v5b_nonleveraged: {
+        id: 'v5b_nonleveraged',
+        name: 'v5b — Adaptive Regime (Non-Leveraged)',
+        description: 'Same adaptive regime engine as v5 but with SPY/QQQ in aggressive mode to reduce leverage drag and improve risk-adjusted profile.',
+        instruments: ['SPY', 'QQQ', 'SHY', 'GLD'],
+        states: ['AGGRESSIVE', 'DEFENSIVE', 'CRASH_PROTECT'],
+        data_period: '2020-2025 (DataBento)',
+        api_mode: true,
+        benchmark_results: {
+          cagr_pct: 9.28,
+          sharpe: 0.74,
+          calmar: 0.367,
+          max_drawdown_pct: -25.27,
+          total_return_pct: 70.21,
+          total_trades: 27
+        },
+        param_count: 8,
+        params: {}
+      }
+    };
+
+    function withTimeout(url, options = {}, timeoutMs = API_FETCH_TIMEOUT_MS) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timeoutId));
+    }
 
     function getBadge(strategy) {
       if (strategy.api_mode) {
@@ -280,6 +384,7 @@
       const instruments = s.instruments.join(' + ');
       const stateCount = s.states.length;
       const badge = getBadge(s);
+      const paramCount = Number.isFinite(s.param_count) ? s.param_count : Object.keys(s.params || {}).length;
 
       return `
         <div class="strategy-card" onclick="selectStrategy('${s.id}')">
@@ -318,7 +423,7 @@
             <span class="meta-pill">${stateCount} states</span>
             <span class="meta-pill">${instruments}</span>
             <span class="meta-pill">${s.data_period || '2020-2025'}</span>
-            <span class="meta-pill">${Object.keys(s.params).length} params</span>
+            <span class="meta-pill">${paramCount} params</span>
           </div>
           <div class="card-arrow">→</div>
         </div>
@@ -329,26 +434,28 @@
       window.location.href = `/dashboard/?strategy=${id}`;
     }
 
+    function renderStrategies(strategies) {
+      const list = Object.values(strategies || {});
+      document.getElementById('strategy-count').textContent = `${list.length} strategies`;
+
+      if (list.length === 0) {
+        document.getElementById('strategy-grid').innerHTML =
+          '<div class="loading">No strategies found. Add JSON files to strategies/</div>';
+        return;
+      }
+
+      document.getElementById('strategy-grid').innerHTML = list.map(renderCard).join('');
+    }
+
     async function loadStrategies() {
       try {
-        const resp = await fetch(API_BASE + '/api/strategies');
+        const resp = await withTimeout(API_BASE + '/api/strategies');
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const strategies = await resp.json();
-        const list = Object.values(strategies);
-
-        document.getElementById('strategy-count').textContent = `${list.length} strategies`;
-
-        if (list.length === 0) {
-          document.getElementById('strategy-grid').innerHTML =
-            '<div class="loading">No strategies found. Add JSON files to strategies/</div>';
-          return;
-        }
-
-        document.getElementById('strategy-grid').innerHTML = list.map(renderCard).join('');
+        renderStrategies(strategies);
       } catch (err) {
-        document.getElementById('strategy-grid').innerHTML =
-          `<div class="error-msg">Failed to load strategies: ${err.message}<br><br>Make sure the FastAPI server is running: <code>uvicorn app.main:app --reload</code></div>`;
-        document.getElementById('strategy-count').textContent = 'Error';
+        // Keep static fallback rendered; backend may still be waking up.
+        console.warn('Using fallback strategy list:', err.message);
       }
     }
 
@@ -367,6 +474,9 @@
       } catch (e) { /* silent */ }
     }
 
+    // Render immediately from local fallback to avoid blocking first paint.
+    renderStrategies(FALLBACK_STRATEGIES);
+    // Try to hydrate with live API data in the background.
     loadStrategies();
     fetchDataSource();
   </script>

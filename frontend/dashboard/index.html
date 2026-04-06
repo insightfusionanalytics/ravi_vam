@@ -341,6 +341,7 @@
     let strategyConfig = null;
     let currentStrategyId = null;
     let isApiMode = false;
+    const INITIAL_API_BACKTEST_TIMEOUT_MS = 8000;
 
     // API base URL — empty string for same-origin (local dev), full URL for split deployment
     const API_BASE = window.location.hostname === 'localhost' ? '' : (window.__RAVI_API_BASE || 'https://ravi-vam-api.onrender.com');
@@ -376,8 +377,8 @@
       createAllCharts();
 
       if (isApiMode) {
-        // API mode: run Python backtest with default params
-        await runBacktestViaAPI(getDefaultParams(strategyConfig));
+        // API mode: start a background warm-up call without blocking UI.
+        runInitialApiBacktest();
       } else {
         // Browser mode: load pre-computed CSV then run JS engine
         await loadData();
@@ -403,6 +404,20 @@
       }
     }
 
+    function setApiStatus(message) {
+      const el = document.getElementById('api-init-status');
+      if (el) el.textContent = message || '';
+    }
+
+    function runInitialApiBacktest() {
+      setApiStatus('Connecting to backend...');
+      runBacktestViaAPI(getDefaultParams(strategyConfig), {
+        showOverlay: false,
+        timeoutMs: INITIAL_API_BACKTEST_TIMEOUT_MS,
+        initialLoad: true
+      });
+    }
+
     // =========================================================================
     // SIDEBAR BUILDER — dynamic from strategy config.params
     // =========================================================================
@@ -419,6 +434,7 @@
         html += `<div class="api-mode-notice">
           API Mode — parameters are sent to the Python engine.<br>
           Adjust sliders then click <strong>Run Backtest</strong>.
+          <div id="api-init-status" style="margin-top:6px; font-size:10px; color:var(--text-muted);">Preparing first result...</div>
         </div>`;
       }
 
@@ -896,15 +912,23 @@
     // =========================================================================
     // API MODE — run Python backtest
     // =========================================================================
-    async function runBacktestViaAPI(params) {
-      showLoading('Running Python backtest...');
+    async function runBacktestViaAPI(params, opts = {}) {
+      const showOverlay = opts.showOverlay !== false;
+      const timeoutMs = Number.isFinite(opts.timeoutMs) ? opts.timeoutMs : 0;
+      const initialLoad = opts.initialLoad === true;
+      if (showOverlay) showLoading('Running Python backtest...');
       const btn = document.getElementById('run-btn');
       if (btn) { btn.disabled = true; btn.textContent = '⏳ Running...'; }
+
+      let timeoutId = null;
+      const controller = timeoutMs > 0 ? new AbortController() : null;
+      if (controller) timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
         const resp = await fetch(API_BASE + '/api/backtest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          ...(controller ? { signal: controller.signal } : {}),
           body: JSON.stringify({
             strategy_id: currentStrategyId,
             params,
@@ -930,10 +954,22 @@
 
         if (!Object.keys(charts).length) createAllCharts();
         updateAllVisuals(params);
+        setApiStatus('Live result loaded.');
       } catch (err) {
+        if (err && err.name === 'AbortError') {
+          if (initialLoad) {
+            // Render stays interactive; user can trigger once backend wakes up.
+            setApiStatus('Backend is waking up. Click Run Backtest in a few seconds.');
+            return;
+          }
+          showError('Request timed out while backend is waking up. Please try again.');
+          return;
+        }
+        setApiStatus('');
         showError(`Backtest failed: ${err.message}`);
       } finally {
-        hideLoading();
+        if (timeoutId) clearTimeout(timeoutId);
+        if (showOverlay) hideLoading();
         if (btn) { btn.disabled = false; btn.textContent = '▶ Run Backtest'; }
       }
     }
