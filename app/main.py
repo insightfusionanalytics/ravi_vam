@@ -23,12 +23,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "*",  # Allow all for now — tighten to specific domains in production
-        "https://ravisrp.vercel.app",
-        "http://localhost:8000",
-        "http://localhost:3000",
-    ],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

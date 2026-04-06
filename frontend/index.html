@@ -360,13 +360,7 @@
     }
 
     function getBadge(strategy) {
-      if (strategy.api_mode) {
-        return '<span class="card-badge badge-api">API Mode</span>';
-      }
-      if (strategy.benchmark_results.cagr_pct > 0) {
-        return '<span class="card-badge badge-live">Live Recalc</span>';
-      }
-      return '<span class="card-badge badge-research">Research</span>';
+      return '<span class="card-badge badge-api">API Mode</span>';
     }
 
     function getStatClass(value) {
