@@ -348,6 +348,16 @@
 
     // Strategies that have a JS browser engine (others use API)
     const BROWSER_ENGINE_STRATEGIES = new Set(['step1_upro_4state', 'step2_upro_tqqq_6state']);
+    const CONFIG_FETCH_TIMEOUT_MS = 7000;
+
+    // Static fallback strategy configs so dashboard renders instantly during Render cold starts.
+    const FALLBACK_CONFIGS = {
+      step1_upro_4state: {"id":"step1_upro_4state","name":"Step 1 — UPRO Only (4-State)","version":"1","description":"4-state machine using only UPRO (3x S&P 500). States: BULL_100, BULL_TRIMMED, DEFENSIVE, CASH.","engine":"step1","instruments":["UPRO"],"signal_source":"SPY + VIX","states":["BULL_100","BULL_TRIMMED","DEFENSIVE","CASH"],"allocations":{"BULL_100":"99% UPRO","BULL_TRIMMED":"75% UPRO","DEFENSIVE":"50% UPRO","CASH":"0% (all cash)"},"data_period":"2020-2025 (DataBento)","benchmark_results":{"cagr_pct":21.44,"sharpe":0.676,"sortino":0.88,"calmar":0.559,"max_drawdown_pct":-38.34,"total_return_pct":174.82,"final_value":274820.99,"total_trades":67,"years":5.2},"params":{"vixThreshold":{"label":"VIX Kill Switch","group":"Kill Switch (Priority 1)","type":"range","default":30,"min":20,"max":45,"step":1,"unit":""},"smaKill":{"label":"SMA Period (Kill)","group":"Kill Switch (Priority 1)","type":"range","default":200,"min":100,"max":300,"step":10,"unit":""},"smaDef":{"label":"SMA Period (Defense)","group":"Defensive Trim (Priority 2)","type":"range","default":50,"min":20,"max":100,"step":5,"unit":""},"confirmDays":{"label":"Confirm Days","group":"Defensive Trim (Priority 2)","type":"range","default":2,"min":0,"max":5,"step":1,"unit":" days"},"rsiPeriod":{"label":"RSI Period","group":"RSI Trim (Priority 3)","type":"range","default":14,"min":7,"max":28,"step":1,"unit":""},"rsiOB":{"label":"RSI Overbought (Trim)","group":"RSI Trim (Priority 3)","type":"range","default":75,"min":65,"max":85,"step":1,"unit":""},"rsiRe":{"label":"RSI Rebuy Level","group":"RSI Trim (Priority 3)","type":"range","default":60,"min":40,"max":70,"step":1,"unit":""},"uproSplit":{"label":"UPRO Allocation","group":"Portfolio Allocation","type":"range","default":100,"min":50,"max":100,"step":5,"unit":"%"},"capital":{"label":"Initial Capital","group":"Portfolio Allocation","type":"range","default":100000,"min":10000,"max":1000000,"step":10000,"unit":"$"}}},
+      step2_upro_tqqq_6state: {"id":"step2_upro_tqqq_6state","name":"Step 2 — UPRO + TQQQ (6-State)","version":"2","description":"6-state machine with two independent sleeves for UPRO and TQQQ. Defensive states triggered independently per index, plus kill switch.","engine":"step2","instruments":["UPRO","TQQQ"],"signal_source":"SPY + QQQ + VIX","states":["BULL_FULL","BULL_TRIMMED","DEF_SPY","DEF_QQQ","DEF_BOTH","CASH"],"allocations":{"BULL_FULL":"74.25% UPRO + 24.75% TQQQ","BULL_TRIMMED":"56.25% UPRO + 18.75% TQQQ","DEF_SPY":"37.5% UPRO + 24.75% TQQQ","DEF_QQQ":"74.25% UPRO + 12.5% TQQQ","DEF_BOTH":"37.5% UPRO + 12.5% TQQQ","CASH":"0% (all cash)"},"data_period":"2020-2025 (DataBento)","benchmark_results":{"cagr_pct":21.77,"sharpe":0.663,"sortino":0.861,"calmar":0.555,"max_drawdown_pct":-39.24,"total_return_pct":178.74,"final_value":278743.93,"total_trades":180,"years":5.2},"params":{"vixThreshold":{"label":"VIX Kill Switch","group":"Kill Switch (Priority 1)","type":"range","default":30,"min":20,"max":45,"step":1,"unit":""},"smaKill":{"label":"SMA Period (Kill)","group":"Kill Switch (Priority 1)","type":"range","default":200,"min":100,"max":300,"step":10,"unit":""},"cooldown":{"label":"Cooldown Days","group":"Kill Switch (Priority 1)","type":"range","default":5,"min":1,"max":15,"step":1,"unit":" days"},"smaDef":{"label":"SMA Period (Defense)","group":"Defensive Trim (Priority 2)","type":"range","default":50,"min":20,"max":100,"step":5,"unit":""},"confirmDays":{"label":"Confirm Days","group":"Defensive Trim (Priority 2)","type":"range","default":2,"min":0,"max":5,"step":1,"unit":" days"},"defSell":{"label":"Defensive Sell %","group":"Defensive Trim (Priority 2)","type":"range","default":50,"min":25,"max":75,"step":5,"unit":"%"},"rsiPeriod":{"label":"RSI Period","group":"RSI Trim (Priority 3)","type":"range","default":14,"min":7,"max":28,"step":1,"unit":""},"rsiOB":{"label":"RSI Overbought (Trim)","group":"RSI Trim (Priority 3)","type":"range","default":75,"min":65,"max":85,"step":1,"unit":""},"rsiRe":{"label":"RSI Rebuy Level","group":"RSI Trim (Priority 3)","type":"range","default":60,"min":40,"max":70,"step":1,"unit":""},"rsiTrim":{"label":"RSI Trim %","group":"RSI Trim (Priority 3)","type":"range","default":25,"min":10,"max":50,"step":5,"unit":"%"},"uproSplit":{"label":"UPRO Split","group":"Portfolio Allocation","type":"range","default":75,"min":50,"max":90,"step":5,"unit":"%"},"capital":{"label":"Initial Capital","group":"Portfolio Allocation","type":"range","default":100000,"min":10000,"max":1000000,"step":10000,"unit":"$"}}},
+      v3_7state_optimized: {"id":"v3_7state_optimized","name":"v3 — 7-State Leveraged Rotation","version":"3","description":"7-state adaptive regime rotation with SMA golden/death cross signals.","engine":"v3","instruments":["UPRO","SHY"],"signal_source":"SPY SMA + RSI + ATR","states":["BULL_FULL","BULL_CAUTION","MOMENTUM","NEUTRAL","RECOVERY","BEAR_HEDGE","CRASH"],"allocations":{"AGGRESSIVE (BULL_FULL/MOMENTUM)":"100% UPRO","MODERATE (BULL_CAUTION/RECOVERY)":"50% UPRO + 50% SHY","DEFENSIVE (BEAR_HEDGE)":"100% SHY","CRASH":"100% Cash"},"data_period":"2020-2025 (DataBento)","api_mode":true,"benchmark_results":{"cagr_pct":-1.08,"sharpe":0.215,"sortino":0.194,"calmar":-0.015,"max_drawdown_pct":-74.23,"total_return_pct":-6.32,"final_value":93680.0,"total_trades":176,"years":5.2},"params":{"sma_short":{"label":"SMA Short Period","group":"Trend Signals","type":"range","default":50,"min":20,"max":100,"step":5,"unit":""},"sma_long":{"label":"SMA Long Period","group":"Trend Signals","type":"range","default":200,"min":100,"max":300,"step":10,"unit":""},"rsi_aggressive_min":{"label":"RSI Min (Aggressive)","group":"RSI Conditions","type":"range","default":50,"min":40,"max":65,"step":1,"unit":""},"rsi_oversold":{"label":"RSI Oversold","group":"RSI Conditions","type":"range","default":30,"min":20,"max":40,"step":1,"unit":""},"atr_threshold_pct":{"label":"ATR% Volatility Guard","group":"Volatility Guard","type":"range","default":20,"min":10,"max":40,"step":2,"unit":"×0.1%"},"dd_trigger_pct":{"label":"Drawdown Circuit Breaker","group":"Risk Management","type":"range","default":15,"min":5,"max":30,"step":1,"unit":"%"},"crash_protect_cooldown":{"label":"Crash Protect Cooldown","group":"Risk Management","type":"range","default":20,"min":5,"max":40,"step":1,"unit":" days"},"capital":{"label":"Initial Capital","group":"Portfolio Allocation","type":"range","default":100000,"min":10000,"max":1000000,"step":10000,"unit":"$"}}},
+      v5_leveraged: {"id":"v5_leveraged","name":"v5 — Adaptive Regime (Leveraged)","version":"5","description":"5-state adaptive regime rotation with ATR volatility guard and drawdown circuit breaker. Leveraged ETFs.","engine":"v5","instruments":["UPRO","TQQQ","SHY","GLD"],"signal_source":"SPY SMA + RSI + ATR","states":["AGGRESSIVE","DEFENSIVE","CRASH_PROTECT"],"allocations":{"AGGRESSIVE":"60% UPRO + 40% TQQQ","DEFENSIVE":"60% SHY + 40% GLD","CRASH_PROTECT":"100% SHY"},"data_period":"2020-2025 (DataBento)","api_mode":true,"benchmark_results":{"cagr_pct":-6.54,"sharpe":-0.099,"sortino":-0.096,"calmar":-0.143,"max_drawdown_pct":-45.81,"total_return_pct":-33.33,"final_value":66670.0,"total_trades":27,"years":5.2},"params":{"sma_short":{"label":"SMA Short Period","group":"Trend Signals","type":"range","default":50,"min":20,"max":100,"step":5,"unit":""},"sma_long":{"label":"SMA Long Period","group":"Trend Signals","type":"range","default":200,"min":100,"max":300,"step":10,"unit":""},"rsi_aggressive_min":{"label":"RSI Min (Aggressive Entry)","group":"RSI Conditions","type":"range","default":50,"min":40,"max":65,"step":1,"unit":""},"atr_threshold_pct":{"label":"ATR% Volatility Guard","group":"Volatility Guard","type":"range","default":20,"min":10,"max":40,"step":2,"unit":"×0.1%"},"dd_trigger_pct":{"label":"Drawdown Circuit Breaker","group":"Risk Management","type":"range","default":15,"min":5,"max":30,"step":1,"unit":"%"},"dd_lookback_days":{"label":"Drawdown Lookback","group":"Risk Management","type":"range","default":60,"min":20,"max":120,"step":10,"unit":" days"},"crash_protect_cooldown":{"label":"Crash Protect Cooldown","group":"Risk Management","type":"range","default":20,"min":5,"max":40,"step":1,"unit":" days"},"capital":{"label":"Initial Capital","group":"Portfolio Allocation","type":"range","default":100000,"min":10000,"max":1000000,"step":10000,"unit":"$"}}},
+      v5b_nonleveraged: {"id":"v5b_nonleveraged","name":"v5b — Adaptive Regime (Non-Leveraged)","version":"5b","description":"Same adaptive regime engine as v5 but with SPY/QQQ. Better risk-adjusted returns.","engine":"v5b","instruments":["SPY","QQQ","SHY","GLD"],"signal_source":"SPY SMA + RSI + ATR","states":["AGGRESSIVE","DEFENSIVE","CRASH_PROTECT"],"allocations":{"AGGRESSIVE":"60% SPY + 40% QQQ","DEFENSIVE":"60% SHY + 40% GLD","CRASH_PROTECT":"60% SHY + 40% GLD"},"data_period":"2020-2025 (DataBento)","api_mode":true,"benchmark_results":{"cagr_pct":9.28,"sharpe":0.74,"sortino":1.02,"calmar":0.367,"max_drawdown_pct":-25.27,"total_return_pct":70.21,"final_value":170210.0,"total_trades":27,"years":5.2},"params":{"sma_short":{"label":"SMA Short Period","group":"Trend Signals","type":"range","default":50,"min":20,"max":100,"step":5,"unit":""},"sma_long":{"label":"SMA Long Period","group":"Trend Signals","type":"range","default":200,"min":100,"max":300,"step":10,"unit":""},"rsi_aggressive_min":{"label":"RSI Min (Aggressive Entry)","group":"RSI Conditions","type":"range","default":50,"min":40,"max":65,"step":1,"unit":""},"atr_threshold_pct":{"label":"ATR% Volatility Guard","group":"Volatility Guard","type":"range","default":20,"min":10,"max":40,"step":2,"unit":"×0.1%"},"dd_trigger_pct":{"label":"Drawdown Circuit Breaker","group":"Risk Management","type":"range","default":15,"min":5,"max":30,"step":1,"unit":"%"},"dd_lookback_days":{"label":"Drawdown Lookback","group":"Risk Management","type":"range","default":60,"min":20,"max":120,"step":10,"unit":" days"},"crash_protect_cooldown":{"label":"Crash Protect Cooldown","group":"Risk Management","type":"range","default":20,"min":5,"max":40,"step":1,"unit":" days"},"capital":{"label":"Initial Capital","group":"Portfolio Allocation","type":"range","default":100000,"min":10000,"max":1000000,"step":10000,"unit":"$"}}}
+    };
 
     // =========================================================================
     // INIT — reads ?strategy= URL param and bootstraps everything
@@ -357,13 +367,26 @@
       currentStrategyId = urlParams.get('strategy') || 'step2_upro_tqqq_6state';
       isApiMode = !BROWSER_ENGINE_STRATEGIES.has(currentStrategyId);
 
+      // Use embedded fallback config for instant render; hydrate from API in background.
+      const fallback = FALLBACK_CONFIGS[currentStrategyId];
+      let usedFallback = false;
+
       try {
-        const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}`);
-        if (!resp.ok) throw new Error(`Strategy not found: ${currentStrategyId}`);
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), CONFIG_FETCH_TIMEOUT_MS);
+        const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}`, { signal: controller.signal });
+        clearTimeout(tid);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         strategyConfig = await resp.json();
       } catch (err) {
-        document.querySelector('.main-container').innerHTML = `<div class="error">Failed to load strategy config: ${err.message}</div>`;
-        return;
+        if (fallback) {
+          strategyConfig = fallback;
+          usedFallback = true;
+          console.warn('Using fallback strategy config:', err.message);
+        } else {
+          document.querySelector('.main-container').innerHTML = `<div class="error">Failed to load strategy config: ${err.message}</div>`;
+          return;
+        }
       }
 
       document.getElementById('strategy-name-header').textContent = strategyConfig.name;
@@ -382,6 +405,11 @@
       } else {
         // Browser mode: load pre-computed CSV then run JS engine
         await loadData();
+      }
+
+      // If we used fallback, try to hydrate from API in background for freshest config.
+      if (usedFallback) {
+        refreshConfigFromAPI();
       }
 
       wireSliders();
@@ -416,6 +444,18 @@
         timeoutMs: INITIAL_API_BACKTEST_TIMEOUT_MS,
         initialLoad: true
       });
+    }
+
+    // Background refresh: once the API wakes up, update config silently.
+    async function refreshConfigFromAPI() {
+      try {
+        const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}`);
+        if (!resp.ok) return;
+        const fresh = await resp.json();
+        strategyConfig = fresh;
+        // Rebuild sidebar if params changed (unlikely but safe).
+        buildSidebar(strategyConfig);
+      } catch (e) { /* silent — fallback is good enough */ }
     }
 
     // =========================================================================
@@ -896,7 +936,10 @@
     // =========================================================================
     async function loadData() {
       try {
-        const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}/precomputed`);
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), CONFIG_FETCH_TIMEOUT_MS);
+        const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}/precomputed`, { signal: controller.signal });
+        clearTimeout(tid);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const csvRows = parseCSV(await resp.text());
         rawData = extractRawPrices(csvRows);
