@@ -340,7 +340,7 @@
     let csvIndicators = null;
     let strategyConfig = null;
     let currentStrategyId = null;
-    const INITIAL_API_BACKTEST_TIMEOUT_MS = 8000;
+    const INITIAL_API_BACKTEST_TIMEOUT_MS = 15000;
 
     // API base URL — empty string for same-origin (local dev), full URL for split deployment
     const API_BASE = window.location.hostname === 'localhost' ? '' : (window.__RAVI_API_BASE || 'https://ravi-vam-api.onrender.com');
@@ -908,62 +908,81 @@
       const showOverlay = opts.showOverlay !== false;
       const timeoutMs = Number.isFinite(opts.timeoutMs) ? opts.timeoutMs : 0;
       const initialLoad = opts.initialLoad === true;
+      const maxRetries = opts.maxRetries ?? (initialLoad ? 3 : 2);
       if (showOverlay) showLoading('Running Python backtest...');
       const btn = document.getElementById('run-btn');
       if (btn) { btn.disabled = true; btn.textContent = '⏳ Running...'; }
 
-      let timeoutId = null;
-      const controller = timeoutMs > 0 ? new AbortController() : null;
-      if (controller) timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        let timeoutId = null;
+        const controller = timeoutMs > 0 ? new AbortController() : null;
+        if (controller) timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      try {
-        const resp = await fetch(API_BASE + '/api/backtest', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          ...(controller ? { signal: controller.signal } : {}),
-          body: JSON.stringify({
-            strategy_id: currentStrategyId,
-            params,
-            initial_capital: params.capital || 100000
-          })
-        });
-
-        if (!resp.ok) {
-          const err = await resp.json();
-          throw new Error(err.detail || `HTTP ${resp.status}`);
-        }
-
-        const result = await resp.json();
-        portfolioData = result.daily_log;
-        tradeLogData = result.trades;
-        metricsData = result.metrics;
-
-        // Update data source badge from backtest response
-        if (result.data_source) {
-          const labels = { databento: 'DataBento', yahoo_fallback: 'Yahoo Finance (fallback)', unknown: 'Not yet determined' };
-          updateDataSourceBadge(result.data_source, labels[result.data_source] || result.data_source, result.data_source === 'yahoo_fallback');
-        }
-
-        if (!Object.keys(charts).length) createAllCharts();
-        updateAllVisuals(params);
-        setApiStatus('Live result loaded.');
-      } catch (err) {
-        if (err && err.name === 'AbortError') {
-          if (initialLoad) {
-            // Render stays interactive; user can trigger once backend wakes up.
-            setApiStatus('Backend is waking up. Click Run Backtest in a few seconds.');
-            return;
+        try {
+          if (attempt > 0) {
+            const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+            setApiStatus(`Retrying (${attempt}/${maxRetries})...`);
+            if (showOverlay) showLoading(`Backend warming up... retry ${attempt}/${maxRetries}`);
+            await new Promise(r => setTimeout(r, delay));
           }
-          showError('Request timed out while backend is waking up. Please try again.');
-          return;
+
+          const resp = await fetch(API_BASE + '/api/backtest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            ...(controller ? { signal: controller.signal } : {}),
+            body: JSON.stringify({
+              strategy_id: currentStrategyId,
+              params,
+              initial_capital: params.capital || 100000
+            })
+          });
+
+          if (!resp.ok) {
+            const errBody = await resp.json().catch(() => ({}));
+            throw new Error(errBody.detail || `HTTP ${resp.status}`);
+          }
+
+          const result = await resp.json();
+          portfolioData = result.daily_log;
+          tradeLogData = result.trades;
+          metricsData = result.metrics;
+
+          if (result.data_source) {
+            const labels = { databento: 'DataBento', yahoo_fallback: 'Yahoo Finance (fallback)', unknown: 'Not yet determined' };
+            updateDataSourceBadge(result.data_source, labels[result.data_source] || result.data_source, result.data_source === 'yahoo_fallback');
+          }
+
+          if (!Object.keys(charts).length) createAllCharts();
+          updateAllVisuals(params);
+          setApiStatus('Live result loaded.');
+          return; // success — exit retry loop
+        } catch (err) {
+          if (timeoutId) clearTimeout(timeoutId);
+
+          if (err && err.name === 'AbortError') {
+            if (initialLoad && attempt < maxRetries) continue; // retry on timeout during initial load
+            if (initialLoad) {
+              setApiStatus('Backend is waking up. Click Run Backtest in a few seconds.');
+              break;
+            }
+            showError('Request timed out. Backend may be waking up — try again shortly.');
+            break;
+          }
+
+          const isNetworkError = err.message === 'Failed to fetch' || err.message.includes('NetworkError');
+          if (isNetworkError && attempt < maxRetries) continue; // retry network errors
+
+          // Final failure
+          setApiStatus('');
+          showError(`Backtest failed: ${err.message}`);
+          break;
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId);
         }
-        setApiStatus('');
-        showError(`Backtest failed: ${err.message}`);
-      } finally {
-        if (timeoutId) clearTimeout(timeoutId);
-        if (showOverlay) hideLoading();
-        if (btn) { btn.disabled = false; btn.textContent = '▶ Run Backtest'; }
       }
+
+      if (showOverlay) hideLoading();
+      if (btn) { btn.disabled = false; btn.textContent = '▶ Run Backtest'; }
     }
 
     function showLoading(msg) {
@@ -1268,15 +1287,24 @@
     }
 
     // =========================================================================
-    // WIRE SLIDERS
+    // WIRE SLIDERS — auto-run backtest on change (debounced)
     // =========================================================================
+    let _sliderDebounceTimer = null;
     function wireSliders() {
       document.querySelectorAll('#sidebar-params input[type="range"]').forEach(slider => {
+        // Update label in real-time as user drags
         slider.addEventListener('input', function() {
           const key = this.closest('[data-param-key]')?.dataset?.paramKey;
           if (!key) return;
           const p = strategyConfig?.params?.[key];
           if (p) document.getElementById(`val-${key}`).textContent = formatParamValue(key, +this.value, p.unit);
+        });
+        // Auto-run backtest when user releases slider (debounced 600ms)
+        slider.addEventListener('change', function() {
+          clearTimeout(_sliderDebounceTimer);
+          _sliderDebounceTimer = setTimeout(() => {
+            runBacktestViaAPI(readParams());
+          }, 600);
         });
       });
     }
