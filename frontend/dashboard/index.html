@@ -935,21 +935,39 @@
     // DATA LOADING
     // =========================================================================
     async function loadData() {
-      try {
-        const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), CONFIG_FETCH_TIMEOUT_MS);
-        const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}/precomputed`, { signal: controller.signal });
-        clearTimeout(tid);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const csvRows = parseCSV(await resp.text());
-        rawData = extractRawPrices(csvRows);
-        csvIndicators = extractCSVIndicators(csvRows);
-        executeRecalc();
-      } catch (error) {
-        // Precomputed CSV not available (e.g. on cloud deployment) — fall back to API backtest
-        console.warn('Precomputed CSV unavailable (' + error.message + '), falling back to API backtest...');
-        await runBacktestViaAPI(readParams());
+      // Browser-mode strategies need the CSV to do local recalc.
+      // Retry with back-off so Render cold-start doesn't leave us with no data.
+      const MAX_RETRIES = 4;
+      const RETRY_DELAYS = [0, 5000, 10000, 15000]; // instant, 5s, 10s, 15s
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        if (attempt > 0) {
+          showLoading(`Backend is waking up... retry ${attempt}/${MAX_RETRIES - 1}`);
+          await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
+        }
+        try {
+          const resp = await fetch(API_BASE + `/api/strategies/${currentStrategyId}/precomputed`);
+          if (resp.status === 404) {
+            // No precomputed file exists — fall back to API backtest once
+            console.warn('Precomputed CSV not found (404), falling back to API backtest...');
+            hideLoading();
+            await runBacktestViaAPI(readParams());
+            return;
+          }
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const csvRows = parseCSV(await resp.text());
+          rawData = extractRawPrices(csvRows);
+          csvIndicators = extractCSVIndicators(csvRows);
+          executeRecalc();
+          hideLoading();
+          return; // success
+        } catch (error) {
+          console.warn(`CSV fetch attempt ${attempt + 1} failed:`, error.message);
+        }
       }
+      // All retries exhausted — try API backtest as last resort
+      console.warn('All CSV fetch retries failed, falling back to API backtest...');
+      hideLoading();
+      await runBacktestViaAPI(readParams());
     }
 
     // =========================================================================
