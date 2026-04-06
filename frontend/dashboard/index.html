@@ -395,8 +395,9 @@
       buildStateMachineView(strategyConfig.states);
       createAllCharts();
 
-      // All strategies use API backtest — start a background warm-up call.
-      runInitialApiBacktest();
+      // Load precomputed default results instantly (same-origin Vercel, no Render dependency).
+      // Then warm up the Render backend silently in the background for slider changes.
+      await loadPrecomputedResults();
 
       // If we used fallback, try to hydrate from API in background for freshest config.
       if (usedFallback) {
@@ -428,13 +429,33 @@
       if (el) el.textContent = message || '';
     }
 
-    function runInitialApiBacktest() {
-      setApiStatus('Connecting to backend...');
-      runBacktestViaAPI(getDefaultParams(strategyConfig), {
-        showOverlay: false,
-        timeoutMs: INITIAL_API_BACKTEST_TIMEOUT_MS,
-        initialLoad: true
-      });
+    async function loadPrecomputedResults() {
+      try {
+        setApiStatus('Loading cached results...');
+        const resp = await fetch(`/dashboard/precomputed/${currentStrategyId}.json`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const result = await resp.json();
+        portfolioData = result.daily_log;
+        tradeLogData = result.trades;
+        metricsData = result.metrics;
+        if (result.data_source) {
+          const labels = { databento: 'DataBento', yahoo_fallback: 'Yahoo Finance (fallback)', unknown: 'Not yet determined' };
+          updateDataSourceBadge(result.data_source, labels[result.data_source] || result.data_source, result.data_source === 'yahoo_fallback');
+        }
+        updateAllVisuals(getDefaultParams(strategyConfig));
+        setApiStatus('Loaded (default params). Adjust sliders to re-run.');
+      } catch (e) {
+        console.warn('Precomputed results not available, falling back to API:', e.message);
+        // Fall back to API backtest (slow Render cold start)
+        setApiStatus('Connecting to backend...');
+        runBacktestViaAPI(getDefaultParams(strategyConfig), {
+          showOverlay: false,
+          timeoutMs: INITIAL_API_BACKTEST_TIMEOUT_MS,
+          initialLoad: true
+        });
+      }
+      // Warm up the Render backend silently so slider changes are fast
+      fetch(API_BASE + '/api/data-source').catch(() => {});
     }
 
     // Background refresh: once the API wakes up, update config silently.
@@ -1299,11 +1320,12 @@
           const p = strategyConfig?.params?.[key];
           if (p) document.getElementById(`val-${key}`).textContent = formatParamValue(key, +this.value, p.unit);
         });
-        // Auto-run backtest when user releases slider (debounced 600ms)
+        // Auto-run backtest when user releases slider (debounced 600ms, no blocking overlay)
         slider.addEventListener('change', function() {
           clearTimeout(_sliderDebounceTimer);
           _sliderDebounceTimer = setTimeout(() => {
-            runBacktestViaAPI(readParams());
+            setApiStatus('Updating...');
+            runBacktestViaAPI(readParams(), { showOverlay: false });
           }, 600);
         });
       });
