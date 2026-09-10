@@ -1,0 +1,22 @@
+[Unit]
+Description=Ravi VAM Strategy Platform (FastAPI/uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=ravivam
+Group=ravivam
+WorkingDirectory=/opt/ravi_vam
+Environment=PATH=/opt/ravi_vam/.venv/bin
+# Uncomment and point at real DataBento CSVs if/when available — otherwise
+# the app auto-downloads data from Yahoo Finance into ./data on first run.
+# Environment=RAVI_DATA_DIR=/opt/ravi_vam/data
+ExecStart=/opt/ravi_vam/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+Restart=on-failure
+RestartSec=5
+
+# Only reachable from nginx on this box, never directly from the internet.
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
