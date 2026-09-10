@@ -95,8 +95,8 @@ sudo systemctl status ravi-vam
 Confirm it's up **before** touching nginx — the app should already be answering on localhost:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8010/
-curl -s http://127.0.0.1:8010/api/strategies | head -c 200
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8005/
+curl -s http://127.0.0.1:8005/api/strategies | head -c 200
 ```
 
 ### 3.4 nginx — bootstrap FIRST, Certbot SECOND
@@ -109,7 +109,13 @@ nginx: [emerg] cannot load certificate ".../fullchain.pem": No such file or dire
 
 ...and every other site nginx serves on this box goes down with it, not just this one — `nginx -t` tests the entire config, and one broken `sites-enabled` file fails the whole reload. So:
 
-**Step 1** — the app is already running on `127.0.0.1:8010` from §3.3. Nginx will proxy to it directly; there's no static bundle to `rsync` first (the app serves its own frontend).
+**Step 1** — the app is already running on `127.0.0.1:8005` from §3.3. Nginx will proxy to it directly; there's no static bundle to `rsync` first (the app serves its own frontend).
+
+**Before Step 2** — check nothing already claims this `server_name`:
+```bash
+grep -rl "server_name backtestravi.insightfusionanalytics.com" /etc/nginx/sites-available/
+```
+If that returns a file already, **stop** — don't create a second `sites-available`/`sites-enabled` entry for the same domain under a different filename. Two files with the same `server_name` don't merge; nginx silently picks one for each `listen` directive and ignores the other (`conflicting server name ... ignored` in `nginx -t`/reload output), which is exactly how this domain ended up half-working from one file and half from another. If a config already exists, skip straight to editing/using that file instead of bootstrapping a new one.
 
 **Step 2** — install the HTTP-only bootstrap config, `deploy/nginx-backtestravi-bootstrap.conf`. It has no `listen ... ssl` and no `ssl_certificate` line, so there is nothing in it that can fail to load:
 
@@ -142,24 +148,24 @@ If you ever need to update `server_name` or add a `www` alias, edit `/etc/nginx/
 
 ### 3.5 What the nginx config actually routes — `/api`, `/docs`, and everything else
 
-Unlike a setup with a separately built static frontend and a separate backend API, this app is **one FastAPI process** that serves the JSON API, its own interactive docs, *and* the static frontend all from the same place. So there's no path-rewriting to get wrong here (nothing like stripping an `/api/v2` prefix) — every location block in `deploy/nginx-backtestravi.conf` proxies to the same upstream, unchanged:
+Unlike a setup with a separately built static frontend and a separate backend API, this app is **one FastAPI process** that serves the JSON API, its own interactive docs, *and* the static frontend all from the same place. So there's no path-rewriting to get wrong here (nothing like stripping an `/api/v2` prefix), and no need to split routes into separate `location` blocks either — a single catch-all is correct and sufficient, because FastAPI itself routes `/api/*`, `/docs`, `/redoc`, and `/openapi.json` internally; nginx just needs to forward everything through unchanged:
 
 ```nginx
-location /api/ {
-    proxy_pass http://127.0.0.1:8010;
-    proxy_read_timeout 120s;   # a full backtest or optimizer run can exceed nginx's default 60s
-    ...
-}
-location = /docs       { proxy_pass http://127.0.0.1:8010; ... }
-location = /redoc      { proxy_pass http://127.0.0.1:8010; ... }
-location = /openapi.json { proxy_pass http://127.0.0.1:8010; ... }
 location / {
-    proxy_pass http://127.0.0.1:8010;   # strategy selector + /dashboard/* static files
-    ...
+    proxy_pass         http://127.0.0.1:8005;
+    proxy_http_version 1.1;
+    proxy_set_header   Host              $host;
+    proxy_set_header   X-Real-IP         $remote_addr;
+    proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header   X-Forwarded-Proto $scheme;
+    proxy_set_header   Upgrade           $http_upgrade;
+    proxy_set_header   Connection        "upgrade";
+    proxy_read_timeout 300s;   # a full backtest or optimizer run can exceed nginx's default 60s
+    proxy_connect_timeout 30s;
 }
 ```
 
-They're still split into separate blocks (instead of one bare `location /`) so `/api/` can carry its own timeout and each class of request is identifiable in the access log — not because routing differs between them.
+`/api/strategies`, `/docs`, `/dashboard/*`, and `/` all flow through this same block — that's expected, not a gap. See `deploy/nginx-backtestravi.conf` for the full file, including the `:80` redirect server block and the ACME renewal webroot path Certbot needs.
 
 ### 3.6 If Certbot / Let's Encrypt isn't an option (GoDaddy manual SSL)
 
@@ -238,7 +244,7 @@ sudo systemctl restart ravi-vam
 sudo journalctl -u ravi-vam -f    # tail logs / see startup errors
 ```
 
-It's bound to `127.0.0.1:8010` only (see `deploy/ravi-vam.service`) — never reachable directly from the internet, only through nginx.
+It's bound to `127.0.0.1:8005` only (see `deploy/ravi-vam.service`) — never reachable directly from the internet, only through nginx.
 
 ## 6) Troubleshooting
 
@@ -246,18 +252,31 @@ It's bound to `127.0.0.1:8010` only (see `deploy/ravi-vam.service`) — never re
 The SSL server block is enabled before Certbot has issued the certificate. Fix: install `deploy/nginx-backtestravi-bootstrap.conf` (no SSL directives), confirm `nginx -t` passes and reload, then run `certbot --nginx` — see §3.4.
 
 **502 Bad Gateway**
-The app isn't running or isn't listening on `127.0.0.1:8010`. Check:
+The app isn't running or isn't listening on `127.0.0.1:8005`. Check:
 ```bash
 sudo systemctl status ravi-vam
 sudo journalctl -u ravi-vam -n 50
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8010/
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8005/
 ```
 
 **Logs show `DataBento data not found or invalid ... falling back to Yahoo Finance`**
 Expected on a fresh install — not an error. The app auto-downloads data via `yfinance` into `./data` on first run. Set `RAVI_DATA_DIR` to point at real DataBento CSVs if/when available (see §2).
 
-**A backtest or optimizer run times out through nginx but works when curled directly against `127.0.0.1:8010`**
-Confirm `proxy_read_timeout 120s;` is present in the `location /api/` block — see §3.5.
+**A backtest or optimizer run times out through nginx but works when curled directly against `127.0.0.1:8005`**
+Confirm `proxy_read_timeout 300s;` is present in the `location /` block — see §3.5.
+
+**`conflicting server name "backtestravi.insightfusionanalytics.com" ... ignored` in `nginx -t`/reload output**
+Two files in `/etc/nginx/sites-available/` (both symlinked into `sites-enabled/`) declare the same `server_name`. nginx picks one per `listen` directive and silently ignores the other — which can mean port 80 and port 443 end up served by *different* files with different (possibly stale) backend ports. Find both:
+```bash
+sudo nginx -T 2>/dev/null | grep -n "server_name backtestravi"
+ls -la /etc/nginx/sites-enabled/ | grep -i backtestravi
+```
+Pick the correct/complete one (check for a valid `ssl_certificate` and the right `proxy_pass` port), then disable the other by removing its symlink from `sites-enabled/` only — leave the file in `sites-available/` untouched in case you need it back:
+```bash
+sudo rm /etc/nginx/sites-enabled/<the-duplicate-one>
+sudo nginx -t
+sudo systemctl reload nginx
+```
 
 **`nginx disable` doesn't work**
 Not a real nginx command. Manage sites via the symlink in `/etc/nginx/sites-enabled/` — remove the symlink to disable, then `sudo nginx -t && sudo systemctl reload nginx`.
@@ -271,7 +290,7 @@ sudo systemctl status nginx
 sudo nginx -t
 
 # what's listening
-sudo ss -tulpn | grep -E ':80|:443|:8010'
+sudo ss -tulpn | grep -E ':80|:443|:8005'
 
 # logs
 sudo journalctl -u ravi-vam -f
