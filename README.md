@@ -95,8 +95,8 @@ sudo systemctl status ravi-vam
 Confirm it's up **before** touching nginx — the app should already be answering on localhost:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/
-curl -s http://127.0.0.1:8000/api/strategies | head -c 200
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8010/
+curl -s http://127.0.0.1:8010/api/strategies | head -c 200
 ```
 
 ### 3.4 nginx — bootstrap FIRST, Certbot SECOND
@@ -109,7 +109,7 @@ nginx: [emerg] cannot load certificate ".../fullchain.pem": No such file or dire
 
 ...and every other site nginx serves on this box goes down with it, not just this one — `nginx -t` tests the entire config, and one broken `sites-enabled` file fails the whole reload. So:
 
-**Step 1** — the app is already running on `127.0.0.1:8000` from §3.3. Nginx will proxy to it directly; there's no static bundle to `rsync` first (the app serves its own frontend).
+**Step 1** — the app is already running on `127.0.0.1:8010` from §3.3. Nginx will proxy to it directly; there's no static bundle to `rsync` first (the app serves its own frontend).
 
 **Step 2** — install the HTTP-only bootstrap config, `deploy/nginx-backtestravi-bootstrap.conf`. It has no `listen ... ssl` and no `ssl_certificate` line, so there is nothing in it that can fail to load:
 
@@ -146,15 +146,15 @@ Unlike a setup with a separately built static frontend and a separate backend AP
 
 ```nginx
 location /api/ {
-    proxy_pass http://127.0.0.1:8000;
+    proxy_pass http://127.0.0.1:8010;
     proxy_read_timeout 120s;   # a full backtest or optimizer run can exceed nginx's default 60s
     ...
 }
-location = /docs       { proxy_pass http://127.0.0.1:8000; ... }
-location = /redoc      { proxy_pass http://127.0.0.1:8000; ... }
-location = /openapi.json { proxy_pass http://127.0.0.1:8000; ... }
+location = /docs       { proxy_pass http://127.0.0.1:8010; ... }
+location = /redoc      { proxy_pass http://127.0.0.1:8010; ... }
+location = /openapi.json { proxy_pass http://127.0.0.1:8010; ... }
 location / {
-    proxy_pass http://127.0.0.1:8000;   # strategy selector + /dashboard/* static files
+    proxy_pass http://127.0.0.1:8010;   # strategy selector + /dashboard/* static files
     ...
 }
 ```
@@ -238,7 +238,7 @@ sudo systemctl restart ravi-vam
 sudo journalctl -u ravi-vam -f    # tail logs / see startup errors
 ```
 
-It's bound to `127.0.0.1:8000` only (see `deploy/ravi-vam.service`) — never reachable directly from the internet, only through nginx.
+It's bound to `127.0.0.1:8010` only (see `deploy/ravi-vam.service`) — never reachable directly from the internet, only through nginx.
 
 ## 6) Troubleshooting
 
@@ -246,17 +246,17 @@ It's bound to `127.0.0.1:8000` only (see `deploy/ravi-vam.service`) — never re
 The SSL server block is enabled before Certbot has issued the certificate. Fix: install `deploy/nginx-backtestravi-bootstrap.conf` (no SSL directives), confirm `nginx -t` passes and reload, then run `certbot --nginx` — see §3.4.
 
 **502 Bad Gateway**
-The app isn't running or isn't listening on `127.0.0.1:8000`. Check:
+The app isn't running or isn't listening on `127.0.0.1:8010`. Check:
 ```bash
 sudo systemctl status ravi-vam
 sudo journalctl -u ravi-vam -n 50
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8010/
 ```
 
 **Logs show `DataBento data not found or invalid ... falling back to Yahoo Finance`**
 Expected on a fresh install — not an error. The app auto-downloads data via `yfinance` into `./data` on first run. Set `RAVI_DATA_DIR` to point at real DataBento CSVs if/when available (see §2).
 
-**A backtest or optimizer run times out through nginx but works when curled directly against `127.0.0.1:8000`**
+**A backtest or optimizer run times out through nginx but works when curled directly against `127.0.0.1:8010`**
 Confirm `proxy_read_timeout 120s;` is present in the `location /api/` block — see §3.5.
 
 **`nginx disable` doesn't work**
@@ -271,7 +271,7 @@ sudo systemctl status nginx
 sudo nginx -t
 
 # what's listening
-sudo ss -tulpn | grep -E ':80|:443|:8000'
+sudo ss -tulpn | grep -E ':80|:443|:8010'
 
 # logs
 sudo journalctl -u ravi-vam -f
