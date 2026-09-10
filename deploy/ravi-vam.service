@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=ravivam
-Group=ravivam
+User=chirag
+Group=chirag
 WorkingDirectory=/opt/ravi_vam
 Environment=PATH=/opt/ravi_vam/.venv/bin
 # Uncomment and point at real DataBento CSVs if/when available — otherwise

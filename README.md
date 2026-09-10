@@ -70,16 +70,17 @@ Wait for propagation before running Certbot — it validates over HTTP and fails
 
 ### 3.3 App setup — clone, venv, systemd service
 
-```bash
-sudo useradd --system --no-create-home --shell /usr/sbin/nologin ravivam
-sudo mkdir -p /opt/ravi_vam
-sudo chown -R ravivam:ravivam /opt/ravi_vam
+The app runs as `chirag` (has sudo on this box) rather than a dedicated no-login system user — simpler, and fine for a single-operator deploy:
 
-sudo -u ravivam git clone <repo-url> /opt/ravi_vam
+```bash
+sudo mkdir -p /opt/ravi_vam
+sudo chown -R chirag:chirag /opt/ravi_vam
+
+git clone <repo-url> /opt/ravi_vam
 cd /opt/ravi_vam
-sudo -u ravivam python3 -m venv .venv
-sudo -u ravivam .venv/bin/pip install --upgrade pip
-sudo -u ravivam .venv/bin/pip install -r requirements.txt
+python3 -m venv .venv
+.venv/bin/pip install --upgrade pip
+.venv/bin/pip install -r requirements.txt
 ```
 
 Install the systemd unit — `deploy/ravi-vam.service` is checked into this repo, copy it as-is:
