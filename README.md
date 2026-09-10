@@ -73,11 +73,11 @@ Wait for propagation before running Certbot — it validates over HTTP and fails
 The app runs as `chirag` (has sudo on this box) rather than a dedicated no-login system user — simpler, and fine for a single-operator deploy:
 
 ```bash
-sudo mkdir -p /opt/ravi_vam
-sudo chown -R chirag:chirag /opt/ravi_vam
+sudo mkdir -p /home/chirag/ravi_vam
+sudo chown -R chirag:chirag /home/chirag/ravi_vam
 
-git clone <repo-url> /opt/ravi_vam
-cd /opt/ravi_vam
+git clone <repo-url> /home/chirag/ravi_vam
+cd /home/chirag/ravi_vam
 python3 -m venv .venv
 .venv/bin/pip install --upgrade pip
 .venv/bin/pip install -r requirements.txt

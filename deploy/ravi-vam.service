@@ -6,12 +6,12 @@ After=network.target
 Type=simple
 User=chirag
 Group=chirag
-WorkingDirectory=/opt/ravi_vam
-Environment=PATH=/opt/ravi_vam/.venv/bin
+WorkingDirectory=/home/chirag/ravi_vam
+Environment=PATH=/home/chirag/ravi_vam/.venv/bin
 # Uncomment and point at real DataBento CSVs if/when available — otherwise
 # the app auto-downloads data from Yahoo Finance into ./data on first run.
-# Environment=RAVI_DATA_DIR=/opt/ravi_vam/data
-ExecStart=/opt/ravi_vam/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+# Environment=RAVI_DATA_DIR=/home/chirag/ravi_vam/data
+ExecStart=/home/chirag/ravi_vam/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
 Restart=on-failure
 RestartSec=5
 
