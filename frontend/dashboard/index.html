@@ -254,6 +254,13 @@
   </div>
 
   <div class="main-container">
+    <div class="chart-container" id="annual-returns-container">
+      <div class="chart-label">Annual Returns — Strategy vs SPY Buy &amp; Hold (the simple view — start here)</div>
+      <div id="annual-returns-table" style="padding: 8px 4px;">
+        <div style="color:var(--text-muted);font-size:11px;padding:12px 0;text-align:center;">Run a backtest to see year-by-year results.</div>
+      </div>
+    </div>
+
     <div class="chart-container">
       <div class="chart-label">Equity Curve — Strategy vs Buy & Hold</div>
       <div id="chart-equity" class="chart-canvas tall"></div>
@@ -482,6 +489,19 @@
 
       let html = '';
 
+      if (config.never_requested_by_client) {
+        html += `<div class="api-mode-notice" style="border-color:#f59e0b; color:#f59e0b; background:rgba(245,158,11,0.1);">
+          <strong>INTERNAL R&amp;D — NEVER REQUESTED BY THE CLIENT.</strong> This strategy family
+          does not appear in any of the six client meetings or the WhatsApp thread. Do not present
+          this as a deliverable Ravi asked for.
+        </div>`;
+      } else if (config.experimental || config.not_confirmed_by_client) {
+        html += `<div class="api-mode-notice" style="border-color:#f59e0b; color:#f59e0b; background:rgba(245,158,11,0.1);">
+          <strong>EXPERIMENTAL — NOT CONFIRMED BY THE CLIENT.</strong> Every threshold in this
+          strategy is an internal proposal. Do not present this as something Ravi asked for.
+        </div>`;
+      }
+
       html += `<div class="api-mode-notice">
         Adjust sliders then click <strong>Run Backtest</strong>.
         <div id="api-init-status" style="margin-top:6px; font-size:10px; color:var(--text-muted);">Preparing first result...</div>
@@ -517,6 +537,19 @@
             <label for="cd-both">Both</label>
           </div></div>`;
       }
+
+      html += `<div class="section"><div class="section-title">History Range</div>
+        <div class="segmented-control">
+          <input type="radio" name="historyRange" id="hr-recent" value="recent" checked>
+          <label for="hr-recent">Recent (~2020-2025)</label>
+          <input type="radio" name="historyRange" id="hr-full" value="full">
+          <label for="hr-full">Full History (2011-2025)</label>
+        </div>
+        <div style="margin-top:6px; font-size:10px; color:var(--text-muted);">
+          The short window shown by default is the flattering case. Full History
+          shows the same strategy over 2011-2025 — where its edge over just
+          buying the S&amp;P 500 is much smaller.
+        </div></div>`;
 
       html += `<button class="run-btn" id="run-btn" onclick="runBacktestViaAPI(readParams())">▶ Run Backtest</button>`;
 
@@ -574,6 +607,9 @@
       // confirmDir for step2
       const confirmDirInput = document.querySelector('input[name="confirmDir"]:checked');
       if (confirmDirInput) params.confirmDir = confirmDirInput.value;
+      // History range toggle (Step 1-4): Recent (~2020-2025) vs Full History (2011-2025)
+      const historyRangeInput = document.querySelector('input[name="historyRange"]:checked');
+      if (historyRangeInput) params.fullHistory = historyRangeInput.value === 'full';
       return params;
     }
 
@@ -1034,6 +1070,16 @@
       series.strategy = c.addLineSeries({ color: '#3b82f6', lineWidth: 3, title: 'Strategy' });
       series.buyHold = c.addLineSeries({ color: '#737373', lineWidth: 2, lineStyle: 2, title: 'SPY B&H' });
       charts.equity = c;
+      // Recompute the header metrics bar for whatever range is currently
+      // visible, so zooming/panning the equity curve isn't misleading —
+      // previously the header always showed full-range numbers no matter
+      // how far you zoomed in.
+      c.timeScale().subscribeVisibleTimeRangeChange(range => {
+        if (!range) { updateHeaderMetrics(); return; }
+        const fromStr = timeToDateStr(range.from);
+        const toStr = timeToDateStr(range.to);
+        if (fromStr && toStr) updateHeaderMetrics(fromStr, toStr);
+      });
 
       el = document.getElementById('chart-spy');
       c = LightweightCharts.createChart(el, { width: el.clientWidth, height: 500, ...CHART_OPTS(), crosshair: { mode: LightweightCharts.CrosshairMode.Normal } });
@@ -1109,12 +1155,148 @@
     }
 
     // =========================================================================
+    // ANNUAL RETURNS — simple table, strategy vs SPY, one year per row.
+    // This is deliberately the plainest view on the page: the client's most
+    // repeated request was for a simple year-by-year comparison, not a dense
+    // chart. Reads from the backend-computed metrics (metricsData), which
+    // reflect whatever History Range is currently selected.
+    // =========================================================================
+    function renderAnnualReturns() {
+      const el = document.getElementById('annual-returns-table');
+      if (!el) return;
+      const yr = metricsData && metricsData.yearly_returns;
+      const yrSpy = metricsData && metricsData.yearly_spy_returns;
+      if (!yr || !Object.keys(yr).length) {
+        el.innerHTML = '<div style="color:var(--text-muted);font-size:11px;padding:12px 0;text-align:center;">No year-by-year data for this strategy yet.</div>';
+        return;
+      }
+      const years = Object.keys(yr).sort();
+      const allVals = years.flatMap(y => [yr[y], (yrSpy && yrSpy[y]) || 0]);
+      const maxAbs = Math.max(1, ...allVals.map(v => Math.abs(v)));
+
+      const bar = (val, color) => {
+        const pct = Math.min(100, (Math.abs(val) / maxAbs) * 100);
+        return `<div style="display:flex; align-items:center; gap:6px;">
+          <div style="flex:1; background:#1a1a2e; border-radius:2px; height:14px; position:relative; overflow:hidden;">
+            <div style="width:${pct}%; height:100%; background:${color};"></div>
+          </div>
+          <div style="width:56px; text-align:right; font-size:11px; color:${color}; font-variant-numeric: tabular-nums;">${val >= 0 ? '+' : ''}${val.toFixed(1)}%</div>
+        </div>`;
+      };
+
+      let html = `<div style="display:grid; grid-template-columns: 60px 1fr 1fr; gap:10px 14px; align-items:center; font-size:11px;">
+        <div style="color:var(--text-muted); font-weight:600;">Year</div>
+        <div style="color:var(--text-muted); font-weight:600;">Strategy</div>
+        <div style="color:var(--text-muted); font-weight:600;">SPY Buy &amp; Hold</div>`;
+      for (const y of years) {
+        const sv = yr[y];
+        const bv = (yrSpy && yrSpy[y] !== undefined) ? yrSpy[y] : null;
+        html += `<div style="color:var(--text);">${y}</div>`;
+        html += `<div>${bar(sv, sv >= 0 ? 'var(--green)' : 'var(--red)')}</div>`;
+        html += bv !== null ? `<div>${bar(bv, bv >= 0 ? 'var(--green)' : 'var(--red)')}</div>` : `<div style="color:var(--text-muted);">—</div>`;
+      }
+      html += `</div>`;
+      el.innerHTML = html;
+    }
+
+    // =========================================================================
+    // HEADER METRICS BAR — recomputed for the visible chart range on zoom/pan
+    // =========================================================================
+    function timeToDateStr(t) {
+      if (t == null) return null;
+      if (typeof t === 'number') return new Date(t * 1000).toISOString().slice(0, 10);
+      if (typeof t === 'object' && t.year) {
+        return `${t.year}-${String(t.month).padStart(2, '0')}-${String(t.day).padStart(2, '0')}`;
+      }
+      return null;
+    }
+
+    function computeRangeMetrics(rows) {
+      const first = rows[0], last = rows[rows.length - 1];
+      const startVal = first.portfolio_value, endVal = last.portfolio_value;
+      const days = (new Date(last.date) - new Date(first.date)) / 86400000;
+      const years = days / 365.25;
+      const totalReturn = startVal > 0 ? (endVal / startVal - 1) * 100 : 0;
+      const cagr = years > 0.02 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : totalReturn;
+
+      const rets = [];
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i - 1].portfolio_value > 0) rets.push(rows[i].portfolio_value / rows[i - 1].portfolio_value - 1);
+      }
+      const mean = rets.reduce((a, b) => a + b, 0) / (rets.length || 1);
+      const variance = rets.reduce((a, b) => a + (b - mean) ** 2, 0) / (rets.length || 1);
+      const std = Math.sqrt(variance);
+      const sharpe = std > 0 ? (mean / std) * Math.sqrt(252) : 0;
+
+      let peak = -Infinity, maxDd = 0;
+      rows.forEach(r => {
+        if (r.portfolio_value > peak) peak = r.portfolio_value;
+        const dd = peak > 0 ? (r.portfolio_value - peak) / peak * 100 : 0;
+        if (dd < maxDd) maxDd = dd;
+      });
+
+      const tradesInRange = (tradeLogData || []).filter(
+        t => t.execution_date >= first.date && t.execution_date <= last.date
+      ).length;
+
+      let alpha = null;
+      if (first.spy_close && last.spy_close) {
+        const spyReturn = (last.spy_close / first.spy_close - 1) * 100;
+        const spyCagr = years > 0.02 ? (Math.pow(last.spy_close / first.spy_close, 1 / years) - 1) * 100 : spyReturn;
+        alpha = cagr - spyCagr;
+      }
+
+      return { final_value: endVal, cagr_pct: cagr, sharpe, max_drawdown_pct: maxDd, total_trades: tradesInRange, alpha_vs_spy_pct: alpha };
+    }
+
+    function updateHeaderMetrics(rangeFromDate, rangeToDate) {
+      let m = metricsData;
+      let isZoomed = false;
+      if (rangeFromDate && rangeToDate && portfolioData && portfolioData.length) {
+        const rows = portfolioData.filter(r => r.date >= rangeFromDate && r.date <= rangeToDate);
+        // Only treat it as a meaningful zoom if it's actually a sub-range
+        if (rows.length >= 2 && rows.length < portfolioData.length) {
+          m = computeRangeMetrics(rows);
+          isZoomed = true;
+        }
+      }
+      if (!m) return;
+
+      document.getElementById('metric-final').textContent = `$${(m.final_value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+      const cagrVal = m.cagr_pct || 0;
+      document.getElementById('metric-cagr').textContent = `${cagrVal >= 0 ? '+' : ''}${cagrVal.toFixed(1)}%`;
+      document.getElementById('metric-cagr').className = `metric-value ${cagrVal >= 0 ? 'positive' : 'negative'}`;
+      document.getElementById('metric-sharpe').textContent = (m.sharpe || 0).toFixed(3);
+      document.getElementById('metric-dd').textContent = `${(m.max_drawdown_pct || 0).toFixed(1)}%`;
+      document.getElementById('metric-trades').textContent = m.total_trades || 0;
+      const alphaEl = document.getElementById('metric-alpha');
+      if (m.alpha_vs_spy_pct === null || m.alpha_vs_spy_pct === undefined) {
+        alphaEl.textContent = '—';
+        alphaEl.className = 'metric-value neutral';
+      } else {
+        const alphaVal = m.alpha_vs_spy_pct;
+        alphaEl.textContent = `${alphaVal >= 0 ? '+' : ''}${alphaVal.toFixed(1)}%`;
+        alphaEl.className = `metric-value ${alphaVal >= 0 ? 'positive' : 'negative'}`;
+      }
+
+      let zoomNote = document.getElementById('metric-zoom-note');
+      if (!zoomNote) {
+        zoomNote = document.createElement('div');
+        zoomNote.id = 'metric-zoom-note';
+        zoomNote.style.cssText = 'font-size:10px; color:var(--accent); align-self:center; padding-left:4px;';
+        document.querySelector('.metrics-bar').appendChild(zoomNote);
+      }
+      zoomNote.textContent = isZoomed ? `ZOOMED: ${rangeFromDate} → ${rangeToDate}` : '';
+    }
+
+    // =========================================================================
     // UPDATE ALL VISUALS
     // =========================================================================
     function updateAllVisuals(params) {
       if (!portfolioData || !portfolioData.length) return;
       params = params || readParams();
       const capital = params.capital || 100000;
+      renderAnnualReturns();
 
       dataByDate = {};
       portfolioData.forEach(row => { dataByDate[row.date] = row; });
@@ -1188,18 +1370,10 @@
       series.drawdownLine.setData(ddData);
       charts.drawdown.timeScale().fitContent();
 
-      // Metrics bar
-      const m = metricsData;
-      document.getElementById('metric-final').textContent = `$${(m.final_value||0).toLocaleString('en-US',{maximumFractionDigits:0})}`;
-      const cagrVal = m.cagr_pct || 0;
-      document.getElementById('metric-cagr').textContent = `${cagrVal>=0?'+':''}${cagrVal.toFixed(1)}%`;
-      document.getElementById('metric-cagr').className = `metric-value ${cagrVal>=0?'positive':'negative'}`;
-      document.getElementById('metric-sharpe').textContent = (m.sharpe||0).toFixed(3);
-      document.getElementById('metric-dd').textContent = `${(m.max_drawdown_pct||0).toFixed(1)}%`;
-      document.getElementById('metric-trades').textContent = m.total_trades || 0;
-      const alphaVal = m.alpha_vs_spy_pct || 0;
-      document.getElementById('metric-alpha').textContent = `${alphaVal>=0?'+':''}${alphaVal.toFixed(1)}%`;
-      document.getElementById('metric-alpha').className = `metric-value ${alphaVal>=0?'positive':'negative'}`;
+      // Metrics bar — full range by default; subscribeVisibleTimeRangeChange
+      // (set up in createAllCharts) calls updateHeaderMetrics again with a
+      // sub-range whenever the equity chart is zoomed or panned.
+      updateHeaderMetrics();
 
       // Current state badge
       const lastState = portfolioData[portfolioData.length-1].state;

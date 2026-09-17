@@ -28,6 +28,12 @@ def _get_engine(strategy_id: str):
     elif strategy_id == "step2_upro_tqqq_6state":
         from app.engines.step2 import run
         return run
+    elif strategy_id == "step3_spxu_predatory_short":
+        from app.engines.step3 import run
+        return run
+    elif strategy_id == "step4_svix_safety_valve":
+        from app.engines.step4 import run
+        return run
     elif strategy_id in ("v3_7state_optimized", "v5_leveraged", "v5b_nonleveraged"):
         from app.engines import v5 as v5_module
         fns = {

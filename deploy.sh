@@ -9,7 +9,10 @@ git pull
 
 echo "==> installing dependencies"
 .venv/bin/pip install -q --upgrade pip
-.venv/bin/pip install -q -r requirements.txt
+.venv/bin/pip install -q -r requirements-dev.txt
+
+echo "==> running test suite (deploy aborts if this fails)"
+.venv/bin/pytest
 
 echo "==> restarting service"
 sudo systemctl restart ravi-vam

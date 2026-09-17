@@ -1,0 +1,103 @@
+{
+  "id": "step4_svix_safety_valve",
+  "name": "Step 4 — Safety Valve (SVIX) [EXPERIMENTAL]",
+  "version": "4",
+  "description": "EXPERIMENTAL -- NOT CONFIRMED BY THE CLIENT. Ravi mentioned \"two short strategies\" once but only ever discussed SPXU in specific detail; SVIX and every threshold here are IFA's own proposal, never reviewed by Ravi. Concept: while Step 2 is in CASH, ease into SVIX (a bet that volatility falls) once VIX is between 30-40 and curving down, escalate if VIX spikes to 50+, exit fully once VIX drops below 20. This must not be presented as something the client asked for -- it needs his explicit confirmation before it means anything.",
+  "engine": "step4",
+  "instruments": ["SVIX"],
+  "signal_source": "VIX only (during Step 2 CASH periods, after 2022-03-30 launch)",
+  "states": ["CASH_IDLE", "CASH_SVIX_INIT", "CASH_SVIX_PANIC", "INACTIVE"],
+  "allocations": {
+    "CASH_IDLE": "0% SVIX",
+    "CASH_SVIX_INIT": "10% of tactical cash in SVIX",
+    "CASH_SVIX_PANIC": "up to 30% of tactical cash in SVIX",
+    "INACTIVE": "Step 2 not in CASH, or before SVIX existed (2022-03-30)"
+  },
+  "experimental": true,
+  "not_confirmed_by_client": true,
+  "data_period": "2022-03-30 to 2026 (live data; SVIX did not exist earlier)",
+  "api_mode": true,
+  "benchmark_results": {
+    "cagr_pct": 1.23,
+    "sharpe": 0.776,
+    "sortino": 0.249,
+    "calmar": 0.454,
+    "max_drawdown_pct": -2.7,
+    "total_return_pct": 9.81,
+    "final_value": 109807.85,
+    "total_trades": 6,
+    "years": 7.68
+  },
+  "params": {
+    "entryVixLow": {
+      "label": "Entry VIX Range (Low)",
+      "group": "Entry (IFA proposal -- unconfirmed)",
+      "type": "range",
+      "default": 30,
+      "min": 20,
+      "max": 40,
+      "step": 1,
+      "unit": ""
+    },
+    "entryVixHigh": {
+      "label": "Entry VIX Range (High)",
+      "group": "Entry (IFA proposal -- unconfirmed)",
+      "type": "range",
+      "default": 40,
+      "min": 30,
+      "max": 55,
+      "step": 1,
+      "unit": ""
+    },
+    "panicVix": {
+      "label": "Panic Escalation VIX",
+      "group": "Entry (IFA proposal -- unconfirmed)",
+      "type": "range",
+      "default": 50,
+      "min": 40,
+      "max": 65,
+      "step": 1,
+      "unit": ""
+    },
+    "exitVix": {
+      "label": "Exit VIX Threshold",
+      "group": "Exit (IFA proposal -- unconfirmed)",
+      "type": "range",
+      "default": 20,
+      "min": 12,
+      "max": 30,
+      "step": 1,
+      "unit": ""
+    },
+    "initialAlloc": {
+      "label": "Initial Allocation",
+      "group": "Position Sizing (IFA proposal -- unconfirmed)",
+      "type": "range",
+      "default": 10,
+      "min": 5,
+      "max": 25,
+      "step": 5,
+      "unit": "%"
+    },
+    "panicAlloc": {
+      "label": "Panic Allocation (Total)",
+      "group": "Position Sizing (IFA proposal -- unconfirmed)",
+      "type": "range",
+      "default": 30,
+      "min": 15,
+      "max": 50,
+      "step": 5,
+      "unit": "%"
+    },
+    "capital": {
+      "label": "Initial Capital",
+      "group": "Portfolio Allocation",
+      "type": "range",
+      "default": 100000,
+      "min": 10000,
+      "max": 1000000,
+      "step": 10000,
+      "unit": "$"
+    }
+  }
+}

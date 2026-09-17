@@ -23,6 +23,32 @@ from app.config import DATA_DIR
 if DATA_DIR is not None:
     _mod.DATA_DIR = DATA_DIR
 
+# 2011-2025 merged history (Polygon 2011-2019 + DataBento 2020-2025, splits
+# already adjusted, verified continuous across every UPRO/TQQQ split date).
+# Only covers up to 2025-12-30 -- older but far more honest than the default
+# 2019-2026 window, which is the only window ever shown to the client.
+FULL_HISTORY_START = "2011-01-01"
+
+
+def _load_full_history_data(data_dir: Path) -> pd.DataFrame:
+    merged_dir = data_dir / "merged"
+
+    def _load(name: str) -> pd.DataFrame:
+        df = pd.read_csv(merged_dir / f"{name}_daily_full.csv", parse_dates=["datetime"])
+        df = df.set_index("datetime").sort_index()
+        return df[~df.index.duplicated(keep="first")]
+
+    spy = _load("SPY")
+    upro = _load("UPRO")
+    vix = _load("VIX")
+
+    df = pd.DataFrame(index=spy.index)
+    df["SPY_Close"] = spy["close"]
+    df["UPRO_Close"] = upro["close"].reindex(spy.index)
+    df["UPRO_Open"] = upro["open"].reindex(spy.index)
+    df["VIX"] = vix["close"].reindex(spy.index)
+    return df.ffill().dropna()
+
 
 def _next_state(
     current,
@@ -30,8 +56,17 @@ def _next_state(
     below_streak, above_streak,
     *,
     vix_kill, sma_confirm_days, rsi_sell, rsi_rebuy,
+    trim_immune: bool = False,
 ):
-    """Parameterized version of the Step 1 state machine — no module globals."""
+    """Parameterized version of the Step 1 state machine — no module globals.
+
+    trim_immune: when True, the SMA-50 defensive trim (below_streak based) is
+    suppressed. This is the 60-day re-entry rule confirmed with the client on
+    WhatsApp (2026-05-24): a fresh CASH->BULL_100 re-entry, or the trim having
+    already fired recently, grants 60 days of immunity from this specific
+    trigger so it can't immediately chop a fresh position back down. The VIX
+    / 200-SMA kill switch is never affected by this — it always fires.
+    """
     State = _mod.State
 
     if current != State.CASH:
@@ -39,14 +74,14 @@ def _next_state(
             return State.CASH, f"KILL: VIX={vix:.1f}, SPY vs 200SMA"
 
     if current == State.BULL_100:
-        if below_streak >= sma_confirm_days:
+        if below_streak >= sma_confirm_days and not trim_immune:
             return State.DEFENSIVE, f"DEFENSIVE: {sma_confirm_days}d below 50-SMA"
         if spy_rsi > rsi_sell:
             return State.BULL_TRIMMED, f"RSI TRIM: RSI={spy_rsi:.1f}>{rsi_sell}"
         return State.BULL_100, "HOLD"
 
     if current == State.BULL_TRIMMED:
-        if below_streak >= sma_confirm_days:
+        if below_streak >= sma_confirm_days and not trim_immune:
             return State.DEFENSIVE, "DEFENSIVE from TRIMMED"
         if spy_rsi < rsi_rebuy:
             return State.BULL_100, f"RSI RECOVERY: RSI={spy_rsi:.1f}<{rsi_rebuy}"
@@ -81,16 +116,35 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
     commission = float(params.get("commission", 1.0))
     slip_normal = float(params.get("slippage_bps_normal", 5.0))
     slip_stress = float(params.get("slippage_bps_stress", 20.0))
+    # 60-day re-entry rule (confirmed with client on WhatsApp, 2026-05-24):
+    # the SMA-50 defensive trim is suppressed for this many days after either
+    # (a) a fresh CASH->BULL_100 re-entry, or (b) the trim last fired.
+    reentry_immunity_days = int(params.get("reentryImmunityDays", params.get("reentry_immunity_days", 60)))
+    # fullHistory: use the 2011-2025 merged dataset instead of the default
+    # 2019-2026 window. This is the only place in the app where the honest,
+    # long-horizon result (where the strategy's edge over SPY nearly
+    # disappears) is available to look at, rather than buried in an audit log.
+    full_history = bool(params.get("fullHistory", params.get("full_history", False)))
+    start_date = params.get("startDate", params.get("start_date"))
+    end_date = params.get("endDate", params.get("end_date"))
 
     State = _mod.State
     STATE_ALLOCATION = _mod.STATE_ALLOCATION
 
-    df = _mod.load_step1_data()
-    df = _mod.add_step1_indicators(df)
+    if full_history:
+        df = _load_full_history_data(data_dir)
+        df = _mod.add_step1_indicators(df)
+    else:
+        df = _mod.load_step1_data()
+        df = _mod.add_step1_indicators(df)
 
     trading_df = df.dropna(subset=["SPY_SMA200", "SPY_RSI", "UPRO_Open"])
+    if start_date:
+        trading_df = trading_df[trading_df.index >= pd.Timestamp(start_date)]
+    if end_date:
+        trading_df = trading_df[trading_df.index <= pd.Timestamp(end_date)]
     if trading_df.empty:
-        raise ValueError("No valid trading data after indicator warmup")
+        raise ValueError("No valid trading data after indicator warmup / date filtering")
 
     cash = initial_capital
     shares = 0.0
@@ -98,6 +152,9 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
     pending_trade = None
     trades: list[dict] = []
     daily_log: list[dict] = []
+    # None = event never happened yet, so immunity does not apply
+    days_since_trim: int | None = None
+    days_since_reentry: int | None = None
 
     for date, row in trading_df.iterrows():
         upro_price = row["UPRO_Close"]
@@ -126,6 +183,12 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
             shares = target_shares
             cash = pv_before - (target_shares * upro_open) - comm - slip
             state = new_state
+
+            # Reset the 60-day immunity clocks on the events that start them
+            if new_state == State.DEFENSIVE:
+                days_since_trim = 0
+            if new_state == State.BULL_100 and old_state_val == State.CASH.value:
+                days_since_reentry = 0
 
             pv_after_close = cash + shares * upro_price
             trades.append({
@@ -161,11 +224,21 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
         below_streak = int(row["SPY_below_50_streak"])
         above_streak = int(row["SPY_above_50_streak"])
 
+        if days_since_trim is not None:
+            days_since_trim += 1
+        if days_since_reentry is not None:
+            days_since_reentry += 1
+        trim_immune = (
+            (days_since_trim is not None and days_since_trim < reentry_immunity_days)
+            or (days_since_reentry is not None and days_since_reentry < reentry_immunity_days)
+        )
+
         new_state, reason = _next_state(
             old_state, spy_close, spy_sma50, spy_sma200, spy_rsi, vix,
             below_streak, above_streak,
             vix_kill=vix_kill, sma_confirm_days=sma_confirm_days,
             rsi_sell=rsi_sell, rsi_rebuy=rsi_rebuy,
+            trim_immune=trim_immune,
         )
 
         if new_state != old_state:
@@ -207,9 +280,15 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
             "tqqq_allocation_pct": 0.0,
             "cash_allocation_pct": round(100 - upro_alloc_pct, 1),
             "cumulative_return_pct": round((portfolio_value / initial_capital - 1) * 100, 2),
+            # 60-day re-entry rule audit trail
+            "trim_immunity_active": "YES" if trim_immune else "NO",
+            "days_since_last_trim": days_since_trim if days_since_trim is not None else "N/A",
+            "days_since_last_reentry": days_since_reentry if days_since_reentry is not None else "N/A",
         })
 
     metrics = _compute_metrics(daily_log, trades, initial_capital)
+    metrics["reentry_immunity_days"] = reentry_immunity_days
+    metrics["full_history_mode"] = full_history
     return {"trades": trades, "daily_log": daily_log, "metrics": metrics}
 
 
@@ -236,6 +315,18 @@ def _compute_metrics(daily_log, trades, initial_capital):
     spy_end = daily["spy_close"].iloc[-1]
     spy_cagr = ((spy_end / spy_start) ** (1 / years) - 1) * 100 if years > 0 else 0
 
+    # Year-by-year: strategy vs SPY buy & hold. Uses first/last portfolio
+    # value and SPY close within each calendar year, so partial first/last
+    # years are labeled honestly rather than presented as a full year.
+    daily["year"] = daily.index.year
+    yearly_returns = {}
+    yearly_spy_returns = {}
+    for yr, grp in daily.groupby("year"):
+        strat_first, strat_last = grp["portfolio_value"].iloc[0], grp["portfolio_value"].iloc[-1]
+        spy_first, spy_last = grp["spy_close"].iloc[0], grp["spy_close"].iloc[-1]
+        yearly_returns[str(yr)] = round((strat_last / strat_first - 1) * 100, 2)
+        yearly_spy_returns[str(yr)] = round((spy_last / spy_first - 1) * 100, 2)
+
     return {
         "final_value": round(end_val, 2),
         "total_return_pct": round((end_val / initial_capital - 1) * 100, 2),
@@ -248,4 +339,6 @@ def _compute_metrics(daily_log, trades, initial_capital):
         "years": round(years, 2),
         "benchmark_spy_cagr_pct": round(spy_cagr, 2),
         "alpha_vs_spy_pct": round(cagr - spy_cagr, 2),
+        "yearly_returns": yearly_returns,
+        "yearly_spy_returns": yearly_spy_returns,
     }

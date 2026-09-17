@@ -15,17 +15,17 @@
     "DEF_BOTH": "37.5% UPRO + 12.5% TQQQ (both halved)",
     "CASH": "0% (all cash)"
   },
-  "data_period": "2020-2025 (DataBento)",
+  "data_period": "2019-2026 (live data); Full History toggle available back to 2011",
   "benchmark_results": {
-    "cagr_pct": 21.77,
-    "sharpe": 0.663,
-    "sortino": 0.861,
-    "calmar": 0.555,
-    "max_drawdown_pct": -39.24,
-    "total_return_pct": 178.74,
-    "final_value": 278743.93,
-    "total_trades": 180,
-    "years": 5.2
+    "cagr_pct": 19.74,
+    "sharpe": 0.697,
+    "sortino": 0.816,
+    "calmar": 0.366,
+    "max_drawdown_pct": -53.88,
+    "total_return_pct": 246.43,
+    "final_value": 346426.1,
+    "total_trades": 176,
+    "years": 6.9
   },
   "params": {
     "vixThreshold": {

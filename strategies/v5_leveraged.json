@@ -1,9 +1,10 @@
 {
   "id": "v5_leveraged",
-  "name": "v5 — Adaptive Regime (Leveraged)",
+  "name": "v5 — Adaptive Regime (Leveraged) [Internal R&D]",
   "version": "5",
-  "description": "5-state adaptive regime rotation with ATR volatility guard and drawdown circuit breaker. AGGRESSIVE state: 60% UPRO + 40% TQQQ. DEFENSIVE: 60% SHY + 40% GLD. Circuit breaker triggers at configurable drawdown%, exits after cooldown. Note: leveraged ETFs amplify losses in uncertain regimes — see v5b for non-leveraged version.",
+  "description": "INTERNAL R&D -- NEVER REQUESTED BY THE CLIENT. This drawdown-based rotation family (v3/v5/v5b) does not appear in any of the six client meetings or the WhatsApp thread; it uses a different mechanism entirely (a drawdown circuit breaker) instead of the VIX kill-switch cascade Ravi actually asked for. Kept here as internal research, not a deliverable. 5-state adaptive regime rotation with ATR volatility guard and drawdown circuit breaker. AGGRESSIVE state: 60% UPRO + 40% TQQQ. DEFENSIVE: 60% SHY + 40% GLD. Circuit breaker triggers at configurable drawdown%, exits after cooldown. Note: leveraged ETFs amplify losses in uncertain regimes — see v5b for non-leveraged version.",
   "engine": "v5",
+  "never_requested_by_client": true,
   "instruments": ["UPRO", "TQQQ", "SHY", "GLD"],
   "signal_source": "SPY SMA + RSI + ATR",
   "states": ["AGGRESSIVE", "DEFENSIVE", "CRASH_PROTECT"],
@@ -12,17 +13,17 @@
     "DEFENSIVE": "60% SHY + 40% GLD",
     "CRASH_PROTECT": "100% SHY"
   },
-  "data_period": "2020-2025 (DataBento)",
+  "data_period": "2020-2025 (live data)",
   "benchmark_results": {
-    "cagr_pct": -6.54,
-    "sharpe": -0.099,
-    "sortino": -0.096,
-    "calmar": -0.143,
-    "max_drawdown_pct": -45.81,
-    "total_return_pct": -33.33,
-    "final_value": 66670.0,
-    "total_trades": 27,
-    "years": 5.2
+    "cagr_pct": 1.55,
+    "sharpe": 0.1996,
+    "sortino": 0.2002,
+    "calmar": 0.0318,
+    "max_drawdown_pct": -48.8,
+    "total_return_pct": 12.57,
+    "final_value": 112572.17,
+    "total_trades": 41,
+    "years": 7.69
   },
   "api_mode": true,
   "params": {

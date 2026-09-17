@@ -20,8 +20,11 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Symbols needed by each engine
-EQUITY_SYMBOLS = ["SPY", "QQQ", "UPRO", "TQQQ", "SHY", "GLD", "TLT"]
+# Symbols needed by each engine. SPXU/SVIX (Step 3/4) were missing here
+# entirely until 2026-09-18 -- they were only ever available on the machine
+# that manually copied them in from a separate audit repo, so a fresh
+# deploy anywhere else would have had no way to fetch them at all.
+EQUITY_SYMBOLS = ["SPY", "QQQ", "UPRO", "TQQQ", "SHY", "GLD", "TLT", "SPXU", "SVIX"]
 BACKFILL_START = "2019-01-01"  # 1 year warmup before 2020 data
 
 

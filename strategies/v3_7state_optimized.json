@@ -1,9 +1,10 @@
 {
   "id": "v3_7state_optimized",
-  "name": "v3 — 7-State Leveraged Rotation",
+  "name": "v3 — 7-State Leveraged Rotation [Internal R&D]",
   "version": "3",
-  "description": "7-state adaptive regime rotation with SMA golden/death cross signals. UPRO 100% in bull regime, SHY in bear. Includes BULL_CAUTION, NEUTRAL, MOMENTUM, RECOVERY, and CRASH states for finer regime detection. Leveraged — high volatility.",
+  "description": "INTERNAL R&D -- NEVER REQUESTED BY THE CLIENT. This drawdown-based rotation family (v3/v5/v5b) does not appear in any of the six client meetings or the WhatsApp thread; it uses a different mechanism entirely (a drawdown circuit breaker) instead of the VIX kill-switch cascade Ravi actually asked for. Kept here as internal research, not a deliverable. 7-state adaptive regime rotation with SMA golden/death cross signals. UPRO 100% in bull regime, SHY in bear. Includes BULL_CAUTION, NEUTRAL, MOMENTUM, RECOVERY, and CRASH states for finer regime detection. Leveraged — high volatility.",
   "engine": "v3",
+  "never_requested_by_client": true,
   "instruments": ["UPRO", "SHY"],
   "signal_source": "SPY SMA + RSI + ATR",
   "states": ["BULL_FULL", "BULL_CAUTION", "MOMENTUM", "NEUTRAL", "RECOVERY", "BEAR_HEDGE", "CRASH"],
@@ -13,17 +14,17 @@
     "DEFENSIVE (BEAR_HEDGE)": "100% SHY",
     "CRASH": "100% Cash"
   },
-  "data_period": "2020-2025 (DataBento)",
+  "data_period": "2020-2025 (live data)",
   "benchmark_results": {
-    "cagr_pct": -1.08,
-    "sharpe": 0.215,
-    "sortino": 0.194,
-    "calmar": -0.015,
-    "max_drawdown_pct": -74.23,
-    "total_return_pct": -6.32,
-    "final_value": 93680.0,
-    "total_trades": 176,
-    "years": 5.2
+    "cagr_pct": 8.46,
+    "sharpe": 0.44,
+    "sortino": 0.4629,
+    "calmar": 0.1913,
+    "max_drawdown_pct": -44.21,
+    "total_return_pct": 86.65,
+    "final_value": 186646.72,
+    "total_trades": 35,
+    "years": 7.69
   },
   "api_mode": true,
   "params": {

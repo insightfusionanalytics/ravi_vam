@@ -66,6 +66,19 @@ def adjust_for_splits(df: pd.DataFrame, splits: list[tuple[str, int]]) -> pd.Dat
     return df
 
 
+def _data_already_split_adjusted(data_dir: Path) -> bool:
+    """True when the loaded CSVs are Yahoo-fallback data (already split-adjusted).
+
+    Raw DataBento data is NOT split-adjusted and needs adjust_for_splits().
+    Yahoo Finance data already IS split-adjusted -- applying adjust_for_splits
+    on top of it corrupts the price series with a fake ~2x/3x jump on every
+    hardcoded split date (found via testing: 2022-01-13 UPRO showed a fake
+    +91% single-day "gain" from double-adjustment, permanently inflating
+    every CAGR computed from that point on).
+    """
+    return (data_dir / "databento" / "equities" / ".yfinance_source").exists()
+
+
 def load_step1_data() -> pd.DataFrame:
     """Load SPY, UPRO, VIX and merge into a single aligned DataFrame.
 
@@ -73,7 +86,8 @@ def load_step1_data() -> pd.DataFrame:
     """
     spy = load_databento_csv(DATA_DIR / "databento" / "equities" / "SPY_daily.csv")
     upro = load_databento_csv(DATA_DIR / "databento" / "equities" / "UPRO_daily.csv")
-    upro = adjust_for_splits(upro, UPRO_SPLITS)
+    if not _data_already_split_adjusted(DATA_DIR):
+        upro = adjust_for_splits(upro, UPRO_SPLITS)
     vix = load_databento_csv(DATA_DIR / "cboe" / "VIX_daily.csv")
 
     df = pd.DataFrame(index=spy.index)
@@ -252,7 +266,7 @@ def run_step1_backtest(df: pd.DataFrame) -> tuple[list[Trade], list[dict], dict]
     cash = INITIAL_CAPITAL
     shares = 0.0
     state = State.CASH
-    pending_trade: tuple[State, str] | None = None  # (new_state, reason)
+    pending_trade: tuple[State, str, dict] | None = None  # (new_state, reason, signal_day_snapshot)
     trades: list[Trade] = []
     daily_log: list[dict] = []
 
@@ -267,7 +281,7 @@ def run_step1_backtest(df: pd.DataFrame) -> tuple[list[Trade], list[dict], dict]
         # today's open (not shifted), so no double-shift.
 
         if pending_trade is not None:
-            new_state, reason = pending_trade
+            new_state, reason, signal_snapshot = pending_trade
             pending_trade = None
 
             old_state_val = state.value  # Capture BEFORE update
@@ -302,16 +316,16 @@ def run_step1_backtest(df: pd.DataFrame) -> tuple[list[Trade], list[dict], dict]
                 "state_to": new_state.value,
                 "trigger_reason": reason,
                 "target_allocation_pct": round(target_alloc * 100, 2),
-                # ── Signal values (from PREVIOUS day's close) ──
-                "signal_spy_close": "",  # filled below in daily log
-                "signal_vix": "",
-                "signal_spy_vs_sma200": "",
-                "signal_spy_vs_sma50": "",
-                "signal_rsi": "",
+                # ── Signal values (from the day the signal actually fired — day T-1's close) ──
+                "signal_spy_close": round(signal_snapshot["spy_close"], 2),
+                "signal_vix": round(signal_snapshot["vix"], 2),
+                "signal_spy_vs_sma200": "ABOVE" if signal_snapshot["spy_close"] > signal_snapshot["spy_sma200"] else "BELOW",
+                "signal_spy_vs_sma50": "ABOVE" if signal_snapshot["spy_close"] > signal_snapshot["spy_sma50"] else "BELOW",
+                "signal_rsi": round(signal_snapshot["spy_rsi"], 2),
                 # ── Execution prices ──
                 "exec_price_upro_open": round(upro_open, 4),
-                "upro_close_same_day": round(upro_price, 4),
-                "overnight_gap_pct": round((upro_open / upro_price - 1) * 100, 2) if upro_price > 0 else 0,
+                "signal_day_upro_close": round(signal_snapshot["upro_close"], 4),
+                "overnight_gap_pct": round((upro_open / signal_snapshot["upro_close"] - 1) * 100, 2) if signal_snapshot["upro_close"] > 0 else 0,
                 # ── Position before ──
                 "shares_before": round(old_shares, 4),
                 "cash_before": round(old_cash, 2),
@@ -355,7 +369,18 @@ def run_step1_backtest(df: pd.DataFrame) -> tuple[list[Trade], list[dict], dict]
         )
 
         if new_state != old_state:
-            pending_trade = (new_state, reason)
+            pending_trade = (
+                new_state,
+                reason,
+                {
+                    "spy_close": spy_close,
+                    "spy_sma200": spy_sma200,
+                    "spy_sma50": spy_sma50,
+                    "spy_rsi": spy_rsi,
+                    "vix": vix,
+                    "upro_close": upro_price,
+                },
+            )
 
         # ── Classify every signal for the daily log ──
         vix_kill_active = vix > VIX_KILL

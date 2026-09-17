@@ -1,0 +1,71 @@
+{
+  "id": "step3_spxu_predatory_short",
+  "name": "Step 3 — Predatory Short (SPXU)",
+  "version": "3",
+  "description": "Confirmed by the client directly. Activates ONLY when Step 2 is in CASH: puts a slice of the idle cash into SPXU (3x inverse S&P 500) when SPY is below its 200-day average and VIX spikes above the entry threshold. KNOWN FLAW: the exit rule tends to sell this hedge once the market has already calmed down -- close to the worst time to sell insurance. This is a confirmed strategy design flaw, not a bug, and has not been fixed -- it is shown here as-is so the effect is visible in the numbers.",
+  "engine": "step3",
+  "instruments": ["SPXU"],
+  "signal_source": "SPY + VIX (during Step 2 CASH periods only)",
+  "states": ["CASH_IDLE", "CASH_SPXU", "INACTIVE"],
+  "allocations": {
+    "CASH_IDLE": "0% SPXU (Step 2 in CASH, entry conditions not met)",
+    "CASH_SPXU": "50% of tactical cash in SPXU",
+    "INACTIVE": "Step 2 not in CASH -- this overlay does nothing"
+  },
+  "data_period": "2019-2026 (live data)",
+  "known_flaw": "Sells the hedge when VIX calms down or SPY reclaims its 50-SMA -- i.e. near the point the hedge is worth the least. Confirmed strategy flaw, not fixed.",
+  "api_mode": true,
+  "benchmark_results": {
+    "cagr_pct": -5.19,
+    "sharpe": -0.178,
+    "sortino": -0.058,
+    "calmar": -0.107,
+    "max_drawdown_pct": -48.36,
+    "total_return_pct": -30.76,
+    "final_value": 69237.78,
+    "total_trades": 48,
+    "years": 6.9
+  },
+  "params": {
+    "vixEntry": {
+      "label": "VIX Entry Threshold",
+      "group": "Entry (confirmed: SPY<200SMA + VIX>30)",
+      "type": "range",
+      "default": 30,
+      "min": 20,
+      "max": 45,
+      "step": 1,
+      "unit": ""
+    },
+    "exitVix": {
+      "label": "VIX Exit Threshold",
+      "group": "Exit (not confirmed -- IFA default)",
+      "type": "range",
+      "default": 30,
+      "min": 15,
+      "max": 40,
+      "step": 1,
+      "unit": ""
+    },
+    "spxuAllocation": {
+      "label": "SPXU Allocation of Tactical Cash",
+      "group": "Position Sizing (confirmed: 50%)",
+      "type": "range",
+      "default": 50,
+      "min": 10,
+      "max": 99,
+      "step": 5,
+      "unit": "%"
+    },
+    "capital": {
+      "label": "Initial Capital",
+      "group": "Portfolio Allocation",
+      "type": "range",
+      "default": 100000,
+      "min": 10000,
+      "max": 1000000,
+      "step": 10000,
+      "unit": "$"
+    }
+  }
+}

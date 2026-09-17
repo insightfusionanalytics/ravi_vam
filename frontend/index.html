@@ -219,7 +219,6 @@
       <div class="tagline">Strategy Research Platform</div>
     </div>
     <div class="header-meta">
-      <span>2020–2025 · Production Data</span>
       <span class="data-source-badge unknown" id="data-source-badge">DATA: ...</span>
     </div>
   </div>
@@ -227,7 +226,7 @@
   <div class="hero">
     <div class="hero-title">Select a <span>Strategy</span></div>
     <div class="hero-subtitle">
-      Five configurable trading strategies, each with editable entry/exit conditions.
+      Configurable trading strategies, each with editable entry/exit conditions.
       Choose a strategy to open its interactive dashboard.
     </div>
     <div class="hero-note">Parameters can be adjusted live on the dashboard. Results update in real-time.</div>
@@ -264,14 +263,14 @@
         description: '4-state machine using only UPRO (3x S&P 500). States: BULL_100, BULL_TRIMMED, DEFENSIVE, CASH. Signal source: SPY SMA-50/200, RSI-14, VIX.',
         instruments: ['UPRO'],
         states: ['BULL_100', 'BULL_TRIMMED', 'DEFENSIVE', 'CASH'],
-        data_period: '2020-2025 (DataBento)',
+        data_period: '2019-2026 (live data)',
         benchmark_results: {
-          cagr_pct: 21.44,
-          sharpe: 0.676,
-          calmar: 0.559,
-          max_drawdown_pct: -38.34,
-          total_return_pct: 174.82,
-          total_trades: 67
+          cagr_pct: 17.87,
+          sharpe: 0.673,
+          calmar: 0.346,
+          max_drawdown_pct: -51.58,
+          total_return_pct: 210.76,
+          total_trades: 78
         },
         param_count: 9,
         params: {}
@@ -282,73 +281,116 @@
         description: '6-state machine with two independent sleeves for UPRO and TQQQ. Defensive states are triggered independently per index, plus kill switch.',
         instruments: ['UPRO', 'TQQQ'],
         states: ['BULL_FULL', 'BULL_TRIMMED', 'DEF_SPY', 'DEF_QQQ', 'DEF_BOTH', 'CASH'],
-        data_period: '2020-2025 (DataBento)',
+        data_period: '2019-2026 (live data)',
         benchmark_results: {
-          cagr_pct: 21.77,
-          sharpe: 0.663,
-          calmar: 0.555,
-          max_drawdown_pct: -39.24,
-          total_return_pct: 178.74,
-          total_trades: 180
+          cagr_pct: 19.74,
+          sharpe: 0.697,
+          calmar: 0.366,
+          max_drawdown_pct: -53.88,
+          total_return_pct: 246.43,
+          total_trades: 176
         },
         param_count: 12,
         params: {}
       },
       v3_7state_optimized: {
         id: 'v3_7state_optimized',
-        name: 'v3 — 7-State Leveraged Rotation',
-        description: '7-state adaptive regime rotation with SMA golden/death cross signals. UPRO in bull regime, SHY in bear. Leveraged and higher-volatility.',
+        name: 'v3 — 7-State Leveraged Rotation [Internal R&D]',
+        description: 'INTERNAL R&D -- NEVER REQUESTED BY THE CLIENT. Uses a drawdown circuit breaker instead of the VIX kill-switch cascade Ravi actually asked for. Kept as internal research, not a deliverable.',
         instruments: ['UPRO', 'SHY'],
         states: ['BULL_FULL', 'BULL_CAUTION', 'MOMENTUM', 'NEUTRAL', 'RECOVERY', 'BEAR_HEDGE', 'CRASH'],
-        data_period: '2020-2025 (DataBento)',
+        data_period: '2020-2025 (live data)',
         api_mode: true,
+        never_requested_by_client: true,
         benchmark_results: {
-          cagr_pct: -1.08,
-          sharpe: 0.215,
-          calmar: -0.015,
-          max_drawdown_pct: -74.23,
-          total_return_pct: -6.32,
-          total_trades: 176
+          cagr_pct: 8.46,
+          sharpe: 0.44,
+          calmar: 0.1913,
+          max_drawdown_pct: -44.21,
+          total_return_pct: 86.65,
+          total_trades: 35
         },
         param_count: 8,
         params: {}
       },
       v5_leveraged: {
         id: 'v5_leveraged',
-        name: 'v5 — Adaptive Regime (Leveraged)',
-        description: '5-state adaptive regime rotation with ATR volatility guard and drawdown circuit breaker. Leveraged ETFs in aggressive regime.',
+        name: 'v5 — Adaptive Regime (Leveraged) [Internal R&D]',
+        description: 'INTERNAL R&D -- NEVER REQUESTED BY THE CLIENT. Uses a drawdown circuit breaker instead of the VIX kill-switch cascade Ravi actually asked for. Kept as internal research, not a deliverable.',
         instruments: ['UPRO', 'TQQQ', 'SHY', 'GLD'],
         states: ['AGGRESSIVE', 'DEFENSIVE', 'CRASH_PROTECT'],
-        data_period: '2020-2025 (DataBento)',
+        data_period: '2020-2025 (live data)',
         api_mode: true,
+        never_requested_by_client: true,
         benchmark_results: {
-          cagr_pct: -6.54,
-          sharpe: -0.099,
-          calmar: -0.143,
-          max_drawdown_pct: -45.81,
-          total_return_pct: -33.33,
-          total_trades: 27
+          cagr_pct: 1.55,
+          sharpe: 0.1996,
+          calmar: 0.0318,
+          max_drawdown_pct: -48.8,
+          total_return_pct: 12.57,
+          total_trades: 41
         },
         param_count: 8,
         params: {}
       },
       v5b_nonleveraged: {
         id: 'v5b_nonleveraged',
-        name: 'v5b — Adaptive Regime (Non-Leveraged)',
-        description: 'Same adaptive regime engine as v5 but with SPY/QQQ in aggressive mode to reduce leverage drag and improve risk-adjusted profile.',
+        name: 'v5b — Adaptive Regime (Non-Leveraged) [Internal R&D]',
+        description: 'INTERNAL R&D -- NEVER REQUESTED BY THE CLIENT. Uses a drawdown circuit breaker instead of the VIX kill-switch cascade Ravi actually asked for. Kept as internal research, not a deliverable.',
         instruments: ['SPY', 'QQQ', 'SHY', 'GLD'],
         states: ['AGGRESSIVE', 'DEFENSIVE', 'CRASH_PROTECT'],
-        data_period: '2020-2025 (DataBento)',
+        data_period: '2020-2025 (live data)',
         api_mode: true,
+        never_requested_by_client: true,
         benchmark_results: {
-          cagr_pct: 9.28,
-          sharpe: 0.74,
-          calmar: 0.367,
-          max_drawdown_pct: -25.27,
-          total_return_pct: 70.21,
-          total_trades: 27
+          cagr_pct: 12.21,
+          sharpe: 0.8691,
+          calmar: 0.4878,
+          max_drawdown_pct: -25.03,
+          total_return_pct: 142.4,
+          total_trades: 7
         },
         param_count: 8,
+        params: {}
+      },
+      step3_spxu_predatory_short: {
+        id: 'step3_spxu_predatory_short',
+        name: 'Step 3 — Predatory Short (SPXU)',
+        description: 'Confirmed by the client. Activates only when Step 2 is in CASH: puts tactical cash into SPXU when SPY is below its 200-day average and VIX spikes. KNOWN FLAW: the exit rule tends to sell this hedge once the market has already calmed down.',
+        instruments: ['SPXU'],
+        states: ['CASH_IDLE', 'CASH_SPXU', 'INACTIVE'],
+        data_period: '2019-2026 (live data)',
+        api_mode: true,
+        benchmark_results: {
+          cagr_pct: -5.19,
+          sharpe: -0.178,
+          calmar: -0.107,
+          max_drawdown_pct: -48.36,
+          total_return_pct: -30.76,
+          total_trades: 48
+        },
+        param_count: 4,
+        params: {}
+      },
+      step4_svix_safety_valve: {
+        id: 'step4_svix_safety_valve',
+        name: 'Step 4 — Safety Valve (SVIX) [EXPERIMENTAL]',
+        description: 'EXPERIMENTAL — NOT CONFIRMED BY THE CLIENT. Ravi mentioned "two short strategies" once but only ever discussed SPXU in detail; SVIX and every threshold here are IFA\'s own unreviewed proposal.',
+        instruments: ['SVIX'],
+        states: ['CASH_IDLE', 'CASH_SVIX_INIT', 'CASH_SVIX_PANIC', 'INACTIVE'],
+        data_period: '2022-03-30 to 2026 (live data)',
+        api_mode: true,
+        experimental: true,
+        not_confirmed_by_client: true,
+        benchmark_results: {
+          cagr_pct: 1.23,
+          sharpe: 0.776,
+          calmar: 0.454,
+          max_drawdown_pct: -2.7,
+          total_return_pct: 9.81,
+          total_trades: 6
+        },
+        param_count: 7,
         params: {}
       }
     };
@@ -360,6 +402,12 @@
     }
 
     function getBadge(strategy) {
+      if (strategy.never_requested_by_client) {
+        return '<span class="card-badge badge-research">Internal R&amp;D</span>';
+      }
+      if (strategy.experimental || strategy.not_confirmed_by_client) {
+        return '<span class="card-badge badge-research">Experimental</span>';
+      }
       return '<span class="card-badge badge-api">API Mode</span>';
     }
 

@@ -13,17 +13,17 @@
     "DEFENSIVE": "50% UPRO",
     "CASH": "0% (all cash)"
   },
-  "data_period": "2020-2025 (DataBento)",
+  "data_period": "2019-2026 (live data); Full History toggle available back to 2011",
   "benchmark_results": {
-    "cagr_pct": 21.44,
-    "sharpe": 0.676,
-    "sortino": 0.88,
-    "calmar": 0.559,
-    "max_drawdown_pct": -38.34,
-    "total_return_pct": 174.82,
-    "final_value": 274820.99,
-    "total_trades": 67,
-    "years": 5.2
+    "cagr_pct": 17.87,
+    "sharpe": 0.673,
+    "sortino": 0.779,
+    "calmar": 0.346,
+    "max_drawdown_pct": -51.58,
+    "total_return_pct": 210.76,
+    "final_value": 310762.12,
+    "total_trades": 78,
+    "years": 6.9
   },
   "params": {
     "vixThreshold": {
