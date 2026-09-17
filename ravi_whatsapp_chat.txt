@@ -1,0 +1,204 @@
+[10/02/26, 4:17:26 PM] IFA - Client - Backtesting - Ravi - Stock: ‎Messages and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them.
+[10/02/26, 4:17:26 PM] Anmol IFA: ‎Anmol IFA created this group
+[14/05/26, 4:41:20 AM] IFA - Client - Backtesting - Ravi - Stock: ‎Anmol IFA added you
+[14/05/26, 10:47:21 PM] Insight Fusion Analytics:
+[15/05/26, 7:15:00 AM] Ameesh Katariya: Hello
+[15/05/26, 7:15:32 AM] Insight Fusion Analytics: https://us06web.zoom.us/j/82486457112?pwd=DiYFLkCBMaiDv3BOxBl5aWmGCFS6jH.1
+[15/05/26, 7:25:35 AM] Ameesh Katariya: https://backtestravi.insightfusionanalytics.com
+[15/05/26, 7:25:50 AM] Ameesh Katariya: 801699c7fa7169ea8bfdca9eb619b4f77affb3d88352adc3ad249c3891fd9835
+[15/05/26, 7:47:17 AM] ~ Ravi mareedu: 1. Above questions to answer
+[15/05/26, 7:48:24 AM] ~ Ravi mareedu: 2. synthetic upro 1960 to now
+[15/05/26, 7:49:28 AM] ~ Ravi mareedu: Daily Synthetic UPRO FormulaThe following formula calculates the synthetic price for day \(t\):\(\text{SynUPRO}_{t}=\text{SynUPRO}_{t-1}\times \left(1+\left(\Delta \text{SPXTR}_{t}\times 3\right)-\left(\text{Cost}_{t}\right)\right)\)\(\text{SynUPRO}_{t}\): Synthetic UPRO price on day \(t\).\(\Delta \text{SPXTR}_t\): Daily percentage change of the S&P 500 Total Return Index.\(3\): Leverage factor.\(\text{Cost}_{t}\): Daily financing costs and expense ratio (approx. \(0.91\% \text{ to } 1.0\% \text{ annually}\), or \(\frac{1.0\%}{250}\) daily).
+[15/05/26, 7:49:31 AM] Ameesh Katariya: .
+[15/05/26, 7:51:39 AM] ~ Ravi mareedu: To create a synthetic formula for the 3x leveraged S&P 500 ETF (UPRO), we can use a linear regression model or a cost-of-carry derivation. Because UPRO seeks to provide $3 \times$ the daily return of the S&P 500 (SPX), its price action is driven by the underlying index minus the costs of leverage (interest rates) and management fees.
+
+### 1. The Daily Return Formula
+
+The most accurate way to model the daily price movement of UPRO is:
+
+$$R_{UPRO} = 3(R_{SPX}) - [2(f) + ER] \cdot \frac{1}{252}$$
+
+**Where:**
+
+* $R_{UPRO}$: The daily percentage return of UPRO.
+* $R_{SPX}$: The daily percentage return of the S&P 500 Index.
+* $f$: The current funding rate (typically Fed Funds Rate + a small spread, currently around 5.3%–5.5%).
+* $ER$: The Expense Ratio (0.91% for UPRO).
+* $252$: The number of trading days in a year.
+
+---
+
+### 2. The Multi-Day Price Formula (Geometric)
+
+To calculate a "synthetic" price over time ($P_t$), you must account for **volatility decay** (slippage). The formula for the price at time $t$ relative to the starting price $P_0$ is:
+
+$$P_t = P_0 \cdot \left( \frac{SPX_t}{SPX_0} \right)^3 \cdot e^{-3(3-1) \frac{\sigma^2}{2} t}$$
+
+**Variables Explained:**
+
+* **The Leverage Multiplier:** $(\frac{SPX_t}{SPX_0})^3$ represents the idealized triple return.
+* **The Decay Constant:** $e^{-3\sigma^2 t}$ (where $\sigma$ is the daily volatility). This is the "hidden tax" of daily rebalancing. In high-volatility markets, this causes the synthetic price to drift lower than the expected $3 \times$ return.
+
+---
+
+### 3. Simplified Backtesting Approximation
+
+If you are building a spreadsheet for historical backtesting and don't want to calculate daily funding rates, you can use this simplified linear approximation:
+
+$$UPRO_{synthetic} = (3 \times \text{Daily \% Change SPX}) - 0.00045$$
+
+> **Note:** The $-0.00045$ (4.5 basis points) is a rough daily "drag" estimate that accounts for a 5% interest rate environment plus the expense ratio. This will vary significantly based on the current yield curve.
+
+### Key Considerations
+
+* **Tracking Error:** Synthetic formulas often underperform the actual ETF during periods of extreme market stress due to swap counterparty costs that aren't captured in simple math.
+* **Dividends:** The S&P 500 price index does not include dividends. For a truly accurate synthetic, you should use the **S&P 500 Total Return Index (SPXTR)** as your base.
+‎[15/05/26, 7:52:59 AM] ~ Ravi mareedu: ‎image omitted
+[18/05/26, 8:20:52 AM] ~ Ravi mareedu: Any updates?
+[18/05/26, 8:21:29 AM] Ameesh Katariya: Heyy yes, nearly completed all changes
+[19/05/26, 11:21:33 AM] Ameesh Katariya: Hello!
+You can check the updated dashboard now, it has data till 1993, and currently backfilling backwards of that year.
+Additionally now you will face a login page
+
+Credentials - 
+ravi@ifa.com
+Password - Admin@2025 ‎<This message was edited>
+[21/05/26, 12:15:52 PM] Ameesh Katariya: Heyy @⁨~Ravi mareedu⁩  @⁨‪+1 (574) 210‑5747‬⁩ , how are you doing?
+[23/05/26, 11:14:42 AM] Anmol IFA: @⁨~Ravi mareedu⁩ @⁨‪+1 (574) 210‑5747‬⁩ when are you guys available next?
+[23/05/26, 6:20:45 PM] ~ Ravi mareedu: We saw and are reviewing data - 2 before 2011 trying to understand -
+[23/05/26, 6:21:13 PM] ~ Ravi mareedu: I’m free for the next four days, I’ll check with Sudhi and circle back
+[23/05/26, 11:24:04 PM] ~ Ravi mareedu: sometimes getting nonsensical results
+‎[23/05/26, 11:24:07 PM] ~ Ravi mareedu: ‎image omitted
+‎[23/05/26, 11:24:07 PM] ~ Ravi mareedu: ‎image omitted
+[23/05/26, 11:24:45 PM] Anmol IFA: @⁨Ameesh Katariya⁩
+[24/05/26, 12:59:02 PM] Ameesh Katariya: Okayy checking this now
+[24/05/26, 1:00:26 PM] Ameesh Katariya: Looks like a bug, will fix it and inform when to see again
+[24/05/26, 3:42:09 PM] Ameesh Katariya: Please check now, this issue has been fixed @⁨~Ravi mareedu⁩
+[24/05/26, 7:30:58 PM] ~ Ravi mareedu: ok
+‎[24/05/26, 7:41:47 PM] ~ Ravi mareedu: ‎image omitted
+‎[24/05/26, 7:41:49 PM] ~ Ravi mareedu: ‎image omitted
+[24/05/26, 7:43:06 PM] ~ Ravi mareedu: Blanket rules: are we just stopping sma less than 50 signal to be blanketed for “42” days or r we going to cash and atopping all trades for those days ?
+[24/05/26, 8:16:07 PM] ~ Ravi mareedu: Ok saw trade logs- that is going all into cash: … thats not what we wanted
+[24/05/26, 8:17:27 PM] ~ Ravi mareedu: see above: we asked “ .⁠ ⁠Once SMA 50 breached to downside (from bull or SMA recovery to defensive mode) - ignore that rule only for 2 months “ i.e blanket sma 50 rule for 30 or 60 days - all other rules apply - i.e vis/sma 200/rsi etc.. dont have to go to all cash
+[24/05/26, 8:17:50 PM] Ameesh Katariya: Ohh okay, let me check, just a minute.
+[24/05/26, 8:18:10 PM] Ameesh Katariya: This should be a quick fix, its all config flags which can be turned on and off.
+[24/05/26, 8:27:30 PM] Ameesh Katariya: Okay changed config file, you can run the backtest again. Sometimes the responses might be cached, so I would recommend closing the browser and opening it again to use.
+[24/05/26, 8:27:36 PM] Ameesh Katariya: You can check in 5 minutes.
+[24/05/26, 8:27:49 PM] Ameesh Katariya: So that the change reflects globally via the server.
+[24/05/26, 8:42:20 PM] Ameesh Katariya: But just for confirmation, I’ll float the rule here again - 
+
+(A) when SMA-50 wants to trim us to DEFENSIVE → we ignore it for 60d, or
+(B) when we go CASH → BULL_100 (every fresh re-entry) → 60d immunity from the SMA-50 trim?
+
+Other rules (VIX kill, RSI, SMA-200) keep working in both cases.
+Right now it is at A
+[24/05/26, 8:42:26 PM] Ameesh Katariya: @⁨~Ravi mareedu⁩
+[24/05/26, 8:43:34 PM] ~ Ravi mareedu: (A) when SMA-50 wants to trim us to DEFENSIVE → we ignore it for 60d - yes for this: if this rule was already triggered in last 60 days 
+
+say jan 2 it triggered- we follow it- but say its triggered again in 60 days we ingnore it… so its only applies if same rule was not triggered in last 60 days. 
+
+
+(B) when we go CASH → BULL_100 (every fresh re-entry) → 60d immunity from the SMA-50 trim?—> yes for this also ‎<This message was edited>
+[24/05/26, 8:45:13 PM] Ameesh Katariya: I think you might have forwarded to our group itself. @⁨~Ravi mareedu⁩
+[24/05/26, 8:47:10 PM] ~ Ravi mareedu: call me Ameesh if you have a few minutes
+[24/05/26, 8:47:42 PM] Ameesh Katariya: Yes sure
+[24/05/26, 9:08:37 PM] Ameesh Katariya: 1) Setting two new conditions of when to blanket SMA50 DEFENSIVE Trigger-
+If in the last 60 days we had SMA 50 Defensive TRIGGER then don’t trim
+AND 
+If in the last 60 days we went from CASH to BULL 100, then also don’t trim.
+
+2) Add annualized returns to the backtest results
+
+3) Check synthetic vs Real data with UPRO, and guve analytics
+
+4) Fetch more real data from Yahoo Finance, in case of less data from DataBento
+[24/05/26, 9:10:51 PM] Ameesh Katariya: @⁨~Ravi mareedu⁩
+[24/05/26, 9:11:18 PM] ~ Ravi mareedu: yes- step 3 from 2011-2018
+[24/05/26, 9:35:49 PM] Ameesh Katariya: Okay understood.
+[24/05/26, 10:29:05 PM] Ameesh Katariya: Hello, I have updated point 1 and 2 on the dashboard. Please check! @⁨~Ravi mareedu⁩
+[24/05/26, 10:29:10 PM] Ameesh Katariya: Can we have a short call now?
+‎[24/05/26, 10:55:27 PM] Ameesh Katariya: ‎image omitted
+‎[24/05/26, 10:55:28 PM] Ameesh Katariya: ‎image omitted
+[24/05/26, 10:56:15 PM] Insight Fusion Analytics: https://us06web.zoom.us/j/81606795523?pwd=TefzPeOPT31mZ7zul2ZpS1qr4bKwpJ.1
+[24/05/26, 11:18:15 PM] Ameesh Katariya: 5) Add tolerance bands 1-3%(configurable) to SMA
+[26/05/26, 7:16:09 PM] Ameesh Katariya: Hello @⁨~Ravi mareedu⁩ !
+The comparison between the Real UPRO and synthetic is as follows - \
+[26/05/26, 7:27:38 PM] Ameesh Katariya: UPRO: Synthetic vs Real (2009-06 → 2018-04, 9 yrs)
+────────────────────────────────────
+Metric         Real      Synth    Gap
+CAGR           39.4%     32.3%    -7.1pp
+Total growth   18.8x     11.8x    -38%
+Ann. vol       44.7%     45.0%    +0.3pp
+Max DD        -51.7%    -52.8%    -1.0pp
+Correlation              0.995
+Tracking err             4.5%/yr
+Daily drift              -2 bps/day
+────────────────────────────────────
+Verdict: risk shape ✓, but synth
+underestimates returns by ~38%
+over 9 yrs. Likely cause: missing
+SPY dividend yield (~2%/yr × 3x).
+[26/05/26, 8:01:02 PM] Ameesh Katariya: Here is the CSV of comparison as well
+‎[26/05/26, 8:01:26 PM] Ameesh Katariya: upro_synthetic_vs_real.csv ‎document omitted
+[26/05/26, 8:04:09 PM] Ameesh Katariya: vol and max drawdown are within ~1 pp of real.
+[26/05/26, 8:04:34 PM] Ameesh Katariya: i think dividend yields is the issue
+[26/05/26, 8:04:37 PM] Ameesh Katariya: we haven’t accounted that
+[27/05/26, 1:09:09 AM] ~ Ravi mareedu: Yes, and also, can you look at the data for example, look at the first day of each quarter between 2012 and 2015 and see if synthetic U pro number and real numbers variation
+[27/05/26, 2:56:09 PM] Ameesh Katariya: Ohh okay, will check on that!
+[08/07/26, 3:30:07 PM] Anmol IFA: @⁨~Susmita Mandal⁩ please arrange a meeting
+[08/07/26, 5:09:54 PM] ~ Ravi mareedu: Usa time thirsday est 930 pm
+[08/07/26, 6:08:19 PM] ~ Susmita Mandal:
+[10/07/26, 6:58:00 AM] ~ Ravi mareedu: Can we push it out one week next Thursday? Got quite delayed today at work
+[10/07/26, 6:58:20 AM] Anmol IFA: yes
+[10/07/26, 7:08:35 AM] IFA - Client - Backtesting - Ravi - Stock: ‎~ Susmita Mandal updated Meeting
+[19/07/26, 7:05:38 PM] Chirag Pandya: Hey @⁨~Ravi mareedu⁩ . Apologies for the delays, I was caught up last week in a personal thing. Can we schedule something at the earliest this week?
+[19/07/26, 8:50:10 PM] ~ Ravi mareedu: Travelling this week…. Can do  tuesdsy 28-930 pm est
+[19/07/26, 8:50:20 PM] ~ Ravi mareedu: 7/28
+[20/07/26, 12:41:06 AM] Chirag Pandya: Thanks Ravi, works.
+[30/07/26, 2:47:30 PM] Chirag Pandya: Hi Ravi, would it be possible to connect for a short call this week?
+[31/07/26, 3:18:21 AM] ~ Ravi mareedu: Looks like we forgot 7/28
+
+Lets do monday 8/3 930 pm est
+[31/07/26, 9:30:18 AM] Anmol IFA: @⁨~Susmita Mandal⁩ can you schedule the meeting?
+[31/07/26, 9:33:23 AM] ~ Susmita Mandal:
+[04/08/26, 7:03:44 AM] ~ Ravi mareedu: Link?
+[04/08/26, 7:11:11 AM] ~ Ravi mareedu: Ok- lets reschdule
+[04/08/26, 7:32:51 PM] Chirag Pandya: Hey @⁨~Ravi mareedu⁩, I wasn’t feeling that well today morning and couldn’t make it. Can  we reschedule it please to tomorrow.
+Apologies for the absence. Will make sure there are no delays or reschedules from us post this.
+[07/08/26, 9:48:47 PM] Anmol IFA: Hello, no problem, we can do next week Thursday 9:30 PM Eastern standard time, I can check with Sudhir also
+[07/08/26, 9:48:47 PM] Anmol IFA: Aug 13 us
+[07/08/26, 9:48:57 PM] Anmol IFA: @⁨~Susmita Mandal⁩
+[07/08/26, 9:55:50 PM] Anmol IFA: Please schedule a meeting
+[08/08/26, 6:21:16 AM] ~ Susmita Mandal:
+[14/08/26, 7:01:26 AM] ~ Ravi mareedu: Link?
+[14/08/26, 7:16:03 AM] Chirag Pandya: Hi Ravi, sending.
+[14/08/26, 7:19:57 AM] Chirag Pandya: https://meet.google.com/idf-dtox-pwe
+[26/08/26, 4:30:24 PM] Anmol IFA: The plan further involves:
+- Integrating optuna to optimise parameters in the current strategy, what this basically does is find the most optimal set of parameters out of millions for the current strategy. For example, set of parameters with the highest ROI, highest sharpe, or any other reward function we want to optimise for.
+[06/09/26, 11:46:40 AM] Anmol IFA: Lets pick a date - next thursday? 930 pm est
+[06/09/26, 11:46:45 AM] Anmol IFA: @⁨Chirag Pandya⁩
+[06/09/26, 11:47:07 AM] Anmol IFA: Meanwhile @⁨~Ravi mareedu⁩ can you check this out?
+[06/09/26, 11:47:52 AM] Anmol IFA: We have already discussed this plan to move forward a couple of times but we have not moved forward so if this can be done over a couple of messages, we can get the optimisation phase going.
+[07/09/26, 9:59:47 PM] ~ Ravi mareedu: Noted- what will be the charges for that
+[09/09/26, 1:31:41 PM] Chirag Pandya: Hi @⁨~Ravi mareedu⁩ Sorry for the delay. We will send over a proposal shortly here in chat.
+‎[09/09/26, 7:31:45 PM] Chirag Pandya: IFA_Optimization_Engine_Managed_Platform.pdf • ‎2 pages ‎document omitted
+[09/09/26, 7:42:48 PM] ~ Ravi mareedu: I will talk with sudhir and circle back in 2 days
+[09/09/26, 11:56:15 PM] Insight Fusion Analytics: sounds good!
+[09/09/26, 11:56:25 PM] Insight Fusion Analytics: lets connect at this time.
+[10/09/26, 5:48:46 PM] Anmol IFA:
+[10/09/26, 7:38:56 PM] IFA - Client - Backtesting - Ravi - Stock: ‎Anmol IFA updated Meeting
+[10/09/26, 7:26:41 PM] Anmol IFA: @⁨~Ravi mareedu⁩ please update
+[10/09/26, 7:33:46 PM] ~ Ravi mareedu: Ok lets meet- can you make sure that appropriate Personal attend the meeting and give us updates
+[10/09/26, 7:34:14 PM] ~ Ravi mareedu: 930 pm est not 10 pm
+[10/09/26, 7:36:14 PM] Anmol IFA: Can you check?
+[11/09/26, 1:43:12 AM] ~ Ajinkya: ‎Anmol IFA added ~ Ajinkya
+[11/09/26, 7:01:28 AM] Insight Fusion Analytics: https://us06web.zoom.us/j/87529498871?pwd=Z55F2VGzqnM4cfdb5CmHBhj6DkpGZ6.1
+[11/09/26, 7:01:34 AM] Insight Fusion Analytics: @⁨~Ravi mareedu⁩
+[11/09/26, 7:03:36 AM] ~ Ravi mareedu: 5 min
+[11/09/26, 7:12:07 AM] Chirag Pandya: https://backtestravi.insightfusionanalytics.com/
+[16/09/26, 8:26:21 PM] Chirag Pandya: Hi Ravi, a quick update so far. I found a light inconsistency in the strategy and have been working on it yesterday and today. It's finished now and looks to be working perfectly.
+I will be submitting the webapp for review tomorrow to you, once you okay it. We proceed with the optimisation part without any obstacles.
+[17/09/26, 11:10:12 AM] Anmol IFA: @⁨~Ravi mareedu⁩ let’s have a meeting once Chirag is done to make sure Backtesting is on point.
+We will move onto optimising from there.
+[17/09/26, 11:10:25 AM] Anmol IFA: @⁨Chirag Pandya⁩ keep us updated.
+[17/09/26, 12:08:56 PM] Chirag Pandya: Will do.
