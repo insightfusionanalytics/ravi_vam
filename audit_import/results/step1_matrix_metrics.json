@@ -1,0 +1,14 @@
+{
+  "step": "Step 1 \u2014 UPRO Matrix Cross-Check",
+  "approach": "Matrix (10-state Markov, YAML-driven)",
+  "start_date": "2020-10-16",
+  "end_date": "2025-12-30",
+  "years": 5.2,
+  "final_value": 215329.04,
+  "total_return_pct": 115.33,
+  "cagr_pct": 15.88,
+  "sharpe": 0.793,
+  "max_drawdown_pct": -31.44,
+  "total_trades": 172,
+  "note": "Matrix uses 5-day cooldown + VIX hysteresis (re-entry at 25, not 30)"
+}

@@ -1,0 +1,21 @@
+{
+  "step": "Step 3 (2011-2025) \u2014 Predatory Short / SPXU (Polygon+DataBento)",
+  "approach": "Activates only during Step 2 CASH periods",
+  "start_date": "2011-10-18",
+  "end_date": "2025-12-30",
+  "years": 14.2,
+  "initial_capital": 100000.0,
+  "final_value": 62946.01,
+  "total_return_pct": -37.05,
+  "cagr_pct": -3.21,
+  "sharpe": -0.446,
+  "sortino": -0.577,
+  "calmar": -0.066,
+  "max_drawdown_pct": -48.27,
+  "max_drawdown_date": "2025-04-09",
+  "total_trades": 54,
+  "buy_trades": 27,
+  "sell_trades": 27,
+  "total_commissions": 528.54,
+  "total_slippage": 3970.0
+}

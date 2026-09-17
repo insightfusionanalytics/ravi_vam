@@ -1,0 +1,41 @@
+{
+  "step": "Step 2 \u2014 UPRO + TQQQ (DataBento)",
+  "approach": "Normal (7-state machine)",
+  "start_date": "2020-10-16",
+  "end_date": "2025-12-30",
+  "years": 5.2,
+  "initial_capital": 100000.0,
+  "final_value": 263057.84,
+  "total_return_pct": 163.06,
+  "cagr_pct": 20.42,
+  "sharpe": 0.618,
+  "sortino": 0.808,
+  "calmar": 0.408,
+  "max_drawdown_pct": -50.09,
+  "max_drawdown_date": "2023-03-22",
+  "total_trades": 238,
+  "upro_trades": 119,
+  "tqqq_trades": 119,
+  "total_commissions": 885.68,
+  "total_slippage": 7200.17,
+  "state_distribution_pct": {
+    "BULL_100": 55.9,
+    "CASH": 22.4,
+    "DEFENSIVE_BOTH": 7.7,
+    "BULL_TRIMMED": 5.6,
+    "DEFENSIVE_QQQ": 4.6,
+    "DEFENSIVE_SPY": 2.4,
+    "SMA_RECOVERY": 1.5
+  },
+  "annual_returns": {
+    "2020": 16.2,
+    "2021": 52.14,
+    "2022": -39.22,
+    "2023": 38.86,
+    "2024": 50.15,
+    "2025": 25.08
+  },
+  "benchmark_spy_cagr_pct": 14.06,
+  "benchmark_spy_total_return_pct": 98.35,
+  "alpha_vs_spy_pct": 6.36
+}

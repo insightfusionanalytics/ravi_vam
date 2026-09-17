@@ -1,0 +1,356 @@
+{
+  "metadata": {
+    "client": "Ravi Mareedu & Sudhir Vyakaranam",
+    "strategy": "VAM v3 (Optimized)",
+    "data_source": "DataBento XNAS.ITCH",
+    "backtest_period": "2020-01-02 to 2025-12-30",
+    "initial_capital": 100000,
+    "generated": "2026-03-20T21:23:08.855853"
+  },
+  "performance": {
+    "total_return_pct": -6.32,
+    "cagr_pct": -1.08,
+    "sharpe_ratio": 0.2153,
+    "sortino_ratio": 0.1943,
+    "max_drawdown_pct": -74.23,
+    "calmar_ratio": -0.0146,
+    "win_rate_pct": 45.68,
+    "profit_factor": 1.0527,
+    "annual_volatility_pct": 41.4,
+    "trade_count": 176,
+    "max_consecutive_losses": 8,
+    "best_year_pct": 85.75,
+    "worst_year_pct": -70.01,
+    "yearly_returns": {
+      "2020": 20.97,
+      "2021": 85.75,
+      "2022": -70.01,
+      "2023": 44.11,
+      "2024": 60.66,
+      "2025": -36.38
+    },
+    "final_equity": 93681.31,
+    "n_years": 5.99,
+    "n_trading_days": 1507
+  },
+  "benchmark": {
+    "total_return_pct": 111.25,
+    "cagr_pct": 13.3,
+    "final_equity": 211246.81,
+    "sharpe_ratio": 0.7178,
+    "max_drawdown_pct": -33.2
+  },
+  "regime_analysis": {
+    "WARMUP": {
+      "days": 199,
+      "pct_of_time": 13.2,
+      "avg_daily_return_pct": 0.0,
+      "total_return_pct": 0.0,
+      "sharpe": 0
+    },
+    "BULL_FULL": {
+      "days": 682,
+      "pct_of_time": 45.3,
+      "avg_daily_return_pct": 0.0209,
+      "total_return_pct": -28.1,
+      "sharpe": 0.1
+    },
+    "BULL_CAUTION": {
+      "days": 92,
+      "pct_of_time": 6.1,
+      "avg_daily_return_pct": -2.0782,
+      "total_return_pct": -86.3,
+      "sharpe": -9.87
+    },
+    "MOMENTUM": {
+      "days": 246,
+      "pct_of_time": 16.3,
+      "avg_daily_return_pct": 1.0115,
+      "total_return_pct": 1058.06,
+      "sharpe": 10.79
+    },
+    "NEUTRAL": {
+      "days": 23,
+      "pct_of_time": 1.5,
+      "avg_daily_return_pct": -0.6954,
+      "total_return_pct": -15.659999999999998,
+      "sharpe": -3.89
+    },
+    "BEAR_HEDGE": {
+      "days": 265,
+      "pct_of_time": 17.6,
+      "avg_daily_return_pct": -0.0099,
+      "total_return_pct": -2.62,
+      "sharpe": -0.87
+    }
+  },
+  "walk_forward": [
+    {
+      "fold": 1,
+      "test_start": "2021-06-02",
+      "test_end": "2021-10-28",
+      "test_days": 105,
+      "return_pct": 21.82,
+      "sharpe": 1.62
+    },
+    {
+      "fold": 2,
+      "test_start": "2022-06-14",
+      "test_end": "2022-11-10",
+      "test_days": 105,
+      "return_pct": -1.0,
+      "sharpe": -0.7
+    },
+    {
+      "fold": 3,
+      "test_start": "2023-06-29",
+      "test_end": "2023-11-27",
+      "test_days": 105,
+      "return_pct": 3.52,
+      "sharpe": 0.41
+    },
+    {
+      "fold": 4,
+      "test_start": "2024-07-15",
+      "test_end": "2024-12-10",
+      "test_days": 105,
+      "return_pct": 10.8,
+      "sharpe": 0.79
+    },
+    {
+      "fold": 5,
+      "test_start": "2025-07-31",
+      "test_end": "2025-12-30",
+      "test_days": 106,
+      "return_pct": 1.09,
+      "sharpe": 0.3
+    }
+  ],
+  "parameter_sensitivity": [
+    {
+      "sma_short": 40,
+      "sma_long": 160,
+      "variation": "-20%",
+      "total_return_pct": 17.22,
+      "sharpe": 0.31
+    },
+    {
+      "sma_short": 45,
+      "sma_long": 180,
+      "variation": "-10%",
+      "total_return_pct": 19.99,
+      "sharpe": 0.31
+    },
+    {
+      "sma_short": 50,
+      "sma_long": 200,
+      "variation": "base",
+      "total_return_pct": -6.32,
+      "sharpe": 0.22
+    },
+    {
+      "sma_short": 55,
+      "sma_long": 220,
+      "variation": "+10%",
+      "total_return_pct": 14.46,
+      "sharpe": 0.29
+    },
+    {
+      "sma_short": 60,
+      "sma_long": 240,
+      "variation": "+20%",
+      "total_return_pct": 23.19,
+      "sharpe": 0.32
+    }
+  ],
+  "monte_carlo": {
+    "n_simulations": 1000,
+    "median_sharpe": 0.2153,
+    "p5_sharpe": 0.2153,
+    "p95_sharpe": 0.2153,
+    "pct_positive_sharpe": 100.0,
+    "median_return_pct": -6.32,
+    "p5_return_pct": -6.32,
+    "p95_return_pct": -6.32,
+    "median_max_dd_pct": -71.31,
+    "p5_max_dd_pct": -82.52
+  },
+  "cost_sensitivity": {
+    "normal_costs": {
+      "commission": 0.1,
+      "slippage": 0.05,
+      "return_pct": -6.32
+    },
+    "double_costs": {
+      "commission": 0.2,
+      "slippage": 0.1,
+      "return_pct": -22.2
+    },
+    "triple_costs": {
+      "commission": 0.3,
+      "slippage": 0.15,
+      "return_pct": -35.4
+    },
+    "still_profitable_at_2x": "False",
+    "still_profitable_at_3x": "False"
+  },
+  "qualification": {
+    "checks": {
+      "Sharpe > 0.5": "False",
+      "Sortino > 0.7": "False",
+      "Max DD < -50%": false,
+      "Calmar > 0.3": "False",
+      "Profit Factor > 1.2": "False",
+      "Walk-Forward avg Sharpe > 0": "True",
+      "Monte Carlo p5 Sharpe > 0": true,
+      "No param >50% degradation": true,
+      "Profitable at 2x costs": "False",
+      "Profitable at 3x costs": "False"
+    },
+    "passed": "3",
+    "total": 10,
+    "verdict": "FAIL"
+  },
+  "trade_log_sample": [
+    {
+      "date": "2020-10-15",
+      "from_regime": "WARMUP",
+      "to_regime": "BULL_FULL",
+      "turnover": 2.0,
+      "tc_pct": 0.3
+    },
+    {
+      "date": "2020-10-28",
+      "from_regime": "BULL_FULL",
+      "to_regime": "BULL_CAUTION",
+      "turnover": 1.0,
+      "tc_pct": 0.15
+    },
+    {
+      "date": "2020-11-02",
+      "from_regime": "BULL_CAUTION",
+      "to_regime": "BULL_FULL",
+      "turnover": 1.0,
+      "tc_pct": 0.15
+    },
+    {
+      "date": "2020-11-11",
+      "from_regime": "BULL_FULL",
+      "to_regime": "MOMENTUM",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-11-12",
+      "from_regime": "MOMENTUM",
+      "to_regime": "BULL_FULL",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-11-16",
+      "from_regime": "BULL_FULL",
+      "to_regime": "MOMENTUM",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-11-18",
+      "from_regime": "MOMENTUM",
+      "to_regime": "BULL_FULL",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-11-24",
+      "from_regime": "BULL_FULL",
+      "to_regime": "MOMENTUM",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-11-25",
+      "from_regime": "MOMENTUM",
+      "to_regime": "BULL_FULL",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-12-01",
+      "from_regime": "BULL_FULL",
+      "to_regime": "MOMENTUM",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-12-09",
+      "from_regime": "MOMENTUM",
+      "to_regime": "BULL_FULL",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-12-16",
+      "from_regime": "BULL_FULL",
+      "to_regime": "MOMENTUM",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-12-18",
+      "from_regime": "MOMENTUM",
+      "to_regime": "BULL_FULL",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-12-28",
+      "from_regime": "BULL_FULL",
+      "to_regime": "MOMENTUM",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-12-29",
+      "from_regime": "MOMENTUM",
+      "to_regime": "BULL_FULL",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2020-12-31",
+      "from_regime": "BULL_FULL",
+      "to_regime": "MOMENTUM",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2021-01-04",
+      "from_regime": "MOMENTUM",
+      "to_regime": "BULL_FULL",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2021-01-07",
+      "from_regime": "BULL_FULL",
+      "to_regime": "MOMENTUM",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2021-01-11",
+      "from_regime": "MOMENTUM",
+      "to_regime": "BULL_FULL",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    },
+    {
+      "date": "2021-01-13",
+      "from_regime": "BULL_FULL",
+      "to_regime": "MOMENTUM",
+      "turnover": 0.5,
+      "tc_pct": 0.075
+    }
+  ]
+}

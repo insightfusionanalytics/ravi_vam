@@ -1,0 +1,36 @@
+{
+  "step": "Step 1 \u2014 UPRO Only (DataBento)",
+  "approach": "Normal (4-state machine)",
+  "start_date": "2020-10-16",
+  "end_date": "2025-12-30",
+  "years": 5.2,
+  "initial_capital": 100000.0,
+  "final_value": 261554.6,
+  "total_return_pct": 161.55,
+  "cagr_pct": 20.29,
+  "sharpe": 0.631,
+  "sortino": 0.825,
+  "calmar": 0.421,
+  "max_drawdown_pct": -48.16,
+  "max_drawdown_date": "2023-03-22",
+  "total_trades": 82,
+  "total_commissions": 704.33,
+  "total_slippage": 8115.17,
+  "state_distribution_pct": {
+    "BULL_100": 61.7,
+    "CASH": 22.4,
+    "DEFENSIVE": 10.3,
+    "BULL_TRIMMED": 5.6
+  },
+  "annual_returns": {
+    "2020": 18.01,
+    "2021": 60.2,
+    "2022": -35.42,
+    "2023": 26.51,
+    "2024": 40.28,
+    "2025": 28.05
+  },
+  "benchmark_spy_cagr_pct": 14.06,
+  "benchmark_spy_total_return_pct": 98.35,
+  "alpha_vs_spy_pct": 6.23
+}

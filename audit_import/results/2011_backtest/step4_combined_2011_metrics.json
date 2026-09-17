@@ -1,0 +1,33 @@
+{
+  "step": "Step 4 Combined (2011-2025) \u2014 Full Portfolio (Polygon+DataBento)",
+  "strategies": [
+    "Strategy 1 (UPRO/TQQQ)",
+    "Strategy 2 (SPXU)",
+    "Strategy 3 (SVIX from 2022)"
+  ],
+  "start_date": "2011-10-18",
+  "end_date": "2025-12-30",
+  "years": 14.2,
+  "initial_capital": 100000.0,
+  "final_value": 653002.02,
+  "total_return_pct": 553.0,
+  "cagr_pct": 14.13,
+  "sharpe_ratio": 0.445,
+  "sortino_ratio": 0.532,
+  "calmar_ratio": 0.264,
+  "max_drawdown_pct": -53.52,
+  "max_drawdown_date": "2020-06-29",
+  "max_allocation_reached": 0.6351,
+  "allocation_cap": 0.99,
+  "allocation_cap_violated_days": 0,
+  "total_trades": 60,
+  "spxu_trades": 54,
+  "svix_trades": 6,
+  "total_commissions": 1851.38,
+  "total_slippage": 13805.58,
+  "days_in_bull_defensive": 2929,
+  "days_in_cash": 588,
+  "days_spxu_and_svix_coexist": 24,
+  "svix_launch_date_used": "2022-03-30",
+  "note": "SVIX layer active only from 2022-03-30 onwards (Option C: real data only)."
+}

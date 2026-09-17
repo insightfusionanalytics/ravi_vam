@@ -1,0 +1,140 @@
+================================================================================
+  VAM SPLIT STRATEGY — DATABENTO PRODUCTION BACKTEST RESULTS (FINAL)
+  Steps 1 & 2 | Client: Ravi Mareedu & Sudhir Vyakaranam
+  Data Source: DataBento Institutional-Grade Daily OHLCV (split-adjusted)
+  Generated: 2026-03-28
+================================================================================
+
+METHODOLOGY
+  Data:        DataBento (DBEQ.BASIC) + CBOE VIX, split-adjusted in-memory
+  Period:      2020-10-16 to 2025-12-30 (5.2 years)
+  Execution:   T+1 (signal at market close, execute at next-day open)
+  Slippage:    5 bps normal / 20 bps on stress days (VIX > 25)
+  Commission:  $1.00 per trade (IBKR flat)
+  Sharpe/Sortino: Risk-free-adjusted at 4% annualized
+
+  Split adjustments applied:
+    UPRO: 3:1 on 2018-05-24, 2:1 on 2022-01-13
+    TQQQ: 2:1 on 2021-01-21, 2:1 on 2022-01-13, 2:1 on 2025-11-20
+
+================================================================================
+  STEP 1 — UPRO ONLY (4-State Machine)
+================================================================================
+
+  States:  BULL_100 (99% UPRO) | BULL_TRIMMED (75%) | DEFENSIVE (50%) | CASH
+
+    Initial Capital:   $100,000
+    Final Value:       $274,821
+    Total Return:      +174.8%
+    CAGR:              +21.4%
+    Sharpe Ratio:      0.676  (risk-free adjusted)
+    Sortino Ratio:     0.880
+    Calmar Ratio:      0.559
+    Max Drawdown:      -38.3% (2023-03-10)
+    Total Trades:      67
+    Total Costs:       $6,421
+
+    SPY Buy & Hold:    +14.1% CAGR
+    Alpha vs SPY:      +7.4%
+
+    Annual Returns:
+      2020: +18.0%  (Oct-Dec only)
+      2021: +60.3%
+      2022: -29.0%
+      2023: +28.5%
+      2024: +27.8%
+      2025: +32.2%
+
+    State Distribution:
+      BULL_100:      60.8%   |   CASH:          24.8%
+      DEFENSIVE:      8.8%   |   BULL_TRIMMED:    5.6%
+
+================================================================================
+  STEP 2 — UPRO + TQQQ (6-State Machine)
+================================================================================
+
+  States:  BULL_FULL (74.25% UPRO + 24.75% TQQQ) | BULL_TRIMMED
+           DEF_SPY | DEF_QQQ | DEF_BOTH | CASH
+
+    Initial Capital:   $100,000
+    Final Value:       $278,744
+    Total Return:      +178.7%
+    CAGR:              +21.8%
+    Sharpe Ratio:      0.663  (risk-free adjusted)
+    Sortino Ratio:     0.861
+    Calmar Ratio:      0.555
+    Max Drawdown:      -39.2% (2023-03-10)
+    Total Trades:      180 (UPRO: 90, TQQQ: 90)
+    Total Costs:       $6,362
+
+    SPY Buy & Hold:    +14.1% CAGR
+    Alpha vs SPY:      +7.7%
+
+    Annual Returns:
+      2020: +16.9%  (Oct-Dec only)
+      2021: +52.7%
+      2022: -31.6%
+      2023: +40.3%
+      2024: +32.7%
+      2025: +31.2%
+
+    State Distribution:
+      BULL_FULL:      56.2%   |   CASH:          24.8%
+      DEF_BOTH:        6.8%   |   BULL_TRIMMED:    5.6%
+      DEF_QQQ:         4.6%   |   DEF_SPY:         2.0%
+
+================================================================================
+  STEP 1 vs STEP 2 COMPARISON
+================================================================================
+
+    Metric              Step 1       Step 2       Winner
+    -----------------------------------------------------------
+    Final Value         $274,821     $278,744     Step 2 (+$3,923)
+    CAGR                21.4%        21.8%        Step 2
+    Sharpe              0.676        0.663        Step 1 (marginal)
+    Max Drawdown        -38.3%       -39.2%       Step 1 (less risk)
+    Alpha vs SPY        +7.4%        +7.7%        Step 2
+
+    Both steps deliver strong results. Step 2 has slightly higher
+    returns; Step 1 has slightly lower drawdown. The difference is
+    small enough that either is defensible.
+
+================================================================================
+  IMPORTANT DISCLOSURES
+================================================================================
+
+  1. DATA WINDOW: 5.2 years (2020-2025) — mostly bull market. The
+     strategy has not been tested through multi-year bears (2000-2003,
+     2007-2009). Results may not generalize to all market conditions.
+
+  2. MAX DRAWDOWN: -38% to -39% is significant. A $100K portfolio
+     would have dropped to ~$62K at the worst point. SPY's max DD
+     over the same period was approximately -25%.
+
+  3. 2022 PERFORMANCE: The strategy lost 29-32% in 2022. The kill
+     switch prevented catastrophic losses (UPRO unprotected lost ~65%),
+     but the strategy still underperformed SPY (-19%) in the crash year.
+
+  4. KILL SWITCH WHIPSAW: In Mar-Apr 2022, the strategy executed 4
+     round trips in 20 days as SPY oscillated around the 200-day SMA.
+     This generated ~$700 in unnecessary costs. The kill switch has
+     no confirmation period on the 200-SMA leg.
+
+  5. STATISTICAL SIGNIFICANCE: Alpha of 7-8% over 5.2 years is not
+     conclusive. The confidence interval is wide enough that the true
+     alpha could be zero. This is historical outperformance, not a
+     guarantee.
+
+================================================================================
+  FILES
+================================================================================
+
+  Step 1:  step1_databento_trade_log.csv (67 trades)
+           step1_databento_portfolio_values.csv (1,308 days)
+           step1_databento_metrics.json
+
+  Step 2:  step2_databento_trade_log.csv (180 trades)
+           step2_databento_portfolio_values.csv (1,308 days)
+           step2_databento_metrics.json
+
+================================================================================

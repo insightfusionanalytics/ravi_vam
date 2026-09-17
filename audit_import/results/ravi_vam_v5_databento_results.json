@@ -1,0 +1,685 @@
+{
+  "metadata": {
+    "client": "Ravi Mareedu & Sudhir Vyakaranam",
+    "strategy": "VAM v5 (Adaptive Regime Rotation with Volatility Guard)",
+    "data_source": "DataBento XNAS.ITCH",
+    "backtest_period": "2020-01-02 to 2025-12-30",
+    "initial_capital": 100000,
+    "generated": "2026-03-20T21:38:38.436258"
+  },
+  "v5_leveraged": {
+    "performance": {
+      "total_return_pct": -33.33,
+      "cagr_pct": -6.54,
+      "sharpe_ratio": -0.0988,
+      "sortino_ratio": -0.0956,
+      "max_drawdown_pct": -45.81,
+      "calmar_ratio": -0.1428,
+      "win_rate_pct": 49.8,
+      "profit_factor": 0.9742,
+      "annual_volatility_pct": 27.84,
+      "trade_count": 27,
+      "max_consecutive_losses": 7,
+      "avg_trade_duration_days": 55.8,
+      "best_year_pct": 39.79,
+      "worst_year_pct": -22.61,
+      "yearly_returns": {
+        "2020": -16.19,
+        "2021": 4.01,
+        "2022": -22.61,
+        "2023": 39.79,
+        "2024": -8.48,
+        "2025": -19.76
+      },
+      "final_equity": 66671.03,
+      "n_years": 5.99,
+      "n_trading_days": 1507
+    },
+    "regime_analysis": {
+      "WARMUP": {
+        "days": 199,
+        "pct_of_time": 13.2,
+        "avg_daily_return_pct": 0.0105,
+        "total_return_contribution_pct": 2.08,
+        "sharpe": 1.37
+      },
+      "AGGRESSIVE": {
+        "days": 554,
+        "pct_of_time": 36.8,
+        "avg_daily_return_pct": -0.0108,
+        "total_return_contribution_pct": -25.37,
+        "sharpe": -0.06
+      },
+      "CRASH_PROTECT": {
+        "days": 551,
+        "pct_of_time": 36.6,
+        "avg_daily_return_pct": -0.021,
+        "total_return_contribution_pct": -11.5,
+        "sharpe": -0.7
+      },
+      "DEFENSIVE": {
+        "days": 203,
+        "pct_of_time": 13.5,
+        "avg_daily_return_pct": -0.0046,
+        "total_return_contribution_pct": -1.12,
+        "sharpe": -0.17
+      }
+    },
+    "qualification": {
+      "checks": {
+        "1_statistical_significance": false,
+        "2_cagr_above_5pct": false,
+        "3_sharpe_above_0.5": false,
+        "4_max_dd_within_limit": false,
+        "5_profit_factor_above_1.2": false,
+        "6_regime_robustness": false,
+        "7_walk_forward_positive": true,
+        "8_monte_carlo_p5_positive": false,
+        "9_parameter_sensitivity": true,
+        "10_cost_sensitivity": false
+      },
+      "passed": "2",
+      "total": 10,
+      "verdict": "FAIL",
+      "details": {
+        "statistical_significance": {
+          "t_statistic": -0.2415,
+          "p_value": 0.809217,
+          "mean_return_positive": false,
+          "significant_at_005": false
+        },
+        "regime_robustness": {
+          "regime_details": {
+            "BULL": [
+              {
+                "year": 2020,
+                "spy_return": 15.17,
+                "strategy_return": -16.19
+              },
+              {
+                "year": 2021,
+                "spy_return": 28.87,
+                "strategy_return": 4.02
+              },
+              {
+                "year": 2023,
+                "spy_return": 24.81,
+                "strategy_return": 40.29
+              },
+              {
+                "year": 2024,
+                "spy_return": 24.09,
+                "strategy_return": -11.02
+              },
+              {
+                "year": 2025,
+                "spy_return": 17.54,
+                "strategy_return": -20.53
+              }
+            ],
+            "BEAR": [
+              {
+                "year": 2022,
+                "spy_return": -19.76,
+                "strategy_return": -22.91
+              }
+            ]
+          },
+          "regime_averages": {
+            "BULL": -0.69,
+            "BEAR": -22.91
+          },
+          "positive_regimes": 0,
+          "total_regimes": 2,
+          "passes": false
+        },
+        "walk_forward": [
+          {
+            "fold": 1,
+            "test_start": "2020-10-16",
+            "test_end": "2022-07-11",
+            "test_days": 435,
+            "return_pct": -33.11,
+            "sharpe": -0.8
+          },
+          {
+            "fold": 2,
+            "test_start": "2022-07-12",
+            "test_end": "2024-04-03",
+            "test_days": 435,
+            "return_pct": 77.68,
+            "sharpe": 1.44
+          },
+          {
+            "fold": 3,
+            "test_start": "2024-04-04",
+            "test_end": "2025-12-30",
+            "test_days": 437,
+            "return_pct": -40.61,
+            "sharpe": -0.61
+          }
+        ],
+        "monte_carlo": {
+          "n_simulations": 1000,
+          "median_sharpe": -0.0988,
+          "p5_sharpe": -0.0988,
+          "p95_sharpe": -0.0988,
+          "pct_positive_sharpe": 0.0,
+          "median_return_pct": -33.33,
+          "p5_return_pct": -33.33,
+          "p95_return_pct": -33.33,
+          "median_max_dd_pct": -60.72,
+          "p5_max_dd_pct": -72.78
+        },
+        "parameter_sensitivity": [
+          {
+            "sma_short": 40,
+            "sma_long": 160,
+            "variation": "-20%",
+            "total_return_pct": 25.83,
+            "sharpe": 0.29
+          },
+          {
+            "sma_short": 45,
+            "sma_long": 180,
+            "variation": "-10%",
+            "total_return_pct": -7.26,
+            "sharpe": 0.11
+          },
+          {
+            "sma_short": 50,
+            "sma_long": 200,
+            "variation": "base",
+            "total_return_pct": -33.33,
+            "sharpe": -0.1
+          },
+          {
+            "sma_short": 55,
+            "sma_long": 220,
+            "variation": "+10%",
+            "total_return_pct": 4.12,
+            "sharpe": 0.18
+          },
+          {
+            "sma_short": 60,
+            "sma_long": 240,
+            "variation": "+20%",
+            "total_return_pct": -4.33,
+            "sharpe": 0.12
+          },
+          {
+            "rsi_threshold": 40,
+            "variation": "-20% RSI",
+            "total_return_pct": -33.33,
+            "sharpe": -0.1
+          },
+          {
+            "rsi_threshold": 50,
+            "variation": "base RSI",
+            "total_return_pct": -33.33,
+            "sharpe": -0.1
+          },
+          {
+            "rsi_threshold": 60,
+            "variation": "+20% RSI",
+            "total_return_pct": -33.33,
+            "sharpe": -0.1
+          }
+        ],
+        "cost_sensitivity": {
+          "normal_costs": {
+            "commission": 0.1,
+            "slippage": 0.05,
+            "return_pct": -33.33
+          },
+          "double_costs": {
+            "commission": 0.2,
+            "slippage": 0.1,
+            "return_pct": -38.44
+          },
+          "triple_costs": {
+            "commission": 0.3,
+            "slippage": 0.15,
+            "return_pct": -66.72
+          },
+          "still_profitable_at_2x": "False",
+          "still_profitable_at_3x": "False"
+        }
+      }
+    },
+    "trade_log_sample": [
+      {
+        "date": "2020-10-15",
+        "from_regime": "WARMUP",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2020-10-29",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2021-02-01",
+        "from_regime": "CRASH_PROTECT",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2021-03-04",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2021-06-03",
+        "from_regime": "CRASH_PROTECT",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2021-10-01",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2021-11-01",
+        "from_regime": "CRASH_PROTECT",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2021-12-02",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2022-01-03",
+        "from_regime": "CRASH_PROTECT",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2022-01-06",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2022-03-09",
+        "from_regime": "CRASH_PROTECT",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2022-03-14",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2022-04-12",
+        "from_regime": "CRASH_PROTECT",
+        "to_regime": "DEFENSIVE",
+        "turnover": 0.8,
+        "tc_pct": 0.12
+      },
+      {
+        "date": "2023-02-02",
+        "from_regime": "DEFENSIVE",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2023-02-27",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2023-03-28",
+        "from_regime": "CRASH_PROTECT",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2023-08-18",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2023-11-16",
+        "from_regime": "CRASH_PROTECT",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2024-04-19",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2024-07-22",
+        "from_regime": "CRASH_PROTECT",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      }
+    ]
+  },
+  "v5b_non_leveraged": {
+    "performance": {
+      "total_return_pct": 70.21,
+      "cagr_pct": 9.28,
+      "sharpe_ratio": 0.7367,
+      "sortino_ratio": 0.9193,
+      "max_drawdown_pct": -25.27,
+      "calmar_ratio": 0.3672,
+      "win_rate_pct": 54.52,
+      "profit_factor": 1.145,
+      "annual_volatility_pct": 13.28,
+      "trade_count": 5,
+      "max_consecutive_losses": 6,
+      "avg_trade_duration_days": 301.4,
+      "best_year_pct": 29.02,
+      "worst_year_pct": -21.28,
+      "yearly_returns": {
+        "2020": 9.67,
+        "2021": 29.02,
+        "2022": -21.28,
+        "2023": 24.06,
+        "2024": 25.32,
+        "2025": 0.15
+      },
+      "final_equity": 170210.77,
+      "n_years": 5.99,
+      "n_trading_days": 1507
+    },
+    "regime_analysis": {
+      "WARMUP": {
+        "days": 199,
+        "pct_of_time": 13.2,
+        "avg_daily_return_pct": 0.0105,
+        "total_return_contribution_pct": 2.08,
+        "sharpe": 1.37
+      },
+      "AGGRESSIVE": {
+        "days": 1022,
+        "pct_of_time": 67.8,
+        "avg_daily_return_pct": 0.0541,
+        "total_return_contribution_pct": 65.44,
+        "sharpe": 0.88
+      },
+      "CRASH_PROTECT": {
+        "days": 84,
+        "pct_of_time": 5.6,
+        "avg_daily_return_pct": 0.0328,
+        "total_return_contribution_pct": 2.65,
+        "sharpe": 0.89
+      },
+      "DEFENSIVE": {
+        "days": 202,
+        "pct_of_time": 13.4,
+        "avg_daily_return_pct": -0.0081,
+        "total_return_contribution_pct": -1.82,
+        "sharpe": -0.29
+      }
+    },
+    "qualification": {
+      "checks": {
+        "1_statistical_significance": false,
+        "2_cagr_above_5pct": true,
+        "3_sharpe_above_0.5": true,
+        "4_max_dd_within_limit": false,
+        "5_profit_factor_above_1.2": false,
+        "6_regime_robustness": false,
+        "7_walk_forward_positive": true,
+        "8_monte_carlo_p5_positive": true,
+        "9_parameter_sensitivity": true,
+        "10_cost_sensitivity": true
+      },
+      "passed": "6",
+      "total": 10,
+      "verdict": "FAIL",
+      "details": {
+        "statistical_significance": {
+          "t_statistic": 1.8009,
+          "p_value": 0.071922,
+          "mean_return_positive": true,
+          "significant_at_005": false
+        },
+        "regime_robustness": {
+          "regime_details": {
+            "BULL": [
+              {
+                "year": 2020,
+                "spy_return": 15.17,
+                "strategy_return": 9.67
+              },
+              {
+                "year": 2021,
+                "spy_return": 28.87,
+                "strategy_return": 27.0
+              },
+              {
+                "year": 2023,
+                "spy_return": 24.81,
+                "strategy_return": 24.49
+              },
+              {
+                "year": 2024,
+                "spy_return": 24.09,
+                "strategy_return": 24.1
+              },
+              {
+                "year": 2025,
+                "spy_return": 17.54,
+                "strategy_return": -0.18
+              }
+            ],
+            "BEAR": [
+              {
+                "year": 2022,
+                "spy_return": -19.76,
+                "strategy_return": -20.76
+              }
+            ]
+          },
+          "regime_averages": {
+            "BULL": 17.02,
+            "BEAR": -20.76
+          },
+          "positive_regimes": 1,
+          "total_regimes": 2,
+          "passes": false
+        },
+        "walk_forward": [
+          {
+            "fold": 1,
+            "test_start": "2020-10-16",
+            "test_end": "2022-07-11",
+            "test_days": 435,
+            "return_pct": 8.08,
+            "sharpe": 0.37
+          },
+          {
+            "fold": 2,
+            "test_start": "2022-07-12",
+            "test_end": "2024-04-03",
+            "test_days": 435,
+            "return_pct": 37.65,
+            "sharpe": 1.63
+          },
+          {
+            "fold": 3,
+            "test_start": "2024-04-04",
+            "test_end": "2025-12-30",
+            "test_days": 437,
+            "return_pct": 15.32,
+            "sharpe": 0.61
+          }
+        ],
+        "monte_carlo": {
+          "n_simulations": 1000,
+          "median_sharpe": 0.7369,
+          "p5_sharpe": 0.7369,
+          "p95_sharpe": 0.7369,
+          "pct_positive_sharpe": 100.0,
+          "median_return_pct": 70.21,
+          "p5_return_pct": 70.21,
+          "p95_return_pct": 70.21,
+          "median_max_dd_pct": -20.36,
+          "p5_max_dd_pct": -30.0
+        },
+        "parameter_sensitivity": [
+          {
+            "sma_short": 40,
+            "sma_long": 160,
+            "variation": "-20%",
+            "total_return_pct": 120.07,
+            "sharpe": 1.03
+          },
+          {
+            "sma_short": 45,
+            "sma_long": 180,
+            "variation": "-10%",
+            "total_return_pct": 93.44,
+            "sharpe": 0.88
+          },
+          {
+            "sma_short": 50,
+            "sma_long": 200,
+            "variation": "base",
+            "total_return_pct": 70.21,
+            "sharpe": 0.74
+          },
+          {
+            "sma_short": 55,
+            "sma_long": 220,
+            "variation": "+10%",
+            "total_return_pct": 70.71,
+            "sharpe": 0.75
+          },
+          {
+            "sma_short": 60,
+            "sma_long": 240,
+            "variation": "+20%",
+            "total_return_pct": 67.78,
+            "sharpe": 0.74
+          },
+          {
+            "rsi_threshold": 40,
+            "variation": "-20% RSI",
+            "total_return_pct": 70.21,
+            "sharpe": 0.74
+          },
+          {
+            "rsi_threshold": 50,
+            "variation": "base RSI",
+            "total_return_pct": 70.21,
+            "sharpe": 0.74
+          },
+          {
+            "rsi_threshold": 60,
+            "variation": "+20% RSI",
+            "total_return_pct": 70.21,
+            "sharpe": 0.74
+          }
+        ],
+        "cost_sensitivity": {
+          "normal_costs": {
+            "commission": 0.1,
+            "slippage": 0.05,
+            "return_pct": 70.21
+          },
+          "double_costs": {
+            "commission": 0.2,
+            "slippage": 0.1,
+            "return_pct": 67.67
+          },
+          "triple_costs": {
+            "commission": 0.3,
+            "slippage": 0.15,
+            "return_pct": 65.15
+          },
+          "still_profitable_at_2x": "True",
+          "still_profitable_at_3x": "True"
+        }
+      }
+    },
+    "trade_log_sample": [
+      {
+        "date": "2020-10-15",
+        "from_regime": "WARMUP",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2022-03-08",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2023-02-02",
+        "from_regime": "DEFENSIVE",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2025-04-07",
+        "from_regime": "AGGRESSIVE",
+        "to_regime": "CRASH_PROTECT",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      },
+      {
+        "date": "2025-07-01",
+        "from_regime": "DEFENSIVE",
+        "to_regime": "AGGRESSIVE",
+        "turnover": 2.0,
+        "tc_pct": 0.3
+      }
+    ]
+  },
+  "benchmark": {
+    "total_return_pct": 111.25,
+    "cagr_pct": 13.3,
+    "sharpe_ratio": 0.7178,
+    "max_drawdown_pct": -33.2,
+    "final_equity": 211246.81
+  },
+  "v3_comparison": {
+    "total_return_pct": -6.32,
+    "cagr_pct": -1.08,
+    "sharpe_ratio": 0.2153,
+    "max_drawdown_pct": -74.23,
+    "verdict": "FAIL (3/10)"
+  }
+}
