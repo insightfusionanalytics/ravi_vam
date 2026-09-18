@@ -14,6 +14,9 @@ echo "==> installing dependencies"
 echo "==> running test suite (deploy aborts if this fails)"
 .venv/bin/pytest
 
+echo "==> regenerating dashboard precomputed snapshots (so the default view is never stale)"
+.venv/bin/python3 scripts/generate_precomputed_snapshots.py
+
 echo "==> restarting service"
 sudo systemctl restart ravi-vam
 

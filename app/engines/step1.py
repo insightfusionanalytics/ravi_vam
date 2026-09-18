@@ -163,7 +163,7 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
 
         # Execute pending trade at today's open (T+1)
         if pending_trade is not None:
-            new_state, reason = pending_trade
+            new_state, reason, signal_snapshot = pending_trade
             pending_trade = None
 
             old_state_val = state.value
@@ -201,6 +201,17 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
                 "state_to": new_state.value,
                 "trigger_reason": reason,
                 "target_allocation_pct": round(target_alloc * 100, 2),
+                # Signal-day snapshot — the values that actually drove this
+                # decision, captured the day BEFORE execution, so the trade
+                # can be independently checked against raw market data.
+                "signal_spy_close": round(signal_snapshot["spy_close"], 2),
+                "signal_vix": round(signal_snapshot["vix"], 2),
+                "signal_spy_sma50": round(signal_snapshot["spy_sma50"], 2),
+                "signal_spy_sma200": round(signal_snapshot["spy_sma200"], 2),
+                "signal_spy_rsi": round(signal_snapshot["spy_rsi"], 2),
+                "signal_day_upro_close": round(signal_snapshot["upro_close"], 4),
+                "overnight_gap_pct": round((upro_open / signal_snapshot["upro_close"] - 1) * 100, 2)
+                if signal_snapshot["upro_close"] > 0 else 0,
                 "exec_price": round(upro_open, 4),
                 "shares_before": round(old_shares, 4),
                 "cash_before": round(old_cash, 2),
@@ -242,7 +253,18 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
         )
 
         if new_state != old_state:
-            pending_trade = (new_state, reason)
+            pending_trade = (
+                new_state,
+                reason,
+                {
+                    "spy_close": spy_close,
+                    "spy_sma50": spy_sma50,
+                    "spy_sma200": spy_sma200,
+                    "spy_rsi": spy_rsi,
+                    "vix": vix,
+                    "upro_close": upro_price,
+                },
+            )
 
         portfolio_value = cash + shares * upro_price
         upro_alloc_pct = (shares * upro_price / portfolio_value * 100) if portfolio_value > 0 else 0

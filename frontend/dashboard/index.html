@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RAVI VAM — Strategy Dashboard</title>
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -70,6 +71,8 @@
     .trade-summary-value.negative { color: var(--red); }
     .trade-list { display: flex; flex-direction: column; gap: 8px; }
     .trade-item { background: #0a0a0a; border: 1px solid var(--card-border); border-radius: 4px; padding: 8px; font-size: 11px; transition: all 0.2s; }
+    .trade-item:hover { border-color: var(--accent); }
+    .trade-item.trade-item-active { border-color: var(--accent); background: rgba(59,130,246,0.12); box-shadow: 0 0 0 1px var(--accent); }
     .trade-item:hover { border-color: var(--accent); background: #0f0f0f; }
     .trade-item-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
     .trade-number { color: var(--text-muted); font-weight: 600; }
@@ -126,6 +129,8 @@
     .run-btn { width: 100%; margin-top: 12px; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s; letter-spacing: 0.5px; }
     .run-btn:hover { background: #6BB3FF; }
     .run-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .export-btn { flex: 1; padding: 7px 6px; background: #111; color: var(--text-dim); border: 1px solid var(--card-border); border-radius: 5px; font-size: 10px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .export-btn:hover { border-color: var(--accent); color: var(--accent); }
     .api-mode-notice { background: rgba(168,85,247,0.1); border: 1px solid #a855f7; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; font-size: 10px; color: #a855f7; line-height: 1.5; }
     .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
     .loading-overlay.visible { display: flex; }
@@ -306,6 +311,10 @@
   <div id="trade-panel-toggle-btn" class="trade-panel-toggle" onclick="toggleTradePanel()">▶</div>
   <div class="trade-panel">
     <div class="trade-panel-title">Trade History & Stats</div>
+    <div class="export-buttons" style="display:flex; gap:6px; margin-bottom:10px;">
+      <button class="export-btn" onclick="exportTradesCSV()" title="Every trade with the signal-day indicator values that drove it, for independent verification">⬇ Trades (CSV)</button>
+      <button class="export-btn" onclick="exportReportPDF()" title="A saved snapshot of this exact run's parameters and results, to compare against later">⬇ Report (PDF)</button>
+    </div>
     <div class="trade-summary">
       <div class="trade-summary-row"><span class="trade-summary-label">Final Portfolio</span><span class="trade-summary-value positive" id="trade-final">Loading...</span></div>
       <div class="trade-summary-row"><span class="trade-summary-label">Total Return</span><span class="trade-summary-value positive" id="trade-return">Loading...</span></div>
@@ -1309,8 +1318,13 @@
       portfolioData.forEach(row => {
         stratData.push({ time: row.date, value: row.portfolio_value });
         bhData.push({ time: row.date, value: capital * (row.spy_close / startSPY) });
+        // No inline text label here (was overlapping into unreadable soup on
+        // any chart with more than a handful of trades). The color still
+        // shows the new state; hovering the crosshair shows the full detail,
+        // and the color-coded state timeline bar below the chart gives the
+        // same information continuously without clutter.
         if (row.state_changed_today === 'YES')
-          eqMarkers.push({ time: row.date, position: 'belowBar', color: stateColors[row.state]||'#666', shape: 'circle', text: row.state.replace(/_/g,' '), size: 0.5 });
+          eqMarkers.push({ time: row.date, position: 'belowBar', color: stateColors[row.state]||'#666', shape: 'circle', size: 1 });
       });
       series.strategy.setData(stratData);
       series.buyHold.setData(bhData);
@@ -1402,11 +1416,14 @@
         const date = trade.execution_date;
         if (!date) return;
         if ((trade.action === 'BUY' && showBuys) || (trade.action === 'SELL' && showSells)) {
+          // No inline text label (was stacking into unreadable overlapping
+          // text in dense trading periods). Hover the crosshair for the
+          // full state transition, or check the Major Decisions panel.
           markers.push({
             time: date, position: trade.action === 'BUY' ? 'belowBar' : 'aboveBar',
             color: trade.action === 'BUY' ? '#22c55e' : '#ef4444',
             shape: trade.action === 'BUY' ? 'arrowUp' : 'arrowDown',
-            text: `${trade.action} → ${trade.state_to || ''}`, size: 2
+            size: 1.5
           });
         }
       });
@@ -1448,13 +1465,190 @@
       tradeLogData.slice(-30).reverse().forEach((trade, idx, arr) => {
         const div = document.createElement('div');
         div.className = 'trade-item';
+        div.style.cursor = 'pointer';
+        div.title = 'Click to jump the charts to this trade';
         const execDate = trade.execution_date || trade.date || '';
         const instrument = trade.instrument || 'UPRO';
         const execPrice = trade.exec_price || 0;
         const stateTo = trade.state_to || '';
         div.innerHTML = `<div class="trade-item-header"><span class="trade-number">#${arr.length-idx}</span><span class="trade-action ${(trade.action||'').toLowerCase()}">${trade.action}</span><span class="trade-date">${execDate}</span></div><div class="trade-details">${instrument} @ $${execPrice.toFixed(2)} → ${stateTo}</div>`;
+        div.addEventListener('click', () => jumpChartsToDate(execDate, div));
         listEl.appendChild(div);
       });
+    }
+
+    // =========================================================================
+    // EXPORTS — CSV trade log (full indicator context, for independent
+    // verification) and a PDF report (params + metrics, to compare runs).
+    // =========================================================================
+    function todayStamp() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function safeFilenamePart(s) {
+      return String(s || '').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
+    }
+
+    function toCSV(rows) {
+      if (!rows || !rows.length) return '';
+      const allKeys = new Set();
+      rows.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
+      const headers = Array.from(allKeys);
+      const escape = v => {
+        if (v === null || v === undefined) return '';
+        const s = String(v);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      const lines = [headers.join(',')];
+      rows.forEach(r => lines.push(headers.map(h => escape(r[h])).join(',')));
+      return lines.join('\n');
+    }
+
+    function downloadFile(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function exportTradesCSV() {
+      if (!tradeLogData || !tradeLogData.length) {
+        alert('No trades to export yet — run a backtest first.');
+        return;
+      }
+      const csv = toCSV(tradeLogData);
+      const name = safeFilenamePart(strategyConfig && strategyConfig.name || currentStrategyId);
+      downloadFile(`${name}_trades_${todayStamp()}.csv`, csv, 'text/csv');
+    }
+
+    async function exportReportPDF() {
+      if (!metricsData) {
+        alert('No results to export yet — run a backtest first.');
+        return;
+      }
+      if (!window.jspdf) {
+        alert('PDF library did not load — check your internet connection and try again.');
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let y = 44;
+
+      const ensureSpace = (needed) => {
+        if (y + needed > pageHeight - 40) { doc.addPage(); y = 44; }
+      };
+
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(20);
+      doc.text('RAVI VAM — Backtest Report', 40, y); y += 22;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(90);
+      doc.text(String((strategyConfig && strategyConfig.name) || currentStrategyId), 40, y); y += 14;
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 40, y); y += 14;
+      const dataSourceLabel = (document.getElementById('data-source-badge') || {}).textContent || '';
+      doc.text(`Data source: ${dataSourceLabel}`, 40, y); y += 14;
+      const m = metricsData;
+      doc.text(`History range: ${m.full_history_mode ? 'Full History (2011-2025)' : 'Recent (~2020-2025)'}`, 40, y); y += 20;
+      doc.setTextColor(0);
+
+      // Equity chart screenshot, if the chart library supports it
+      try {
+        if (charts.equity && typeof charts.equity.takeScreenshot === 'function') {
+          const canvas = charts.equity.takeScreenshot();
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = pageWidth - 80;
+          const imgHeight = imgWidth * (canvas.height / canvas.width);
+          ensureSpace(imgHeight + 10);
+          doc.addImage(imgData, 'PNG', 40, y, imgWidth, imgHeight);
+          y += imgHeight + 20;
+        }
+      } catch (e) {
+        console.warn('Could not embed chart image in PDF report:', e);
+      }
+
+      ensureSpace(20);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text('Key Metrics', 40, y); y += 16;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      const metricRows = [
+        ['Final Value', `$${(m.final_value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`],
+        ['CAGR', `${(m.cagr_pct || 0).toFixed(2)}%`],
+        ['Sharpe', (m.sharpe || 0).toFixed(3)],
+        ['Sortino', (m.sortino !== undefined ? m.sortino.toFixed(3) : '—')],
+        ['Max Drawdown', `${(m.max_drawdown_pct || 0).toFixed(2)}%`],
+        ['Total Trades', String(m.total_trades || 0)],
+        ['Alpha vs SPY', (m.alpha_vs_spy_pct !== undefined && m.alpha_vs_spy_pct !== null) ? `${m.alpha_vs_spy_pct.toFixed(2)}%` : '—'],
+        ['Years Tested', String(m.years || '')],
+      ];
+      metricRows.forEach(([k, v]) => {
+        ensureSpace(14);
+        doc.text(String(k), 40, y);
+        doc.text(String(v), 220, y);
+        y += 14;
+      });
+      y += 12;
+
+      ensureSpace(20);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text('Parameters Used', 40, y); y += 16;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      const params = readParams();
+      Object.entries(params).forEach(([k, v]) => {
+        ensureSpace(14);
+        const label = (strategyConfig && strategyConfig.params && strategyConfig.params[k] && strategyConfig.params[k].label) || k;
+        doc.text(String(label), 40, y);
+        doc.text(String(v), 300, y);
+        y += 14;
+      });
+      y += 12;
+
+      if (m.yearly_returns && Object.keys(m.yearly_returns).length) {
+        ensureSpace(20);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+        doc.text('Annual Returns — Strategy vs SPY Buy & Hold', 40, y); y += 16;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+        doc.setTextColor(90);
+        doc.text('Year', 40, y); doc.text('Strategy', 130, y); doc.text('SPY B&H', 230, y);
+        y += 12; doc.setTextColor(0);
+        Object.keys(m.yearly_returns).sort().forEach(yr => {
+          ensureSpace(14);
+          const sv = m.yearly_returns[yr];
+          const bv = (m.yearly_spy_returns && m.yearly_spy_returns[yr] !== undefined) ? m.yearly_spy_returns[yr] : null;
+          doc.text(yr, 40, y);
+          doc.text(`${sv >= 0 ? '+' : ''}${sv.toFixed(1)}%`, 130, y);
+          doc.text(bv !== null ? `${bv >= 0 ? '+' : ''}${bv.toFixed(1)}%` : '—', 230, y);
+          y += 14;
+        });
+      }
+
+      const name = safeFilenamePart((strategyConfig && strategyConfig.name) || currentStrategyId);
+      doc.save(`${name}_report_${todayStamp()}.pdf`);
+    }
+
+    // =========================================================================
+    // "Major Decisions" -> chart cross-reference: clicking a trade zooms the
+    // equity + SPY charts to a window around that date and flashes the row,
+    // so a claim in the trade list can be visually checked against the chart
+    // instead of the two living in disconnected panels.
+    // =========================================================================
+    function jumpChartsToDate(dateStr, rowEl) {
+      if (!dateStr) return;
+      const center = new Date(dateStr + 'T00:00:00Z');
+      const from = new Date(center); from.setUTCDate(from.getUTCDate() - 45);
+      const to = new Date(center); to.setUTCDate(to.getUTCDate() + 45);
+      const fmt = d => d.toISOString().slice(0, 10);
+      const range = { from: fmt(from), to: fmt(to) };
+
+      if (charts.equity) charts.equity.timeScale().setVisibleRange(range);
+      if (charts.spy) charts.spy.timeScale().setVisibleRange(range);
+      if (charts.equity) charts.equity.setCrosshairPosition(undefined, undefined, dateStr);
+      if (charts.spy) charts.spy.setCrosshairPosition(undefined, undefined, dateStr);
+
+      document.querySelectorAll('.trade-item.trade-item-active').forEach(el => el.classList.remove('trade-item-active'));
+      if (rowEl) rowEl.classList.add('trade-item-active');
+
+      const chartSection = document.querySelector('.main-container');
+      if (chartSection) chartSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // =========================================================================

@@ -190,7 +190,7 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
         vix = row["VIX"]
 
         if pending_trade is not None:
-            new_state, reason = pending_trade
+            new_state, reason, signal_snapshot = pending_trade
             pending_trade = None
 
             pv_before = cash + upro_shares * upro_exec + tqqq_shares * tqqq_exec
@@ -248,6 +248,12 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
                         "state_from": old_state_val,
                         "state_to": new_state.value,
                         "trigger_reason": reason,
+                        "signal_spy_close": round(signal_snapshot["spy_close"], 2),
+                        "signal_qqq_close": round(signal_snapshot["qqq_close"], 2),
+                        "signal_vix": round(signal_snapshot["vix"], 2),
+                        "signal_spy_sma50": round(signal_snapshot["spy_sma50"], 2),
+                        "signal_spy_sma200": round(signal_snapshot["spy_sma200"], 2),
+                        "signal_spy_rsi": round(signal_snapshot["spy_rsi"], 2),
                         "exec_price": round(exec_p, 4),
                         "shares_delta": round(delta, 4),
                         "trade_value_dollars": round(trade_val, 2),
@@ -293,7 +299,18 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
         )
 
         if new_state != old_state:
-            pending_trade = (new_state, reason)
+            pending_trade = (
+                new_state,
+                reason,
+                {
+                    "spy_close": spy_close,
+                    "qqq_close": qqq_close,
+                    "spy_sma50": spy_sma50,
+                    "spy_sma200": spy_sma200,
+                    "spy_rsi": spy_rsi,
+                    "vix": vix,
+                },
+            )
 
         portfolio_value = cash + upro_shares * upro_price + tqqq_shares * tqqq_price
         upro_val = upro_shares * upro_price
