@@ -22,8 +22,11 @@ sudo systemctl restart ravi-vam
 
 echo "==> health check"
 sleep 2
-printf "  /                -> "; curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/
-printf "  /api/strategies  -> "; curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/api/strategies
-printf "  /docs            -> "; curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/docs
+# The systemd unit (deploy/ravi-vam.service) runs uvicorn on 8005, not 8000 —
+# this was checking the wrong port entirely, so a 404 here didn't actually
+# mean the app was broken. Fixed 2026-09-18.
+printf "  /                -> "; curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8005/
+printf "  /api/strategies  -> "; curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8005/api/strategies
+printf "  /docs            -> "; curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8005/docs
 
 echo "==> done"
