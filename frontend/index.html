@@ -252,7 +252,14 @@
 
   <script>
     // API base URL — empty string for same-origin (local dev), full URL for split deployment
-    const API_BASE = window.location.hostname === 'localhost' ? '' : (window.__RAVI_API_BASE || 'https://ravi-vam-api.onrender.com');
+    // Same-origin by default (this app serves frontend + API from one process
+    // on one domain — see README). Only use a different backend if explicitly
+    // opted into via window.__RAVI_API_BASE (e.g. a genuinely split deployment).
+    // Previously defaulted to a separate, stale Render deployment whenever the
+    // hostname wasn't literally "localhost" -- on the real production domain,
+    // that meant the page would flash the correct same-origin fallback data,
+    // then silently overwrite it with old data from that unrelated service.
+    const API_BASE = window.__RAVI_API_BASE || '';
     const API_FETCH_TIMEOUT_MS = 7000;
 
     // Static fallback so first paint is instant even when Render is cold.
