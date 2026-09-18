@@ -26,7 +26,7 @@ ENV/
 *.swo
 
 # Logs
-*.log
+# *.log
 uvicorn.log
 
 # Environment variables
@@ -34,11 +34,11 @@ uvicorn.log
 .env.*
 
 # yfinance marker file (generated at runtime)
-data/databento/equities/.yfinance_source
+# data/databento/equities/.yfinance_source
 
 # Analysis artifacts (not part of web app)
-analyst_trade_logs/
-_archive_v1_v4/
+# analyst_trade_logs/
+# _archive_v1_v4/
 
 # Duplicate files (macOS sync artifacts)
 *-Anmol's MacBook Pro*
