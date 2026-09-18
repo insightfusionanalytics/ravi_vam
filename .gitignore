@@ -16,7 +16,7 @@ env/
 ENV/
 
 # Data files (large — use DataBento source or yfinance fallback)
-data/
+# data/
 
 # IDE
 .DS_Store
