@@ -10,9 +10,9 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --bg: #0a0a0a; --card: #171717; --card-border: #262626;
-      --text: #e5e5e5; --text-dim: #a3a3a3; --text-muted: #737373;
-      --accent: #3b82f6; --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+      --bg: #0a0b0d; --card: #131519; --card-border: #24272e;
+      --text: #edeef0; --text-dim: #9098a3; --text-muted: #5c6470;
+      --accent: #4c7dff; --green: #1fad5c; --red: #dc4646; --yellow: #c99a2e;
     }
     body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
     .container { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto auto 1fr auto; height: 100vh; transition: grid-template-columns 0.3s ease; }
@@ -72,7 +72,7 @@
     .trade-list { display: flex; flex-direction: column; gap: 8px; }
     .trade-item { background: #0a0a0a; border: 1px solid var(--card-border); border-radius: 4px; padding: 8px; font-size: 11px; transition: all 0.2s; }
     .trade-item:hover { border-color: var(--accent); }
-    .trade-item.trade-item-active { border-color: var(--accent); background: rgba(59,130,246,0.12); box-shadow: 0 0 0 1px var(--accent); }
+    .trade-item.trade-item-active { border-color: var(--accent); background: rgba(76,125,255,0.1); }
     .trade-item:hover { border-color: var(--accent); background: #0f0f0f; }
     .trade-item-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
     .trade-number { color: var(--text-muted); font-weight: 600; }
@@ -90,8 +90,7 @@
     .timeline-segment.AGGRESSIVE { background: var(--green); }
     .timeline-segment.CASH { background: var(--red); }
     .timeline-segment.CRASH_PROTECT { background: #a855f7; }
-    .state-badge { position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 2px solid; z-index: 10; animation: pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .state-badge { position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid; z-index: 10; }
     .state-badge.BULL_FULL, .state-badge.BULL_100, .state-badge.AGGRESSIVE { background: rgba(34, 197, 94, 0.15); border-color: var(--green); color: var(--green); }
     .state-badge.BULL_TRIMMED { background: rgba(234, 179, 8, 0.15); border-color: var(--yellow); color: var(--yellow); }
     .state-badge.DEF_SPY, .state-badge.DEF_QQQ, .state-badge.DEF_BOTH, .state-badge.DEFENSIVE { background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #f59e0b; }
@@ -104,8 +103,8 @@
     .state-machine { background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 20px; }
     .state-machine-title { font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 16px; }
     .states-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .state-node { padding: 12px 16px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 2px solid; text-align: center; transition: all 0.3s ease; }
-    .state-node.active { transform: scale(1.05); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    .state-node { padding: 12px 16px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid; text-align: center; transition: border-color 0.15s ease; }
+    .state-node.active { border-width: 2px; }
     .state-bull { background: rgba(34, 197, 94, 0.1); border-color: var(--green); color: var(--green); }
     .state-trimmed { background: rgba(234, 179, 8, 0.1); border-color: var(--yellow); color: var(--yellow); }
     .state-defensive { background: rgba(245, 158, 11, 0.1); border-color: #f59e0b; color: #f59e0b; }
@@ -131,12 +130,25 @@
     .run-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
     .export-btn { flex: 1; padding: 7px 6px; background: #111; color: var(--text-dim); border: 1px solid var(--card-border); border-radius: 5px; font-size: 10px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .export-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .api-mode-notice { background: rgba(168,85,247,0.1); border: 1px solid #a855f7; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; font-size: 10px; color: #a855f7; line-height: 1.5; }
+    .api-mode-notice { background: var(--card); border: 1px solid var(--card-border); border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; font-size: 10px; color: var(--text-dim); line-height: 1.5; }
     .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
     .loading-overlay.visible { display: flex; }
     .loading-spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { color: var(--text-dim); font-size: 13px; }
+
+    /* Returns distribution / monthly P&L / expectancy panels */
+    .hist-bars { display: flex; align-items: flex-end; gap: 1px; height: 110px; }
+    .hist-bar { flex: 1; border-radius: 1px 1px 0 0; min-height: 1px; background: var(--accent); opacity: 0.75; }
+    .hist-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+    .heatmap-grid { display: grid; grid-template-columns: 46px repeat(12, 1fr); gap: 3px; font-size: 10px; }
+    .heatmap-grid .hdr { color: var(--text-muted); text-align: center; padding: 3px 0; }
+    .heatmap-grid .yr { color: var(--text-muted); display: flex; align-items: center; font-family: 'JetBrains Mono', monospace; }
+    .heatmap-cell { text-align: center; padding: 5px 2px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text); background: #1a1d22; }
+    .heatmap-cell.empty { background: transparent; color: transparent; }
+    .expectancy-stats { display: flex; gap: 32px; flex-wrap: wrap; }
+    .expectancy-stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 4px; }
+    .expectancy-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 19px; font-weight: 700; }
 
     /* ===== RESPONSIVE — Tablet (<=900px) ===== */
     @media (max-width: 900px) {
@@ -223,8 +235,10 @@
   <div class="container">
   <div class="header">
     <div class="header-left">
-      <a href="/" class="back-link">← Strategies</a>
       <div class="logo">RAVI VAM</div>
+      <a href="/" class="back-link">Strategies</a>
+      <a href="/compare/" class="back-link">Compare</a>
+      <a href="/optimize/" class="back-link">Optimization</a>
       <div class="strategy-name" id="strategy-name-header">Loading...</div>
       <span class="data-source-badge unknown" id="data-source-badge" title="Data source not yet determined">DATA: ...</span>
     </div>
@@ -305,6 +319,21 @@
     <div class="chart-container">
       <div class="chart-label">Drawdown from Peak (%)</div>
       <div id="chart-drawdown" class="chart-canvas short"></div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-label">Daily Return Distribution</div>
+      <div id="return-histogram" style="padding: 8px 4px 4px;"></div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-label">Monthly Returns</div>
+      <div id="monthly-heatmap" style="padding: 4px;"></div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-label">Expectancy per Investment Cycle (cash &rarr; invested &rarr; back to cash)</div>
+      <div id="expectancy-block" style="padding: 8px 4px;"></div>
     </div>
   </div>
 
@@ -429,6 +458,7 @@
       }
 
       wireSliders();
+      applyPresetFromURL();
 
       // On mobile, collapse both panels by default to show charts full-width
       if (isMobile()) {
@@ -582,6 +612,48 @@
 
     function onParamChange(key, value, unit) {
       document.getElementById(`val-${key}`).textContent = formatParamValue(key, +value, unit);
+    }
+
+    // Lets the optimization results page (/optimize/) hand a specific
+    // parameter set to this dashboard via ?preset=<json>, e.g. the
+    // "Load these settings into the dashboard" button on a recommended
+    // candidate -- sets the matching sliders, shows a banner so it's
+    // obvious these aren't the defaults, and runs the backtest
+    // immediately so the visitor sees the actual result, not just moved
+    // sliders.
+    function applyPresetFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const presetRaw = urlParams.get('preset');
+      if (!presetRaw) return;
+
+      let preset;
+      try {
+        preset = JSON.parse(presetRaw);
+      } catch (e) {
+        console.warn('Ignoring malformed preset param:', e.message);
+        return;
+      }
+
+      let applied = 0;
+      for (const [key, value] of Object.entries(preset)) {
+        const slider = document.getElementById(`param-${key}`);
+        if (!slider) continue;
+        slider.value = value;
+        const unit = strategyConfig.params[key] ? strategyConfig.params[key].unit : '';
+        onParamChange(key, value, unit);
+        applied++;
+      }
+      if (applied === 0) return;
+
+      const notice = document.createElement('div');
+      notice.className = 'api-mode-notice';
+      notice.style.cssText = 'border-color:#22c55e; color:#22c55e; background:rgba(34,197,94,0.1); margin-bottom:12px;';
+      notice.innerHTML = '<strong>Showing optimizer-recommended settings</strong> — not the defaults. ' +
+        '<a href="?strategy=' + encodeURIComponent(currentStrategyId) + '" style="color:#22c55e;">Reset to defaults</a>';
+      const sidebarParams = document.getElementById('sidebar-params');
+      if (sidebarParams) sidebarParams.prepend(notice);
+
+      runBacktestViaAPI(readParams());
     }
 
     // =========================================================================
@@ -1217,6 +1289,131 @@
     }
 
     // =========================================================================
+    // RETURNS ANALYTICS — daily return distribution, monthly P&L heatmap,
+    // and expectancy per investment cycle. All computed client-side from
+    // portfolioData (the same daily_log every other chart on this page
+    // already uses), so there's nothing new to fetch.
+    // =========================================================================
+
+    // Which daily_log "state" values mean "not holding a directional
+    // position" -- used to reconstruct discrete investment cycles for the
+    // expectancy stat. A strategy continuously rebalancing between
+    // BULL_FULL/BULL_TRIMMED/DEFENSIVE doesn't have natural round-trip
+    // trades the way a single buy/sell pair does; the stretch between
+    // leaving cash and returning to it is the closest honest analogue.
+    const CASH_LIKE_STATES = {
+      step1_upro_4state: ['CASH'],
+      step2_upro_tqqq_6state: ['CASH'],
+    };
+
+    function dailyReturnsFromLog(dailyLog) {
+      const rets = [];
+      for (let i = 1; i < dailyLog.length; i++) {
+        const prev = dailyLog[i - 1].portfolio_value, cur = dailyLog[i].portfolio_value;
+        if (prev > 0) rets.push((cur - prev) / prev);
+      }
+      return rets;
+    }
+
+    function monthlyReturnsByYearFromLog(dailyLog) {
+      const byMonth = {};
+      for (const row of dailyLog) {
+        const ym = row.date.slice(0, 7);
+        if (!byMonth[ym]) byMonth[ym] = { first: row.portfolio_value, last: row.portfolio_value };
+        byMonth[ym].last = row.portfolio_value;
+      }
+      const byYear = {};
+      for (const [ym, v] of Object.entries(byMonth)) {
+        const [yr, mo] = ym.split('-');
+        if (!byYear[yr]) byYear[yr] = Array(12).fill(null);
+        byYear[yr][parseInt(mo, 10) - 1] = v.first > 0 ? ((v.last / v.first - 1) * 100) : null;
+      }
+      return byYear;
+    }
+
+    function computeExpectancyFromLog(dailyLog, strategyId) {
+      const cashStates = CASH_LIKE_STATES[strategyId];
+      if (!cashStates) return null;
+      const episodes = [];
+      let epStart = null;
+      for (const row of dailyLog) {
+        const inCash = cashStates.includes(row.state);
+        if (!inCash && epStart === null) epStart = row.portfolio_value;
+        else if (inCash && epStart !== null) { episodes.push((row.portfolio_value - epStart) / epStart); epStart = null; }
+      }
+      if (episodes.length === 0) return null;
+      const wins = episodes.filter(e => e > 0), losses = episodes.filter(e => e <= 0);
+      const winRate = wins.length / episodes.length;
+      const avgWin = wins.length ? wins.reduce((a, b) => a + b, 0) / wins.length : 0;
+      const avgLoss = losses.length ? losses.reduce((a, b) => a + b, 0) / losses.length : 0;
+      return { episodes: episodes.length, winRate, avgWin, avgLoss, expectancy: winRate * avgWin + (1 - winRate) * avgLoss };
+    }
+
+    function renderReturnHistogram(returns) {
+      const el = document.getElementById('return-histogram');
+      if (!el) return;
+      if (!returns.length) { el.innerHTML = ''; return; }
+      const pctReturns = returns.map(r => r * 100);
+      const min = Math.min(...pctReturns), max = Math.max(...pctReturns);
+      const nBins = 40;
+      const width = (max - min) / nBins || 1;
+      const bins = Array(nBins).fill(0);
+      pctReturns.forEach(r => {
+        let idx = Math.floor((r - min) / width);
+        if (idx >= nBins) idx = nBins - 1;
+        if (idx < 0) idx = 0;
+        bins[idx]++;
+      });
+      const maxCount = Math.max(...bins);
+      el.innerHTML = `<div class="hist-bars">${bins.map(c => `<div class="hist-bar" style="height:${Math.max(2, c / maxCount * 108)}px;"></div>`).join('')}</div>
+        <div class="hist-axis"><span>${min.toFixed(1)}%</span><span>0%</span><span>${max.toFixed(1)}%</span></div>`;
+    }
+
+    function renderMonthlyHeatmap(byYear) {
+      const el = document.getElementById('monthly-heatmap');
+      if (!el) return;
+      const years = Object.keys(byYear).sort();
+      if (!years.length) { el.innerHTML = ''; return; }
+      const months = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+      let html = `<div class="heatmap-grid"><div></div>${months.map(m => `<div class="hdr">${m}</div>`).join('')}`;
+      for (const yr of years) {
+        html += `<div class="yr">${yr}</div>`;
+        for (const v of byYear[yr]) {
+          if (v === null) { html += `<div class="heatmap-cell empty">&middot;</div>`; continue; }
+          const alpha = Math.min(0.85, Math.abs(v) / 15 + 0.15);
+          const bg = v >= 0 ? `rgba(31,173,92,${alpha})` : `rgba(220,70,70,${alpha})`;
+          html += `<div class="heatmap-cell" style="background:${bg};">${v >= 0 ? '+' : ''}${v.toFixed(1)}</div>`;
+        }
+      }
+      html += `</div>`;
+      el.innerHTML = html;
+    }
+
+    function renderExpectancyBlock(exp) {
+      const el = document.getElementById('expectancy-block');
+      if (!el) return;
+      if (!exp) {
+        el.innerHTML = '<div style="color:var(--text-muted);font-size:11px;padding:8px 0;">Not shown for this strategy — it hedges an existing position rather than being invested or not, so a cash-to-cash cycle doesn\'t apply cleanly here.</div>';
+        return;
+      }
+      const cls = exp.expectancy >= 0 ? 'positive' : 'negative';
+      el.innerHTML = `<div class="expectancy-stats">
+        <div><div class="expectancy-stat-label">Expectancy / cycle</div><div class="expectancy-stat-value ${cls === 'positive' ? '' : ''}" style="color:${exp.expectancy >= 0 ? 'var(--green)' : 'var(--red)'};">${exp.expectancy >= 0 ? '+' : ''}${(exp.expectancy * 100).toFixed(2)}%</div></div>
+        <div><div class="expectancy-stat-label">Cycles</div><div class="expectancy-stat-value">${exp.episodes}</div></div>
+        <div><div class="expectancy-stat-label">Win rate</div><div class="expectancy-stat-value">${(exp.winRate * 100).toFixed(0)}%</div></div>
+        <div><div class="expectancy-stat-label">Avg win</div><div class="expectancy-stat-value" style="color:var(--green);">+${(exp.avgWin * 100).toFixed(1)}%</div></div>
+        <div><div class="expectancy-stat-label">Avg loss</div><div class="expectancy-stat-value" style="color:var(--red);">${(exp.avgLoss * 100).toFixed(1)}%</div></div>
+      </div>`;
+    }
+
+    function renderReturnsAnalytics() {
+      if (!portfolioData || !portfolioData.length) return;
+      renderReturnHistogram(dailyReturnsFromLog(portfolioData));
+      renderMonthlyHeatmap(monthlyReturnsByYearFromLog(portfolioData));
+      renderExpectancyBlock(computeExpectancyFromLog(portfolioData, currentStrategyId));
+    }
+
+    // =========================================================================
     // HEADER METRICS BAR — recomputed for the visible chart range on zoom/pan
     // =========================================================================
     function timeToDateStr(t) {
@@ -1314,6 +1511,7 @@
       params = params || readParams();
       const capital = params.capital || 100000;
       renderAnnualReturns();
+      renderReturnsAnalytics();
 
       dataByDate = {};
       portfolioData.forEach(row => { dataByDate[row.date] = row; });
@@ -1323,16 +1521,20 @@
 
       // Equity curve
       const stratData = [], bhData = [], eqMarkers = [];
+      let prevState = null;
       portfolioData.forEach(row => {
         stratData.push({ time: row.date, value: row.portfolio_value });
         bhData.push({ time: row.date, value: capital * (row.spy_close / startSPY) });
-        // No inline text label here (was overlapping into unreadable soup on
-        // any chart with more than a handful of trades). The color still
-        // shows the new state; hovering the crosshair shows the full detail,
-        // and the color-coded state timeline bar below the chart gives the
-        // same information continuously without clutter.
-        if (row.state_changed_today === 'YES')
+        // Only mark the kill-switch (-> CASH) and re-entry (CASH ->) events --
+        // the big, decisive moments. The finer bull/trimmed/defensive
+        // adjustments (still roughly half of all trades) are left off: they're
+        // already fully visible in the color-coded state timeline bar below,
+        // and plotting every one of them here made the chart unreadably dense
+        // (found by the client screenshotting it and asking why the markers
+        // "look wrong" -- they weren't wrong, just too many to read).
+        if (row.state_changed_today === 'YES' && (row.state === 'CASH' || prevState === 'CASH'))
           eqMarkers.push({ time: row.date, position: 'belowBar', color: stateColors[row.state]||'#666', shape: 'circle', size: 1 });
+        prevState = row.state;
       });
       series.strategy.setData(stratData);
       series.buyHold.setData(bhData);
@@ -1423,6 +1625,11 @@
       tradeLogData.forEach(trade => {
         const date = trade.execution_date;
         if (!date) return;
+        // Only the kill-switch / re-entry trades -- see the matching note on
+        // eqMarkers above. Marking every trim/rebuy too (roughly half of
+        // all trades) made this chart too dense to read.
+        const isMajor = trade.state_from === 'CASH' || trade.state_to === 'CASH';
+        if (!isMajor) return;
         if ((trade.action === 'BUY' && showBuys) || (trade.action === 'SELL' && showSells)) {
           // No inline text label (was stacking into unreadable overlapping
           // text in dense trading periods). Hover the crosshair for the

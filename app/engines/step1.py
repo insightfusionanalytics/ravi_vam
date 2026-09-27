@@ -7,6 +7,7 @@ leaving the original script 100% untouched.
 """
 
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -30,7 +31,7 @@ if DATA_DIR is not None:
 FULL_HISTORY_START = "2011-01-01"
 
 
-def _load_full_history_data(data_dir: Path) -> pd.DataFrame:
+def _load_full_history_data_uncached(data_dir: Path) -> pd.DataFrame:
     merged_dir = data_dir / "merged"
 
     def _load(name: str) -> pd.DataFrame:
@@ -48,6 +49,53 @@ def _load_full_history_data(data_dir: Path) -> pd.DataFrame:
     df["UPRO_Open"] = upro["open"].reindex(spy.index)
     df["VIX"] = vix["close"].reindex(spy.index)
     return df.ffill().dropna()
+
+
+# --- Caching for the optimizer: a study can call run() hundreds of times.
+# Without this, every single trial re-reads 3+ CSVs from disk and, for the
+# ~2/3 of tunable params that aren't SMA/RSI periods, redundantly recomputes
+# indicators that were already computed for an earlier trial with the same
+# periods. Two layers:
+#   1. raw price data, keyed only by (data_dir, full_history) -- never
+#      mutated, so a plain lru_cache is safe as long as every caller treats
+#      the returned frame as read-only (see _get_indicator_frame below).
+#   2. indicator-enriched frames, keyed additionally by the three params
+#      that actually affect indicator computation (sma_def/sma_kill/
+#      rsi_period). Bounded cardinality in practice -- an optimizer sampling
+#      integer periods from a fixed range revisits the same few dozen
+#      combinations across hundreds of trials.
+@lru_cache(maxsize=8)
+def _load_raw_data_cached(data_dir_str: str, full_history: bool) -> pd.DataFrame:
+    data_dir = Path(data_dir_str)
+    if full_history:
+        return _load_full_history_data_uncached(data_dir)
+    return _mod.load_step1_data()
+
+
+_INDICATOR_CACHE: dict[tuple, pd.DataFrame] = {}
+
+
+def _get_indicator_frame(data_dir: Path, full_history: bool, sma_def: int, sma_kill: int, rsi_period: int) -> pd.DataFrame:
+    """Raw data + indicators for this (dataset, periods) combination.
+
+    Always returns a fresh copy -- add_step1_indicators mutates its argument
+    in place, and callers further slice/filter the frame, so nothing here
+    may hand out a reference to the cached object itself.
+    """
+    key = (str(data_dir), full_history, sma_def, sma_kill, rsi_period)
+    cached = _INDICATOR_CACHE.get(key)
+    if cached is None:
+        raw = _load_raw_data_cached(str(data_dir), full_history)
+        enriched = _mod.add_step1_indicators(raw.copy(), sma_def=sma_def, sma_kill=sma_kill, rsi_period=rsi_period)
+        _INDICATOR_CACHE[key] = enriched
+        cached = enriched
+    return cached.copy()
+
+
+def _load_full_history_data(data_dir: Path) -> pd.DataFrame:
+    """Kept for external callers (e.g. scripts) that want raw data without
+    indicators. Internally, run() below goes through the cached path."""
+    return _load_full_history_data_uncached(data_dir)
 
 
 def _next_state(
@@ -113,6 +161,15 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
     sma_confirm_days = int(params.get("confirmDays", params.get("sma_confirm_days", 2)))
     rsi_sell = float(params.get("rsiOB", params.get("rsi_sell", 75.0)))
     rsi_rebuy = float(params.get("rsiRe", params.get("rsi_rebuy", 60.0)))
+    # SMA/RSI periods and UPRO allocation split — these were declared in the
+    # strategy JSON and honored by the browser JS engine but silently ignored
+    # here, meaning the dashboard sliders for them did nothing server-side.
+    # Defaults match Ravi's confirmed values (200/50-day SMA, 14-day RSI,
+    # 100% UPRO split for this UPRO-only strategy).
+    sma_kill_period = int(params.get("smaKill", params.get("sma_kill_period", 200)))
+    sma_def_period = int(params.get("smaDef", params.get("sma_def_period", 50)))
+    rsi_period = int(params.get("rsiPeriod", params.get("rsi_period", 14)))
+    upro_split = float(params.get("uproSplit", params.get("upro_split", 100.0))) / 100.0
     commission = float(params.get("commission", 1.0))
     slip_normal = float(params.get("slippage_bps_normal", 5.0))
     slip_stress = float(params.get("slippage_bps_stress", 20.0))
@@ -129,14 +186,18 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
     end_date = params.get("endDate", params.get("end_date"))
 
     State = _mod.State
-    STATE_ALLOCATION = _mod.STATE_ALLOCATION
+    # Scale the confirmed 99/75/50/0 allocation ladder by uproSplit (percent
+    # of the portfolio's bull allocation actually put into UPRO vs held as
+    # cash). At the default uproSplit=100 this is byte-identical to the
+    # module's fixed STATE_ALLOCATION.
+    STATE_ALLOCATION = {
+        State.BULL_100: upro_split * 0.99,
+        State.BULL_TRIMMED: upro_split * 0.75,
+        State.DEFENSIVE: upro_split * 0.50,
+        State.CASH: 0.00,
+    }
 
-    if full_history:
-        df = _load_full_history_data(data_dir)
-        df = _mod.add_step1_indicators(df)
-    else:
-        df = _mod.load_step1_data()
-        df = _mod.add_step1_indicators(df)
+    df = _get_indicator_frame(data_dir, full_history, sma_def_period, sma_kill_period, rsi_period)
 
     trading_df = df.dropna(subset=["SPY_SMA200", "SPY_RSI", "UPRO_Open"])
     if start_date:
@@ -156,10 +217,16 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
     days_since_trim: int | None = None
     days_since_reentry: int | None = None
 
-    for date, row in trading_df.iterrows():
-        upro_price = row["UPRO_Close"]
-        upro_open = row["UPRO_Open"]
-        vix = row["VIX"]
+    # itertuples() instead of iterrows(): iterrows() builds a full pandas
+    # Series (with its own dtype-unification and index) for every row, which
+    # is by far the dominant cost of a run once data loading is cached --
+    # itertuples() yields a plain namedtuple instead. Same values, ~5-10x
+    # less overhead per row; verified against the full regression suite.
+    for row in trading_df.itertuples():
+        date = row.Index
+        upro_price = row.UPRO_Close
+        upro_open = row.UPRO_Open
+        vix = row.VIX
 
         # Execute pending trade at today's open (T+1)
         if pending_trade is not None:
@@ -228,12 +295,12 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
 
         # Generate signal for tomorrow
         old_state = state
-        spy_close = row["SPY_Close"]
-        spy_sma50 = row["SPY_SMA50"]
-        spy_sma200 = row["SPY_SMA200"]
-        spy_rsi = row["SPY_RSI"]
-        below_streak = int(row["SPY_below_50_streak"])
-        above_streak = int(row["SPY_above_50_streak"])
+        spy_close = row.SPY_Close
+        spy_sma50 = row.SPY_SMA50
+        spy_sma200 = row.SPY_SMA200
+        spy_rsi = row.SPY_RSI
+        below_streak = int(row.SPY_below_50_streak)
+        above_streak = int(row.SPY_above_50_streak)
 
         if days_since_trim is not None:
             days_since_trim += 1

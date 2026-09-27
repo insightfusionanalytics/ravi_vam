@@ -35,7 +35,9 @@
       "min": 20,
       "max": 45,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi confirmed VIX>30 as part of the entry condition. Locked in the confirmed-locked optimization pass, added 2026-09-24."
     },
     "exitVix": {
       "label": "VIX Exit Threshold",
@@ -45,7 +47,9 @@
       "min": 15,
       "max": 40,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "free",
+      "tier_note": "Explicitly an IFA default, never confirmed by Ravi. Fair game for optimization -- including a possible mitigation of the known 'sells the hedge at the worst time' flaw, added 2026-09-24."
     },
     "spxuAllocation": {
       "label": "SPXU Allocation of Tactical Cash",
@@ -55,7 +59,9 @@
       "min": 10,
       "max": 99,
       "step": 5,
-      "unit": "%"
+      "unit": "%",
+      "tier": "confirmed",
+      "tier_note": "Ravi confirmed 50% of tactical cash. Locked in the confirmed-locked optimization pass, added 2026-09-24."
     },
     "capital": {
       "label": "Initial Capital",
@@ -65,7 +71,9 @@
       "min": 10000,
       "max": 1000000,
       "step": 10000,
-      "unit": "$"
+      "unit": "$",
+      "tier": "input",
+      "tier_note": "Account size, not a strategy setting. Never optimized."
     }
   }
 }

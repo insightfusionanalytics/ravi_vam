@@ -40,5 +40,10 @@ uvicorn.log
 # analyst_trade_logs/
 # _archive_v1_v4/
 
+# Optuna study storage (local scratch state -- runs happen locally per
+# design, results get published deliberately via the Step 8 report, not
+# by committing the raw study database)
+data/optuna/
+
 # Duplicate files (macOS sync artifacts)
 *-Anmol's MacBook Pro*

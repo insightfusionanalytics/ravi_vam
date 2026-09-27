@@ -17,14 +17,14 @@
   },
   "data_period": "2019-2026 (live data); Full History toggle available back to 2011",
   "benchmark_results": {
-    "cagr_pct": 19.74,
-    "sharpe": 0.697,
-    "sortino": 0.816,
-    "calmar": 0.366,
-    "max_drawdown_pct": -53.88,
-    "total_return_pct": 246.43,
-    "final_value": 346426.1,
-    "total_trades": 176,
+    "cagr_pct": 18.38,
+    "sharpe": 0.667,
+    "sortino": 0.778,
+    "calmar": 0.329,
+    "max_drawdown_pct": -55.95,
+    "total_return_pct": 220.19,
+    "final_value": 320185.44,
+    "total_trades": 172,
     "years": 6.9
   },
   "params": {
@@ -36,7 +36,9 @@
       "min": 20,
       "max": 45,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's fear-gauge threshold (VIX>30 = get defensive). Locked in the headline optimization pass."
     },
     "smaKill": {
       "label": "SMA Period (Kill)",
@@ -46,7 +48,9 @@
       "min": 100,
       "max": 300,
       "step": 10,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's 200-day trend line. Locked in the headline optimization pass. Wired into the Python engine 2026-09-24 -- previously this slider was silently ignored server-side."
     },
     "cooldown": {
       "label": "Cooldown Days",
@@ -56,7 +60,9 @@
       "min": 1,
       "max": 15,
       "step": 1,
-      "unit": " days"
+      "unit": " days",
+      "tier": "free",
+      "tier_note": "Never actually implemented anywhere (not this engine, not the browser one) until 2026-09-24, despite the slider existing. Blocks re-entry for N trading days after the kill switch fires, even if conditions clear. A genuinely new, unconfirmed rule -- not something Ravi asked for or ever saw in action. Default of 5 days changes Step 2's default trade count/CAGR versus the previously-shown numbers; see OURS_VS_CLIENT_COMPARISON.md."
     },
     "smaDef": {
       "label": "SMA Period (Defense)",
@@ -66,7 +72,9 @@
       "min": 20,
       "max": 100,
       "step": 5,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's 50-day trend line. Locked in the headline optimization pass. Wired into the Python engine 2026-09-24 -- previously this slider was silently ignored server-side."
     },
     "confirmDays": {
       "label": "Confirm Days",
@@ -74,9 +82,11 @@
       "type": "range",
       "default": 2,
       "min": 0,
-      "max": 5,
+      "max": 15,
       "step": 1,
-      "unit": " days"
+      "unit": " days",
+      "tier": "fixed",
+      "tier_note": "Held fixed at 2, never optimized, as of 2026-09-24. When freed, a 200-trial pass pushed this to 14 -- but real SPY/QQQ streaks below/above the 50-day average almost never last that long (empirically: only 17% of real episodes reach 14 days, vs 73% reaching 2 days), so confirmDays=14 doesn't mean 'wait for stronger confirmation' -- it means the defensive-trim rule almost never fires at all (measured: defensive-state days dropped from 7.4% of the test period at the default to 3.6%). It scored well purely because 2011-2021 rewarded staying invested, which is exactly the kind of thing that looks smart in a backtest and hurts badly the one time a real crash isn't in the tested years. 2 is close to the median real episode length (3 days) -- long enough to filter single-day noise, short enough to still catch most genuine weakness."
     },
     "defSell": {
       "label": "Defensive Sell %",
@@ -86,7 +96,9 @@
       "min": 25,
       "max": 75,
       "step": 5,
-      "unit": "%"
+      "unit": "%",
+      "tier": "free",
+      "tier_note": "Never specified by Ravi -- an implementation choice. Fair game for optimization. Wired into the Python engine 2026-09-24 -- previously this slider was silently ignored server-side."
     },
     "rsiPeriod": {
       "label": "RSI Period",
@@ -96,7 +108,9 @@
       "min": 7,
       "max": 28,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "free",
+      "tier_note": "Ravi named the overbought/rebuy levels (75/60), not the lookback window. Fair game for optimization. Wired into the Python engine 2026-09-24 -- previously this slider was silently ignored server-side."
     },
     "rsiOB": {
       "label": "RSI Overbought (Trim)",
@@ -106,7 +120,9 @@
       "min": 65,
       "max": 85,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's overheat/trim level. Locked in the headline optimization pass."
     },
     "rsiRe": {
       "label": "RSI Rebuy Level",
@@ -116,7 +132,9 @@
       "min": 40,
       "max": 70,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's rebuy level. Locked in the headline optimization pass."
     },
     "rsiTrim": {
       "label": "RSI Trim %",
@@ -126,17 +144,21 @@
       "min": 10,
       "max": 50,
       "step": 5,
-      "unit": "%"
+      "unit": "%",
+      "tier": "free",
+      "tier_note": "Never specified by Ravi -- an implementation choice. Fair game for optimization. Wired into the Python engine 2026-09-24 -- previously this slider was silently ignored server-side."
     },
     "uproSplit": {
       "label": "UPRO Split",
       "group": "Portfolio Allocation",
       "type": "range",
       "default": 75,
-      "min": 50,
+      "min": 10,
       "max": 90,
       "step": 5,
-      "unit": "%"
+      "unit": "%",
+      "tier": "free",
+      "tier_note": "Never specified by Ravi -- an implementation choice. Fair game for optimization. Range widened 50-90 -> 10-90 on 2026-09-24: the first 200-trial optimization pass hit the old min=50 floor in both the confirmed-locked and free-everything region picks, a sign the true optimum was probably outside the searched range."
     },
     "capital": {
       "label": "Initial Capital",
@@ -146,7 +168,9 @@
       "min": 10000,
       "max": 1000000,
       "step": 10000,
-      "unit": "$"
+      "unit": "$",
+      "tier": "input",
+      "tier_note": "Account size, not a strategy setting. Never optimized."
     }
   }
 }

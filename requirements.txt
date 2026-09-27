@@ -6,3 +6,4 @@ numpy
 scipy
 pyyaml
 yfinance>=0.2.40
+optuna>=4.0.0

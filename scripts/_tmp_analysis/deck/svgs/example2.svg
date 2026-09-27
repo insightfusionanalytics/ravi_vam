@@ -1,0 +1,10 @@
+<svg aria-label="Line chart: UPRO price with shaded defensive period, June-July 2013 example" width="760" height="420" viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg">
+<rect x="309.2" y="30" width="179.5" height="290" fill="#DC4646" fill-opacity="0.16"/>
+<line x1="309.2" y1="30" x2="309.2" y2="320" stroke="#DC4646" stroke-width="2" stroke-dasharray="6,5"/>
+<line x1="488.7" y1="30" x2="488.7" y2="320" stroke="#DC4646" stroke-width="2" stroke-dasharray="6,5"/>
+<path d="M 40.0,166.2 L 57.9,180.1 L 75.9,226.4 L 93.8,198.3 L 111.8,159.1 L 129.7,159.0 L 147.7,190.5 L 165.6,217.3 L 183.6,171.1 L 201.5,190.7 L 219.5,167.0 L 237.4,143.1 L 255.4,186.3 L 273.3,263.8 L 291.3,255.9 L 309.2,291.9 L 327.2,264.3 L 345.1,237.8 L 363.1,219.2 L 381.0,237.2 L 399.0,214.9 L 416.9,218.8 L 434.9,215.7 L 452.8,184.6 L 470.8,167.2 L 488.7,146.1 L 506.7,143.9 L 524.6,98.6 L 542.6,98.3 L 560.5,83.7 L 578.5,97.5 L 596.4,89.8 L 614.4,71.5 L 632.3,64.0 L 650.3,58.1 L 668.2,65.0 L 686.2,77.6 L 704.1,70.6 L 722.1,66.8 L 740.0,78.3" fill="none" stroke="#4C7DFF" stroke-width="3"/>
+<text x="399.0" y="58" font-family="IBM Plex Sans" font-size="22" font-weight="700" fill="#DC4646" text-anchor="middle">DEFENSIVE / CASH</text>
+<text x="740.0" y="60.3" font-family="JetBrains Mono" font-size="24" font-weight="700" fill="#1FAD5C" text-anchor="end">+15.8%</text>
+<text x="40" y="404" font-family="JetBrains Mono" font-size="20" fill="#9098A3">2013-06-24</text>
+<text x="740.0" y="404" font-family="JetBrains Mono" font-size="20" fill="#9098A3" text-anchor="end">2013-07-09</text>
+</svg>

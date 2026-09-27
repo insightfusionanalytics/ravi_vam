@@ -1,0 +1,125 @@
+/*
+ * Shared design system for the RAVI VAM frontend (landing, dashboard,
+ * compare, optimize results). Clean minimal fintech direction: flat
+ * surfaces, thin low-contrast borders, no gradients or glow effects,
+ * color used only to mean something (green = gain, red = loss, accent =
+ * interactive), monospace for every number, generous whitespace.
+ */
+
+:root {
+  --bg: #0a0b0d;
+  --surface: #131519;
+  --surface-2: #1a1d22;
+  --border: #24272e;
+  --border-soft: #1c1f25;
+
+  --text: #edeef0;
+  --text-dim: #9098a3;
+  --text-muted: #5c6470;
+
+  --accent: #4c7dff;
+  --accent-dim: rgba(76, 125, 255, 0.12);
+  --green: #1fad5c;
+  --green-dim: rgba(31, 173, 92, 0.12);
+  --red: #dc4646;
+  --red-dim: rgba(220, 70, 70, 0.12);
+  --yellow: #c99a2e;
+  --yellow-dim: rgba(201, 154, 46, 0.12);
+
+  --radius: 8px;
+  --radius-sm: 5px;
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+.neutral { color: var(--text-dim); }
+
+/* -- Top bar, shared shape across every page -- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.brand { font-size: 13px; font-weight: 700; letter-spacing: 1.2px; color: var(--text); }
+.brand-dot { color: var(--accent); }
+.nav-links { display: flex; gap: 4px; }
+.nav-link {
+  font-size: 13px; color: var(--text-dim); padding: 6px 12px; border-radius: var(--radius-sm);
+}
+.nav-link:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+.nav-link.active { color: var(--text); background: var(--surface-2); }
+
+/* -- Cards -- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.card-pad { padding: 20px; }
+
+/* -- Stat tiles -- */
+.stat { display: flex; flex-direction: column; gap: 4px; }
+.stat-label {
+  font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px;
+}
+.stat-value { font-family: var(--font-mono); font-size: 19px; font-weight: 600; color: var(--text); }
+.stat-sub { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+
+/* -- Buttons -- */
+.btn {
+  font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text); cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #061024; }
+.btn.primary:hover { background: #6d95ff; }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* -- Tables -- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-muted); padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 600;
+}
+td { padding: 9px 10px; border-bottom: 1px solid var(--border-soft); }
+tr:last-child td { border-bottom: none; }
+
+/* -- Badges / pills -- */
+.pill {
+  display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.4px;
+  padding: 2px 8px; border-radius: 999px; text-transform: uppercase;
+}
+.pill.green { background: var(--green-dim); color: var(--green); }
+.pill.red { background: var(--red-dim); color: var(--red); }
+.pill.yellow { background: var(--yellow-dim); color: var(--yellow); }
+.pill.neutral { background: var(--surface-2); color: var(--text-dim); }
+
+/* -- Section headers -- */
+.section-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--text-muted); margin-bottom: 12px;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border); }

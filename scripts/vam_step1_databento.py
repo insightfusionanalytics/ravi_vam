@@ -117,21 +117,35 @@ def calculate_rsi(series: pd.Series, period: int = 14) -> pd.Series:
 
 
 def consecutive_streak(condition: pd.Series) -> pd.Series:
-    """Count consecutive True days. Resets to 0 on False."""
-    streak = condition.astype(int).copy()
-    for i in range(1, len(streak)):
-        if streak.iloc[i] == 1:
-            streak.iloc[i] = streak.iloc[i - 1] + 1
-        else:
-            streak.iloc[i] = 0
-    return streak
+    """Count consecutive True days, ending at each position. Resets to 0 on False.
+
+    Vectorized (groupby-cumsum on reset points) instead of a per-row Python
+    loop -- same semantics, verified equivalent to the original row-by-row
+    version in tests/test_consecutive_streak.py. This matters once an
+    optimizer calls this hundreds of times per study: the old loop was the
+    single slowest step in a single backtest run.
+    """
+    cond_int = condition.astype(int)
+    reset_groups = (~condition.fillna(False)).cumsum()
+    return cond_int.groupby(reset_groups).cumsum().astype(int)
 
 
-def add_step1_indicators(df: pd.DataFrame) -> pd.DataFrame:
-    """Calculate all indicators needed for the 4-state machine."""
-    df["SPY_SMA50"] = df["SPY_Close"].rolling(50).mean()
-    df["SPY_SMA200"] = df["SPY_Close"].rolling(200).mean()
-    df["SPY_RSI"] = calculate_rsi(df["SPY_Close"], 14)
+def add_step1_indicators(
+    df: pd.DataFrame,
+    sma_def: int = 50,
+    sma_kill: int = 200,
+    rsi_period: int = 14,
+) -> pd.DataFrame:
+    """Calculate all indicators needed for the 4-state machine.
+
+    sma_def/sma_kill/rsi_period default to the values Ravi confirmed
+    (50-day defensive trim, 200-day kill switch, 14-day RSI). Callers that
+    want to explore other periods (e.g. an optimizer) pass them explicitly;
+    the defaults reproduce the original hardcoded behavior exactly.
+    """
+    df["SPY_SMA50"] = df["SPY_Close"].rolling(sma_def).mean()
+    df["SPY_SMA200"] = df["SPY_Close"].rolling(sma_kill).mean()
+    df["SPY_RSI"] = calculate_rsi(df["SPY_Close"], rsi_period)
 
     df["SPY_below_50_streak"] = consecutive_streak(df["SPY_Close"] < df["SPY_SMA50"])
     df["SPY_above_50_streak"] = consecutive_streak(df["SPY_Close"] > df["SPY_SMA50"])

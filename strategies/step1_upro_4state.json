@@ -34,7 +34,9 @@
       "min": 20,
       "max": 45,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's fear-gauge threshold (VIX>30 = get defensive). Locked in the headline optimization pass."
     },
     "smaKill": {
       "label": "SMA Period (Kill)",
@@ -44,7 +46,9 @@
       "min": 100,
       "max": 300,
       "step": 10,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's 200-day trend line. Locked in the headline optimization pass. Wired into the Python engine 2026-09-24 -- previously this slider was silently ignored server-side."
     },
     "smaDef": {
       "label": "SMA Period (Defense)",
@@ -54,7 +58,9 @@
       "min": 20,
       "max": 100,
       "step": 5,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's 50-day trend line. Locked in the headline optimization pass. Wired into the Python engine 2026-09-24 -- previously this slider was silently ignored server-side."
     },
     "confirmDays": {
       "label": "Confirm Days",
@@ -64,7 +70,9 @@
       "min": 0,
       "max": 5,
       "step": 1,
-      "unit": " days"
+      "unit": " days",
+      "tier": "fixed",
+      "tier_note": "Held fixed at 2, never optimized, as of 2026-09-24 -- same reasoning as Step 2's identical param (see strategies/step2_upro_tqqq_6state.json): freeing this let an optimizer push it high enough to quietly disable the defensive-trim rule rather than genuinely tune it (real SPY streaks below/above the 50-day average almost never sustain double-digit day counts), and it only looked good because 2011-2021 happened to reward staying invested."
     },
     "rsiPeriod": {
       "label": "RSI Period",
@@ -74,7 +82,9 @@
       "min": 7,
       "max": 28,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "free",
+      "tier_note": "Ravi named the overbought/rebuy levels (75/60), not the lookback window. Fair game for optimization. Wired into the Python engine 2026-09-24 -- previously this slider was silently ignored server-side."
     },
     "rsiOB": {
       "label": "RSI Overbought (Trim)",
@@ -84,7 +94,9 @@
       "min": 65,
       "max": 85,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's overheat/trim level. Locked in the headline optimization pass."
     },
     "rsiRe": {
       "label": "RSI Rebuy Level",
@@ -94,7 +106,9 @@
       "min": 40,
       "max": 70,
       "step": 1,
-      "unit": ""
+      "unit": "",
+      "tier": "confirmed",
+      "tier_note": "Ravi's rebuy level. Locked in the headline optimization pass."
     },
     "uproSplit": {
       "label": "UPRO Allocation",
@@ -104,7 +118,9 @@
       "min": 50,
       "max": 100,
       "step": 5,
-      "unit": "%"
+      "unit": "%",
+      "tier": "free",
+      "tier_note": "Never specified by Ravi -- an implementation choice. Fair game for optimization. Wired into the Python engine 2026-09-24 -- previously this slider was silently ignored server-side."
     },
     "capital": {
       "label": "Initial Capital",
@@ -114,7 +130,9 @@
       "min": 10000,
       "max": 1000000,
       "step": 10000,
-      "unit": "$"
+      "unit": "$",
+      "tier": "input",
+      "tier_note": "Account size, not a strategy setting. Never optimized."
     }
   }
 }

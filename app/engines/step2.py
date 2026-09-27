@@ -7,6 +7,7 @@ this Python wrapper is used when server-side backtest is requested.
 """
 
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -24,7 +25,7 @@ if DATA_DIR is not None:
 # 2011-2025 merged history (Polygon 2011-2019 + DataBento 2020-2025, splits
 # already adjusted). Only covers up to 2025-12-30, but is the only place in
 # the app where the honest long-horizon result is available to look at.
-def _load_full_history_data(data_dir: Path) -> pd.DataFrame:
+def _load_full_history_data_uncached(data_dir: Path) -> pd.DataFrame:
     merged_dir = data_dir / "merged"
 
     def _load(name: str) -> pd.DataFrame:
@@ -49,6 +50,44 @@ def _load_full_history_data(data_dir: Path) -> pd.DataFrame:
     return df.ffill().dropna()
 
 
+# --- Caching for the optimizer -- see app/engines/step1.py for the full
+# explanation. Two layers: raw price data keyed by (data_dir, full_history),
+# and indicator-enriched frames additionally keyed by the three params that
+# affect indicator computation (sma_def/sma_kill/rsi_period).
+@lru_cache(maxsize=8)
+def _load_raw_data_cached(data_dir_str: str, full_history: bool) -> pd.DataFrame:
+    data_dir = Path(data_dir_str)
+    if full_history:
+        return _load_full_history_data_uncached(data_dir)
+    return _mod.load_step2_data()
+
+
+_INDICATOR_CACHE: dict[tuple, pd.DataFrame] = {}
+
+
+def _get_indicator_frame(data_dir: Path, full_history: bool, sma_def: int, sma_kill: int, rsi_period: int) -> pd.DataFrame:
+    """Raw data + indicators for this (dataset, periods) combination.
+
+    Always returns a fresh copy -- add_step2_indicators mutates its argument
+    in place, and callers further slice/filter the frame, so nothing here
+    may hand out a reference to the cached object itself.
+    """
+    key = (str(data_dir), full_history, sma_def, sma_kill, rsi_period)
+    cached = _INDICATOR_CACHE.get(key)
+    if cached is None:
+        raw = _load_raw_data_cached(str(data_dir), full_history)
+        enriched = _mod.add_step2_indicators(raw.copy(), sma_def=sma_def, sma_kill=sma_kill, rsi_period=rsi_period)
+        _INDICATOR_CACHE[key] = enriched
+        cached = enriched
+    return cached.copy()
+
+
+def _load_full_history_data(data_dir: Path) -> pd.DataFrame:
+    """Kept for external callers that want raw data without indicators.
+    Internally, run() below goes through the cached path."""
+    return _load_full_history_data_uncached(data_dir)
+
+
 def _next_state(
     current,
     spy_close, spy_sma50, spy_sma200, spy_rsi, vix,
@@ -58,6 +97,7 @@ def _next_state(
     vix_kill, sma_confirm_days, rsi_sell, rsi_rebuy,
     spy_trim_immune: bool = False,
     qqq_trim_immune: bool = False,
+    kill_cooldown_active: bool = False,
 ):
     """Parameterized 6-state machine — no module globals.
 
@@ -66,6 +106,14 @@ def _next_state(
     trim is suppressed for 60 days after either a fresh CASH->BULL_FULL
     re-entry (which grants immunity to both sleeves at once) or that sleeve's
     own trim last firing. The VIX / 200-SMA kill switch always fires.
+
+    kill_cooldown_active: an unconfirmed, newly-implemented rule (the
+    "Cooldown Days" slider existed in the strategy JSON but had never
+    actually been built, in this engine or the browser one — see
+    OURS_VS_CLIENT_COMPARISON.md). When True, blocks CASH->BULL_FULL
+    re-entry even if conditions are otherwise met, for `cooldown` trading
+    days after the kill switch most recently fired. Off by construction
+    unless the caller passes a positive cooldown period.
     """
     State = _mod.State
 
@@ -116,7 +164,8 @@ def _next_state(
 
     if current == State.CASH:
         if (spy_close > spy_sma200 and vix < vix_kill
-                and spy_close > spy_sma50 and qqq_close > qqq_sma50):
+                and spy_close > spy_sma50 and qqq_close > qqq_sma50
+                and not kill_cooldown_active):
             return State.BULL_FULL, "RE-ENTRY: all conditions met"
         return State.CASH, "HOLD"
 
@@ -144,24 +193,40 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
     full_history = bool(params.get("fullHistory", params.get("full_history", False)))
     start_date = params.get("startDate", params.get("start_date"))
     end_date = params.get("endDate", params.get("end_date"))
+    # SMA/RSI periods — declared in the strategy JSON and honored by the
+    # browser JS engine, but silently ignored here until now. Defaults match
+    # Ravi's confirmed values.
+    sma_kill_period = int(params.get("smaKill", params.get("sma_kill_period", 200)))
+    sma_def_period = int(params.get("smaDef", params.get("sma_def_period", 50)))
+    rsi_period = int(params.get("rsiPeriod", params.get("rsi_period", 14)))
+    # defSell / rsiTrim: also previously ignored. At their defaults (50%,
+    # 25%) these reproduce the module's original hardcoded 0.50/0.75 factors
+    # exactly (see STATE_ALLOCATION below).
+    def_sell_pct = float(params.get("defSell", params.get("def_sell_pct", 50.0))) / 100.0
+    rsi_trim_pct = float(params.get("rsiTrim", params.get("rsi_trim_pct", 25.0))) / 100.0
+    def_factor = 1.0 - def_sell_pct
+    trim_factor = 1.0 - rsi_trim_pct
+    # cooldown: an unconfirmed, newly-implemented rule (see _next_state
+    # docstring and OURS_VS_CLIENT_COMPARISON.md) — trading days after the
+    # kill switch fires during which re-entry is blocked even if conditions
+    # clear. The "Cooldown Days" slider existed in the JSON but had never
+    # actually been wired anywhere before this.
+    cooldown_days = int(params.get("cooldown", params.get("cooldown_days", 5)))
 
     State = _mod.State
-    # Build dynamic allocation from upro_pct param
+    # Build dynamic allocation from upro_pct/def_factor/trim_factor params.
+    # At defaults (defSell=50 -> def_factor=0.50, rsiTrim=25 -> trim_factor=
+    # 0.75) this is byte-identical to the original hardcoded ladder.
     STATE_ALLOCATION = {
         State.BULL_FULL:    (upro_pct * 0.99, tqqq_pct * 0.99),
-        State.BULL_TRIMMED: (upro_pct * 0.75, tqqq_pct * 0.75),
-        State.DEF_SPY:      (upro_pct * 0.50, tqqq_pct),
-        State.DEF_QQQ:      (upro_pct, tqqq_pct * 0.50),
-        State.DEF_BOTH:     (upro_pct * 0.50, tqqq_pct * 0.50),
+        State.BULL_TRIMMED: (upro_pct * trim_factor, tqqq_pct * trim_factor),
+        State.DEF_SPY:      (upro_pct * def_factor, tqqq_pct),
+        State.DEF_QQQ:      (upro_pct, tqqq_pct * def_factor),
+        State.DEF_BOTH:     (upro_pct * def_factor, tqqq_pct * def_factor),
         State.CASH:         (0.0, 0.0),
     }
 
-    if full_history:
-        df = _load_full_history_data(data_dir)
-        df = _mod.add_step2_indicators(df)
-    else:
-        df = _mod.load_step2_data()
-        df = _mod.add_step2_indicators(df)
+    df = _get_indicator_frame(data_dir, full_history, sma_def_period, sma_kill_period, rsi_period)
 
     trading_df = df.dropna(subset=["SPY_SMA200", "SPY_RSI", "QQQ_SMA50", "UPRO_Open", "TQQQ_Open"])
     if start_date:
@@ -181,13 +246,17 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
     days_since_spy_trim: int | None = None
     days_since_qqq_trim: int | None = None
     days_since_reentry: int | None = None
+    days_since_kill: int | None = None
 
-    for date, row in trading_df.iterrows():
-        upro_price = row["UPRO_Close"]
-        tqqq_price = row["TQQQ_Close"]
-        upro_exec = row["UPRO_Open"]
-        tqqq_exec = row["TQQQ_Open"]
-        vix = row["VIX"]
+    # itertuples() instead of iterrows(): see app/engines/step1.py for why --
+    # same behavior, ~5-10x less per-row overhead.
+    for row in trading_df.itertuples():
+        date = row.Index
+        upro_price = row.UPRO_Close
+        tqqq_price = row.TQQQ_Close
+        upro_exec = row.UPRO_Open
+        tqqq_exec = row.TQQQ_Open
+        vix = row.VIX
 
         if pending_trade is not None:
             new_state, reason, signal_snapshot = pending_trade
@@ -230,6 +299,8 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
                 days_since_qqq_trim = 0
             if new_state == State.BULL_FULL and old_state_val == State.CASH.value:
                 days_since_reentry = 0
+            if new_state == State.CASH and "KILL" in reason:
+                days_since_kill = 0
 
             exec_date_str = date.strftime("%Y-%m-%d")
             signal_date_str = (date - pd.tseries.offsets.BDay(1)).strftime("%Y-%m-%d")
@@ -263,16 +334,16 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
                     })
 
         old_state = state
-        spy_close = row["SPY_Close"]
-        qqq_close = row["QQQ_Close"]
-        spy_sma50 = row["SPY_SMA50"]
-        spy_sma200 = row["SPY_SMA200"]
-        spy_rsi = row["SPY_RSI"]
-        qqq_sma50 = row["QQQ_SMA50"]
-        spy_below = int(row["SPY_below_50_streak"])
-        spy_above = int(row["SPY_above_50_streak"])
-        qqq_below = int(row["QQQ_below_50_streak"])
-        qqq_above = int(row["QQQ_above_50_streak"])
+        spy_close = row.SPY_Close
+        qqq_close = row.QQQ_Close
+        spy_sma50 = row.SPY_SMA50
+        spy_sma200 = row.SPY_SMA200
+        spy_rsi = row.SPY_RSI
+        qqq_sma50 = row.QQQ_SMA50
+        spy_below = int(row.SPY_below_50_streak)
+        spy_above = int(row.SPY_above_50_streak)
+        qqq_below = int(row.QQQ_below_50_streak)
+        qqq_above = int(row.QQQ_above_50_streak)
 
         if days_since_spy_trim is not None:
             days_since_spy_trim += 1
@@ -280,6 +351,8 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
             days_since_qqq_trim += 1
         if days_since_reentry is not None:
             days_since_reentry += 1
+        if days_since_kill is not None:
+            days_since_kill += 1
         spy_trim_immune = (
             (days_since_spy_trim is not None and days_since_spy_trim < reentry_immunity_days)
             or (days_since_reentry is not None and days_since_reentry < reentry_immunity_days)
@@ -287,6 +360,9 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
         qqq_trim_immune = (
             (days_since_qqq_trim is not None and days_since_qqq_trim < reentry_immunity_days)
             or (days_since_reentry is not None and days_since_reentry < reentry_immunity_days)
+        )
+        kill_cooldown_active = (
+            days_since_kill is not None and days_since_kill < cooldown_days
         )
 
         new_state, reason = _next_state(
@@ -296,6 +372,7 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
             vix_kill=vix_kill, sma_confirm_days=sma_confirm_days,
             rsi_sell=rsi_sell, rsi_rebuy=rsi_rebuy,
             spy_trim_immune=spy_trim_immune, qqq_trim_immune=qqq_trim_immune,
+            kill_cooldown_active=kill_cooldown_active,
         )
 
         if new_state != old_state:
@@ -355,11 +432,15 @@ def run(params: dict, initial_capital: float = 100_000.0) -> dict:
             "days_since_last_spy_trim": days_since_spy_trim if days_since_spy_trim is not None else "N/A",
             "days_since_last_qqq_trim": days_since_qqq_trim if days_since_qqq_trim is not None else "N/A",
             "days_since_last_reentry": days_since_reentry if days_since_reentry is not None else "N/A",
+            # Kill-switch cooldown audit trail (unconfirmed, newly-implemented rule)
+            "kill_cooldown_active": "YES" if kill_cooldown_active else "NO",
+            "days_since_last_kill": days_since_kill if days_since_kill is not None else "N/A",
         })
 
     metrics = _compute_metrics(daily_log, trades, initial_capital)
     metrics["reentry_immunity_days"] = reentry_immunity_days
     metrics["full_history_mode"] = full_history
+    metrics["cooldown_days"] = cooldown_days
     return {"trades": trades, "daily_log": daily_log, "metrics": metrics}
 
 

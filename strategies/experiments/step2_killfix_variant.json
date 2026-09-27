@@ -1,0 +1,36 @@
+{
+    "id": "step2_killfix_variant",
+    "name": "Step 2 -- Kill-Switch Whipsaw Fix (EXPERIMENT, not a deliverable)",
+    "version": "experiment-1",
+    "description": "Isolates the effect of buffering + confirming the kill switch's SPY/200-SMA leg (VIX leg untouched). Every other parameter is held fixed at the already-recommended 'confirmed values locked' tuned config from OPTIMIZATION_REPORT.md (cooldown=2, defSell=75, rsiPeriod=24, rsiTrim=50, uproSplit=10) so only the two new params are actually being searched. Lives outside strategies/*.json on purpose -- app/config.py globs that directory for the live dashboard, and this is not a deliverable strategy.",
+    "engine": "app.engines.step2_killfix_variant",
+    "instruments": ["UPRO", "TQQQ"],
+    "states": ["BULL_FULL", "BULL_TRIMMED", "DEF_SPY", "DEF_QQQ", "DEF_BOTH", "CASH"],
+    "params": {
+        "vixThreshold": {"type": "range", "default": 30, "min": 20, "max": 45, "step": 1, "tier": "confirmed"},
+        "smaKill":      {"type": "range", "default": 200, "min": 100, "max": 300, "step": 10, "tier": "confirmed"},
+        "smaDef":       {"type": "range", "default": 50, "min": 20, "max": 100, "step": 5, "tier": "confirmed"},
+        "rsiOB":        {"type": "range", "default": 75, "min": 65, "max": 85, "step": 1, "tier": "confirmed"},
+        "rsiRe":        {"type": "range", "default": 60, "min": 40, "max": 70, "step": 1, "tier": "confirmed"},
+
+        "confirmDays":  {"type": "range", "default": 2, "min": 0, "max": 15, "step": 1, "tier": "fixed",
+                          "tier_note": "Held fixed as in the parent strategy -- never touched by this experiment."},
+        "cooldown":     {"type": "range", "default": 2, "min": 1, "max": 15, "step": 1, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (2), not re-searched here."},
+        "defSell":      {"type": "range", "default": 75, "min": 25, "max": 75, "step": 5, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (75), not re-searched here."},
+        "rsiPeriod":    {"type": "range", "default": 24, "min": 7, "max": 28, "step": 1, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (24), not re-searched here."},
+        "rsiTrim":      {"type": "range", "default": 50, "min": 10, "max": 50, "step": 5, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (50), not re-searched here."},
+        "uproSplit":    {"type": "range", "default": 10, "min": 10, "max": 90, "step": 5, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (10), not re-searched here."},
+
+        "killBufferBps": {"type": "range", "default": 0, "min": 0, "max": 300, "step": 25, "tier": "free",
+                           "tier_note": "NEW. Basis points SPY must close below its 200-SMA (0 = today's bare cross) before the kill switch's SPY leg is even considered. VIX leg untouched. 100bps = 1.0%."},
+        "killConfirmDays": {"type": "range", "default": 1, "min": 1, "max": 5, "step": 1, "tier": "free",
+                             "tier_note": "NEW. Consecutive days the buffered SPY condition must hold before the kill switch's SPY leg fires. 1 = today's single-day trigger (no change)."},
+
+        "capital": {"type": "range", "default": 100000, "min": 10000, "max": 1000000, "step": 10000, "tier": "input"}
+    }
+}

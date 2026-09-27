@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optimization Results — RAVI VAM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared/theme.css">
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  body { padding-bottom: 60px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+  h1 { font-size: 22px; margin: 28px 0 8px; }
+  .subtitle { color: var(--text-dim); font-size: 14px; line-height: 1.6; max-width: 720px; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 16px 0 28px; font-size: 12px; color: var(--text-muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot.sealed { background: var(--green); }
+  .dot.tuned { background: var(--text-muted); }
+
+  .headline-card { padding: 24px; margin-bottom: 40px; }
+  .headline-card .tag { display: inline-block; margin-bottom: 12px; }
+  .headline-card h2 { margin: 0 0 6px; font-size: 18px; font-weight: 700; }
+  .headline-card .desc { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
+
+  .metric-row { display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 18px; }
+  .metric-block { min-width: 110px; }
+  .metric-block .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .metric-block .value { font-family: var(--font-mono); font-size: 19px; font-weight: 700; }
+  .metric-block .arrow { color: var(--text-muted); font-size: 13px; font-weight: 400; margin: 0 4px; }
+  .metric-block .before { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  .value.good { color: var(--green); }
+  .value.bad { color: var(--red); }
+  .value.neutral { color: var(--text); }
+
+  .params-changed { font-size: 12px; color: var(--text-dim); margin: 14px 0; }
+  .params-changed code { background: var(--surface-2); padding: 2px 6px; border-radius: 3px; font-family: var(--font-mono); color: var(--text); }
+
+  .load-btn { display: inline-block; margin-top: 10px; }
+  .caveat { font-size: 12px; color: var(--yellow); background: var(--yellow-dim); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 14px; }
+
+  .strategy-section { margin-bottom: 44px; }
+  .strategy-section h3 { font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .strategy-note { color: var(--text-dim); font-size: 13px; margin-bottom: 16px; max-width: 720px; line-height: 1.6; }
+
+  td { vertical-align: top; }
+  td.num { font-family: var(--font-mono); }
+  .candidate-note { font-size: 12px; color: var(--text-muted); max-width: 340px; line-height: 1.5; }
+  .tuned-val { color: var(--text-muted); font-size: 11px; }
+
+  .footer-note { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; font-size: 12px; color: var(--text-muted); line-height: 1.7; }
+  .loading { color: var(--text-muted); padding: 40px 0; text-align: center; }
+
+  .chart-block { margin: 18px 0; }
+  .chart-legend { display: flex; gap: 20px; font-size: 12px; margin-bottom: 8px; }
+  .chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .chart-legend .swatch { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+  .chart-container { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); padding: 4px 0; }
+  .chart-caption { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="brand">RAVI VAM<span class="brand-dot">.</span></span>
+      <div class="nav-links">
+        <a class="nav-link" href="/">Strategies</a>
+        <a class="nav-link" href="/compare/">Compare</a>
+        <a class="nav-link active" href="/optimize/">Optimization</a>
+      </div>
+    </div>
+  </div>
+<div class="wrap">
+  <h1>Parameter Optimization Results</h1>
+  <p class="subtitle">
+    An automated search tried hundreds of setting combinations per strategy, looking for anything that beats what's live today.
+    Every result below is checked against 2022&ndash;2025 data the search was never allowed to see while choosing anything &mdash;
+    that's the only number that means the setting actually works.
+  </p>
+  <div class="legend">
+    <span><span class="dot sealed"></span> Sealed result &mdash; tested on data the search never saw. This is what matters.</span>
+    <span><span class="dot tuned"></span> Search-time result &mdash; how it looked while being found. Easy to be fooled by.</span>
+  </div>
+
+  <div id="content"><div class="loading">Loading results&hellip;</div></div>
+
+  <div class="footer-note">
+    Full methodology: development period 2011&ndash;2021 (4 blocks, scored on median Calmar), sealed holdout 2022-02-01 to 2025-12-30,
+    Optuna TPE sampler with fixed seed 42, up to 200 trials per pass. Two guardrails prevent the search from gaming its own score:
+    a setting can't drop time spent in a defensive state below 40% of what the current confirmed settings produce, and can't push time
+    spent sitting entirely in cash more than 75% above what current settings produce &mdash; so a "winner" can't just be one that
+    disables risk management or hides from the market instead of genuinely trading through it.
+  </div>
+</div>
+
+<script>
+const API_BASE = window.__RAVI_API_BASE || '';
+
+function fmtPct(v, digits = 1) {
+  return (v > 0 ? '+' : '') + v.toFixed(digits) + '%';
+}
+function colorClass(delta, higherIsBetter = true) {
+  if (Math.abs(delta) < 0.05) return 'neutral';
+  const better = higherIsBetter ? delta > 0 : delta < 0;
+  return better ? 'good' : 'bad';
+}
+function paramsLine(baseParams, changed) {
+  const parts = [];
+  for (const [k, v] of Object.entries(changed)) {
+    const before = baseParams[k];
+    parts.push(`<code>${k}: ${before} &rarr; ${v}</code>`);
+  }
+  return parts.join(' &nbsp; ');
+}
+function buildDashboardUrl(strategyId, params) {
+  const usp = new URLSearchParams();
+  usp.set('strategy', strategyId);
+  usp.set('preset', JSON.stringify(params));
+  return '/dashboard/?' + usp.toString();
+}
+
+function renderHeadline(strategy) {
+  const rec = strategy.candidates.find(c => c.verdict === 'adopt');
+  if (!rec) return '';
+  const b = strategy.baseline.holdout, h = rec.holdout;
+  return `
+    <div class="card headline-card">
+      <div class="pill green tag">Recommended</div>
+      <h2>${strategy.display_name} &mdash; ${rec.label}</h2>
+      <div class="desc">The one candidate, across every strategy and every scoring method tried, that held up on sealed data.</div>
+      <div class="metric-row">
+        <div class="metric-block">
+          <div class="label">CAGR (sealed)</div>
+          <div class="value"><span class="before">${b.cagr_pct.toFixed(1)}%</span><span class="arrow">&rarr;</span><span class="${colorClass(h.cagr_pct - b.cagr_pct)}">${h.cagr_pct.toFixed(1)}%</span></div>
+        </div>
+        <div class="metric-block">
+          <div class="label">Sharpe (sealed)</div>
+          <div class="value"><span class="before">${b.sharpe.toFixed(2)}</span><span class="arrow">&rarr;</span><span class="${colorClass(h.sharpe - b.sharpe)}">${h.sharpe.toFixed(2)}</span></div>
+        </div>
+        <div class="metric-block">
+          <div class="label">Max drawdown (sealed)</div>
+          <div class="value"><span class="before">${b.max_drawdown_pct.toFixed(1)}%</span><span class="arrow">&rarr;</span><span class="${colorClass(h.max_drawdown_pct - b.max_drawdown_pct)}">${h.max_drawdown_pct.toFixed(1)}%</span></div>
+        </div>
+        <div class="metric-block">
+          <div class="label">Calmar (sealed)</div>
+          <div class="value"><span class="before">${b.calmar.toFixed(3)}</span><span class="arrow">&rarr;</span><span class="${colorClass(h.calmar - b.calmar)}">${h.calmar.toFixed(3)}</span></div>
+        </div>
+      </div>
+      <div class="chart-block">
+        <div class="chart-legend">
+          <span><span class="swatch" style="background:#5c6470;"></span> Current settings</span>
+          <span><span class="swatch" style="background:#1fad5c;"></span> Tuned, confirmed values locked</span>
+        </div>
+        <div class="chart-container"><div id="chart-headline" style="height:260px;"></div></div>
+        <div class="chart-caption">$100,000 invested at the start of the sealed period (2022-02-01), never seen by the search. This is the actual money difference, not a ratio.</div>
+      </div>
+      <div class="params-changed">Settings changed (confirmed values untouched): ${paramsLine(strategy.default_params, rec.params)}</div>
+      <div class="caveat">The return gain comes with a real cost: max drawdown got worse, not better. Whether that trade is worth taking is a preference call &mdash; not something this page decides for you.</div>
+      <a class="btn primary load-btn" href="${buildDashboardUrl(strategy.id, {...strategy.default_params, ...rec.params})}">Load these settings into the dashboard &rarr;</a>
+    </div>`;
+}
+
+function renderCandidateRow(strategy, cand) {
+  const b = strategy.baseline.holdout, h = cand.holdout, dTuned = cand.dev;
+  const pill = cand.verdict === 'adopt' ? '<span class="pill green">Adopt</span>' : '<span class="pill neutral">Not recommended</span>';
+  return `
+    <tr class="candidate-row">
+      <td>
+        <strong>${cand.label}</strong><br>
+        <span class="params-changed">${paramsLine(strategy.default_params, cand.params)}</span>
+      </td>
+      <td class="num">
+        ${h.cagr_pct.toFixed(1)}%<br><span class="tuned-val">search: ${dTuned.cagr_pct.toFixed(1)}%</span>
+      </td>
+      <td class="num">
+        ${h.calmar.toFixed(3)}<br><span class="tuned-val">search: ${dTuned.calmar.toFixed(3)}</span>
+      </td>
+      <td class="num">
+        ${h.max_drawdown_pct.toFixed(1)}%<br><span class="tuned-val">search: ${dTuned.max_drawdown_pct.toFixed(1)}%</span>
+      </td>
+      <td>${pill}</td>
+      <td class="candidate-note">${cand.verdict_note}</td>
+    </tr>`;
+}
+
+function renderStrategySection(strategy) {
+  const anyAdopt = strategy.candidates.some(c => c.verdict === 'adopt');
+  const badge = anyAdopt ? '' : '<span class="pill red">Nothing here beat current settings</span>';
+  const b = strategy.baseline.holdout;
+  const primary = strategy.candidates[0]; // "confirmed values locked" is always listed first
+  const chartId = `chart-${strategy.id}`;
+  const primaryColor = primary.verdict === 'adopt' ? '#1fad5c' : '#dc4646';
+  return `
+    <div class="strategy-section" data-chart-id="${chartId}" data-primary-color="${primaryColor}">
+      <h3>${strategy.display_name} ${badge}</h3>
+      <p class="strategy-note">Current settings, sealed-period result: CAGR ${b.cagr_pct.toFixed(1)}%, Calmar ${b.calmar.toFixed(3)}, max drawdown ${b.max_drawdown_pct.toFixed(1)}%.</p>
+      <div class="chart-block">
+        <div class="chart-legend">
+          <span><span class="swatch" style="background:#5c6470;"></span> Current settings</span>
+          <span><span class="swatch" style="background:${primaryColor};"></span> ${primary.label}</span>
+        </div>
+        <div class="chart-container"><div id="${chartId}" style="height:200px;"></div></div>
+      </div>
+      <div class="card card-pad">
+      <table>
+        <thead><tr><th>What was tried</th><th>CAGR</th><th>Calmar</th><th>Max drawdown</th><th>Verdict</th><th>Why</th></tr></thead>
+        <tbody>${strategy.candidates.map(c => renderCandidateRow(strategy, c)).join('')}</tbody>
+      </table>
+      </div>
+    </div>`;
+}
+
+function renderEquityChart(containerId, baselineCurve, candidateCurve, candidateColor) {
+  const el = document.getElementById(containerId);
+  if (!el || typeof LightweightCharts === 'undefined') return;
+  const chart = LightweightCharts.createChart(el, {
+    width: el.clientWidth, height: el.clientHeight,
+    layout: { background: { color: '#0d0d0d' }, textColor: '#a3a3a3' },
+    grid: { vertLines: { color: '#1a1a2e' }, horzLines: { color: '#1a1a2e' } },
+    timeScale: { borderColor: '#2a2a3a' }, rightPriceScale: { borderColor: '#2a2a3a' },
+    handleScroll: false, handleScale: false,
+  });
+  const baseSeries = chart.addLineSeries({ color: '#5c6470', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false });
+  baseSeries.setData(baselineCurve.map(p => ({ time: p.date, value: p.value })));
+  const candSeries = chart.addLineSeries({ color: candidateColor, lineWidth: 2, priceLineVisible: false, lastValueVisible: true });
+  candSeries.setData(candidateCurve.map(p => ({ time: p.date, value: p.value })));
+  chart.timeScale().fitContent();
+  window.addEventListener('resize', () => chart.applyOptions({ width: el.clientWidth }));
+}
+
+function renderAllCharts(data) {
+  const recommended = data.strategies.find(s => s.recommended);
+  if (recommended) {
+    const rec = recommended.candidates.find(c => c.verdict === 'adopt');
+    if (rec) renderEquityChart('chart-headline', recommended.baseline.holdout_curve, rec.holdout_curve, '#1fad5c');
+  }
+  data.strategies.forEach(strategy => {
+    const primary = strategy.candidates[0];
+    const color = primary.verdict === 'adopt' ? '#1fad5c' : '#dc4646';
+    renderEquityChart(`chart-${strategy.id}`, strategy.baseline.holdout_curve, primary.holdout_curve, color);
+  });
+}
+
+async function main() {
+  const el = document.getElementById('content');
+  try {
+    const resp = await fetch('/optimize/results.json');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+
+    let html = '';
+    const recommended = data.strategies.find(s => s.recommended);
+    if (recommended) html += renderHeadline(recommended);
+    html += data.strategies.map(renderStrategySection).join('');
+    el.innerHTML = html;
+    renderAllCharts(data);
+  } catch (err) {
+    el.innerHTML = `<div class="loading">Couldn't load results: ${err.message}</div>`;
+  }
+}
+main();
+</script>
+</body>
+</html>

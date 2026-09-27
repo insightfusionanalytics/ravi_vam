@@ -1,0 +1,36 @@
+{
+  "v": 4,
+  "createdOnFiles": {"v": 1, "at": "2026-09-25T19:45:07Z"},
+  "title": "Optimization & Whipsaw Investigation",
+  "order": [
+    "cover",
+    "exec-summary",
+    "methodology",
+    "headline-results",
+    "flagship-tradeoff",
+    "divider-realmoney",
+    "whipsaw-dominant",
+    "no-asymmetric",
+    "deep-drawdown",
+    "concrete-examples",
+    "root-cause",
+    "divider-fixes",
+    "attempt-killswitch",
+    "attempt-reentry",
+    "why-none-worked",
+    "audit-confidence",
+    "recommendation",
+    "next-steps",
+    "closing"
+  ],
+  "sections": {
+    "s1": {"description": "Six tuning passes tested, one survived, the trade-off it leaves behind", "start": "cover"},
+    "s2": {"description": "Diagnosing whether the strategy's actual behavior is fit for real capital", "start": "divider-realmoney"},
+    "s3": {"description": "Three independent attempts to fix the drawdown trade-off, and why each failed honestly", "start": "divider-fixes"},
+    "s4": {"description": "Verification, current recommendation, and what's left to decide", "start": "audit-confidence"}
+  },
+  "faces": {
+    "ibm-plex-sans": {"family": "IBM Plex Sans", "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"},
+    "jetbrains-mono": {"family": "JetBrains Mono", "href": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap"}
+  }
+}

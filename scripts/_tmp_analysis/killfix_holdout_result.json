@@ -1,0 +1,52 @@
+{
+  "baseline": {
+    "final_value": 212218.84,
+    "total_return_pct": 112.22,
+    "cagr_pct": 21.24,
+    "sharpe": 0.696,
+    "sortino": 0.816,
+    "calmar": 0.522,
+    "max_drawdown_pct": -40.72,
+    "total_trades": 62,
+    "years": 3.91,
+    "benchmark_spy_cagr_pct": 11.25,
+    "alpha_vs_spy_pct": 9.98,
+    "yearly_returns": {
+      "2022": -12.43,
+      "2023": 63.52,
+      "2024": 41.35,
+      "2025": 10.41
+    },
+    "yearly_spy_returns": {
+      "2022": -15.38,
+      "2023": 24.81,
+      "2024": 24.09,
+      "2025": 17.54
+    }
+  },
+  "variant": {
+    "final_value": 207957.51,
+    "total_return_pct": 107.96,
+    "cagr_pct": 20.61,
+    "sharpe": 0.669,
+    "sortino": 0.811,
+    "calmar": 0.506,
+    "max_drawdown_pct": -40.72,
+    "total_trades": 50,
+    "years": 3.91,
+    "benchmark_spy_cagr_pct": 11.25,
+    "alpha_vs_spy_pct": 9.36,
+    "yearly_returns": {
+      "2022": -24.3,
+      "2023": 88.77,
+      "2024": 41.35,
+      "2025": 8.41
+    },
+    "yearly_spy_returns": {
+      "2022": -15.38,
+      "2023": 24.81,
+      "2024": 24.09,
+      "2025": 17.54
+    }
+  }
+}

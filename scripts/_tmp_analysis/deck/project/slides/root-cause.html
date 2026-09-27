@@ -1,0 +1,16 @@
+<section id="root-cause" data-section="Kill switch lacks the trim's own re-entry protection" data-transition="fade" style="background:#0A0B0F; color:#EDEEF0; font-family:'IBM Plex Sans', Arial, sans-serif; display:flex; flex-direction:column; padding:128px 128px 160px; gap:40px">
+
+<p style="font-size:26px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#DC4646; margin:0">Root Cause, Traced to the Trade Log</p>
+<h2 style="font-size:50px; font-weight:700; margin:0">The Kill Switch Has Zero Confirmation &mdash; and It Shows</h2>
+<p style="font-size:26px; color:#9098A3; margin:0; max-width:1650px">Worst drawdown's actual exits (2021-11-22 &rarr; 2023-03-10). All seven were the kill switch. None were the trim.</p>
+<table style="width:1500px; font-family:'JetBrains Mono', 'Courier New', monospace; border-collapse:collapse; margin-top:4px">
+<tr style="background:#1B2340"><th style="padding:12px 18px; text-align:left; font-size:21px; font-family:'IBM Plex Sans', Arial, sans-serif; color:#4C7DFF">DATE</th><th style="padding:12px 18px; text-align:left; font-size:21px; font-family:'IBM Plex Sans', Arial, sans-serif; color:#4C7DFF">TRANSITION</th><th style="padding:12px 18px; text-align:left; font-size:21px; font-family:'IBM Plex Sans', Arial, sans-serif; color:#4C7DFF">NOTE</th></tr>
+<tr><td style="padding:10px 18px; font-size:24px; color:#9098A3">2022-03-23</td><td style="padding:10px 18px; font-size:24px; color:#1FAD5C">CASH &rarr; BULL_FULL</td><td style="padding:10px 18px; font-size:22px; color:#5C6470; font-family:'IBM Plex Sans', Arial, sans-serif">re-entry</td></tr>
+<tr style="background:#331616"><td style="padding:10px 18px; font-size:24px; color:#9098A3">2022-03-24</td><td style="padding:10px 18px; font-size:24px; color:#DC4646">BULL_FULL &rarr; CASH</td><td style="padding:10px 18px; font-size:22px; color:#DC4646; font-family:'IBM Plex Sans', Arial, sans-serif; font-weight:700">killed the VERY NEXT DAY</td></tr>
+<tr><td style="padding:10px 18px; font-size:24px; color:#9098A3">2023-01-17</td><td style="padding:10px 18px; font-size:24px; color:#1FAD5C">CASH &rarr; BULL_FULL</td><td style="padding:10px 18px; font-size:22px; color:#5C6470; font-family:'IBM Plex Sans', Arial, sans-serif">re-entry</td></tr>
+<tr style="background:#331616"><td style="padding:10px 18px; font-size:24px; color:#9098A3">2023-01-18</td><td style="padding:10px 18px; font-size:24px; color:#DC4646">BULL_FULL &rarr; CASH</td><td style="padding:10px 18px; font-size:22px; color:#DC4646; font-family:'IBM Plex Sans', Arial, sans-serif; font-weight:700">killed the VERY NEXT DAY</td></tr>
+</table>
+<p style="font-size:25px; color:#EDEEF0; margin-top:4px; max-width:1650px; line-height:1.5">The trim has a 60-day post-re-entry immunity to stop exactly this. <b>The kill switch has none</b> &mdash; by explicit design, "it always fires." That asymmetry, not a vague bug, is the traceable root cause.</p>
+<p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#5C6470; font-family:'IBM Plex Sans', Arial, sans-serif">Root Cause</p>
+<p style="position:absolute; right:128px; bottom:64px; font-size:24px; color:#5C6470; font-family:'JetBrains Mono', 'Courier New', monospace">09</p>
+</section>

@@ -1,0 +1,24 @@
+<svg aria-label="Bar chart: false-alarm rate for kill-switch vs defensive-trim exits, both strategies" width="1500" height="520" viewBox="0 0 1500 520" xmlns="http://www.w3.org/2000/svg">
+<text x="0" y="38" font-family="IBM Plex Sans" font-size="30" font-weight="700" fill="#4C7DFF">UPRO-Only</text>
+<text x="0" y="105.0" font-family="IBM Plex Sans" font-size="24" fill="#9098A3">Kill switch (VIX / 200-SMA, 0-day confirm)</text>
+<rect x="620" y="64" width="440.2" height="64" fill="#DC4646" rx="4"/>
+<rect x="1060.2" y="64" width="179.8" height="64" fill="#1FAD5C" rx="4"/>
+<text x="636" y="105.0" font-family="JetBrains Mono" font-size="26" font-weight="600" fill="#0A0B0F">71%</text>
+<text x="1264.0" y="105.0" font-family="JetBrains Mono" font-size="26" font-weight="700" fill="#EDEEF0">+125.0pp net</text>
+<text x="0" y="195.0" font-family="IBM Plex Sans" font-size="24" fill="#9098A3">Defensive trim (50-SMA, 2-day confirm)</text>
+<rect x="620" y="154" width="502.2" height="64" fill="#DC4646" rx="4"/>
+<rect x="1122.2" y="154" width="117.8" height="64" fill="#1FAD5C" rx="4"/>
+<text x="636" y="195.0" font-family="JetBrains Mono" font-size="26" font-weight="600" fill="#0A0B0F">81%</text>
+<text x="1264.0" y="195.0" font-family="JetBrains Mono" font-size="26" font-weight="700" fill="#EDEEF0">+56.6pp net</text>
+<text x="0" y="272" font-family="IBM Plex Sans" font-size="30" font-weight="700" fill="#4C7DFF">UPRO + TQQQ</text>
+<text x="0" y="339.0" font-family="IBM Plex Sans" font-size="24" fill="#9098A3">Kill switch (VIX / 200-SMA, 0-day confirm)</text>
+<rect x="620" y="298" width="508.4" height="64" fill="#DC4646" rx="4"/>
+<rect x="1128.4" y="298" width="111.6" height="64" fill="#1FAD5C" rx="4"/>
+<text x="636" y="339.0" font-family="JetBrains Mono" font-size="26" font-weight="600" fill="#0A0B0F">82%</text>
+<text x="1264.0" y="339.0" font-family="JetBrains Mono" font-size="26" font-weight="700" fill="#EDEEF0">+106.1pp net</text>
+<text x="0" y="429.0" font-family="IBM Plex Sans" font-size="24" fill="#9098A3">Defensive trim (50-SMA, 2-day confirm)</text>
+<rect x="620" y="388" width="409.2" height="64" fill="#DC4646" rx="4"/>
+<rect x="1029.2" y="388" width="210.8" height="64" fill="#1FAD5C" rx="4"/>
+<text x="636" y="429.0" font-family="JetBrains Mono" font-size="26" font-weight="600" fill="#0A0B0F">66%</text>
+<text x="1264.0" y="429.0" font-family="JetBrains Mono" font-size="26" font-weight="700" fill="#EDEEF0">+52.6pp net</text>
+</svg>

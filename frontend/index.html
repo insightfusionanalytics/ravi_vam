@@ -6,221 +6,73 @@
   <title>RAVI VAM — Strategy Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/shared/theme.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --bg: #0a0a0a; --card: #171717; --card-border: #262626;
-      --text: #e5e5e5; --text-dim: #a3a3a3; --text-muted: #737373;
-      --accent: #3b82f6; --green: #22c55e; --red: #ef4444; --yellow: #eab308;
-      --orange: #f59e0b; --purple: #a855f7;
-    }
-    body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      background: var(--bg); color: var(--text);
-      min-height: 100vh;
-    }
+    body { padding-bottom: 40px; }
 
-    /* Header */
-    .header {
-      padding: 20px 48px;
-      border-bottom: 1px solid var(--card-border);
-      background: var(--card);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .header-brand { display: flex; align-items: center; gap: 16px; }
-    .logo { font-size: 16px; font-weight: 800; color: var(--accent); letter-spacing: 2px; }
-    .tagline { font-size: 12px; color: var(--text-muted); padding-left: 16px; border-left: 1px solid var(--card-border); }
-    .header-meta { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 10px; }
-    .data-source-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 600; letter-spacing: 0.5px; }
-    .data-source-badge.databento { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
-    .data-source-badge.yahoo { background: rgba(234,179,8,0.12); color: var(--yellow); border: 1px solid rgba(234,179,8,0.25); }
-    .data-source-badge.unknown { background: rgba(163,163,163,0.12); color: var(--text-muted); border: 1px solid rgba(163,163,163,0.25); }
-
-    /* Hero section */
-    .hero {
-      padding: 64px 48px 40px;
-      text-align: center;
-    }
-    .hero-title { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+    /* Hero */
+    .hero { padding: 56px 24px 32px; text-align: center; }
+    .hero-title { font-size: 30px; font-weight: 700; margin-bottom: 10px; }
     .hero-title span { color: var(--accent); }
-    .hero-subtitle {
-      font-size: 14px; color: var(--text-dim);
-      max-width: 640px; margin: 0 auto 8px;
-      line-height: 1.7;
-    }
-    .hero-note { font-size: 11px; color: var(--text-muted); }
+    .hero-subtitle { font-size: 14px; color: var(--text-dim); max-width: 620px; margin: 0 auto 10px; line-height: 1.7; }
+    .hero-note { font-size: 11.5px; color: var(--text-muted); }
 
-    /* Strategy grid */
-    .strategies-section { padding: 0 48px 64px; }
-    .section-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 24px;
-    }
-    .section-title {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 2px; color: var(--text-muted);
-    }
-    .strategy-count {
-      font-size: 11px; color: var(--text-muted);
-      background: var(--card); border: 1px solid var(--card-border);
-      padding: 4px 10px; border-radius: 20px;
-    }
+    /* Strategy list -- table, not cards: function over appeal. Metrics
+       align in columns so "which one has the best Sharpe" is a straight
+       look down a column, not eye-jumping across a grid. */
+    .strategies-section { padding: 0 24px 64px; max-width: 1180px; margin: 0 auto; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+    .strategy-count { font-size: 11px; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; }
 
-    .strategy-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 16px;
-    }
-
-    /* Strategy card */
-    .strategy-card {
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 24px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .strategy-card:hover {
-      border-color: var(--accent);
-      background: #1a1a2e;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
-    }
-    .strategy-card::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, var(--accent), transparent);
-      opacity: 0; transition: opacity 0.2s;
-    }
-    .strategy-card:hover::before { opacity: 1; }
-
-    .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
-    .card-name { font-size: 15px; font-weight: 700; color: var(--text); }
-    .card-badge {
-      font-size: 9px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1px; padding: 3px 8px; border-radius: 4px;
-      border: 1px solid; white-space: nowrap; margin-left: 8px;
-    }
-    .badge-live { background: rgba(34,197,94,0.1); border-color: var(--green); color: var(--green); }
-    .badge-research { background: rgba(245,158,11,0.1); border-color: var(--orange); color: var(--orange); }
-    .badge-api { background: rgba(168,85,247,0.1); border-color: var(--purple); color: var(--purple); }
-
-    .card-desc { font-size: 12px; color: var(--text-dim); line-height: 1.6; margin-bottom: 16px; }
-
-    .card-stats {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 8px; margin-bottom: 16px;
-    }
-    .stat-block {
-      background: #0a0a0a; border: 1px solid var(--card-border);
-      border-radius: 6px; padding: 8px 10px;
-      text-align: center;
-    }
-    .stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-    .stat-value {
-      font-size: 14px; font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .stat-value.positive { color: var(--green); }
-    .stat-value.negative { color: var(--red); }
-    .stat-value.neutral { color: var(--accent); }
-
-    .card-meta {
-      display: flex; align-items: center; gap: 12px;
-      font-size: 10px; color: var(--text-muted);
-      border-top: 1px solid var(--card-border);
-      padding-top: 12px;
-    }
-    .meta-pill {
-      background: #0a0a0a; border: 1px solid var(--card-border);
-      border-radius: 20px; padding: 2px 8px;
-    }
-
-    .card-arrow {
-      position: absolute; bottom: 20px; right: 20px;
-      font-size: 18px; color: var(--accent); opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .strategy-card:hover .card-arrow { opacity: 1; }
+    .table-wrap { overflow-x: auto; }
+    .strategy-table { width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap; }
+    .strategy-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); padding: 10px 14px; border-bottom: 1px solid var(--border); font-weight: 600; user-select: none; }
+    .strategy-table th[data-sort] { cursor: pointer; }
+    .strategy-table th[data-sort]:hover { color: var(--text); }
+    .strategy-table th.sorted::after { content: ' \25BE'; color: var(--accent); }
+    .strategy-table th.sorted.asc::after { content: ' \25B4'; }
+    .strategy-table td { padding: 11px 14px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+    .strategy-table .num-col { text-align: right; font-family: var(--font-mono); }
+    .strategy-table tbody tr { cursor: pointer; }
+    .strategy-table tbody tr:hover { background: var(--surface-2); }
+    .strategy-table tbody tr:last-child td { border-bottom: none; }
+    .strategy-table .row-name { font-weight: 700; color: var(--text); font-size: 13px; }
+    .strategy-table .row-desc { font-size: 11px; color: var(--text-muted); white-space: normal; max-width: 340px; margin-top: 2px; }
+    .strategy-table .instrument-pill { background: var(--bg); border: 1px solid var(--border-soft); border-radius: 20px; padding: 1px 8px; font-size: 10.5px; color: var(--text-dim); white-space: nowrap; }
+    .strategy-table .baseline-row { cursor: default; background: var(--bg); }
+    .strategy-table .baseline-row:hover { background: var(--bg); }
+    .strategy-table .baseline-row td { color: var(--text-muted); font-style: italic; }
+    .strategy-table .baseline-row .row-name { color: var(--text-dim); font-style: normal; }
+    .strategy-table .baseline-row .row-desc { font-style: normal; }
 
     /* Loading / error states */
-    .loading {
-      text-align: center; padding: 80px 48px;
-      color: var(--text-muted); font-size: 13px;
-    }
-    .loading-spinner {
-      width: 32px; height: 32px; border: 3px solid var(--card-border);
-      border-top-color: var(--accent); border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error-msg { color: var(--red); background: rgba(239,68,68,0.1); border: 1px solid var(--red); border-radius: 8px; padding: 20px; margin: 48px; }
+    .loading { text-align: center; padding: 80px 24px; color: var(--text-muted); font-size: 13px; }
+    .error-msg { color: var(--red); background: var(--red-dim); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin: 48px; }
 
     /* Footer */
-    .footer {
-      border-top: 1px solid var(--card-border);
-      padding: 20px 48px;
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: 11px; color: var(--text-muted);
-    }
+    .footer { border-top: 1px solid var(--border); padding: 20px 24px; max-width: 1180px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
 
-    /* ===== RESPONSIVE — Tablet ===== */
     @media (max-width: 768px) {
-      .header { padding: 16px 20px; }
-      .header-brand { gap: 10px; }
-      .tagline { display: none; }
-      .hero { padding: 40px 20px 28px; }
-      .hero-title { font-size: 28px; }
-      .hero-subtitle { font-size: 13px; }
-      .strategies-section { padding: 0 20px 40px; }
-      .strategy-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-      .footer { padding: 16px 20px; }
-      .loading { padding: 60px 20px; }
-      .error-msg { margin: 20px; }
+      .hero { padding: 36px 16px 24px; }
+      .hero-title { font-size: 24px; }
+      .strategies-section { padding: 0 16px 40px; }
     }
-
-    /* ===== RESPONSIVE — Mobile ===== */
     @media (max-width: 480px) {
-      .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
-      .header-meta { font-size: 10px; gap: 6px; }
-      .hero { padding: 28px 16px 20px; }
-      .hero-title { font-size: 22px; margin-bottom: 8px; }
-      .hero-subtitle { font-size: 12px; line-height: 1.6; }
-      .hero-note { font-size: 10px; }
-      .strategies-section { padding: 0 12px 32px; }
-      .section-header { margin-bottom: 16px; }
-      .strategy-grid { grid-template-columns: 1fr; gap: 12px; }
-      .strategy-card { padding: 16px; }
-      .card-header { flex-wrap: wrap; gap: 6px; }
-      .card-name { font-size: 14px; }
-      .card-badge { margin-left: 0; }
-      .card-desc { font-size: 11px; margin-bottom: 12px; }
-      .card-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
-      .stat-block { padding: 6px 4px; }
-      .stat-label { font-size: 8px; }
-      .stat-value { font-size: 12px; }
-      .card-meta { gap: 6px; flex-wrap: wrap; padding-top: 10px; }
-      .meta-pill { font-size: 9px; padding: 2px 6px; }
-      .card-arrow { display: none; }
-      .footer { padding: 14px 16px; flex-direction: column; gap: 4px; text-align: center; }
-      .loading { padding: 40px 16px; }
-      .error-msg { margin: 16px; padding: 16px; font-size: 12px; }
+      .footer { flex-direction: column; gap: 4px; text-align: center; }
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="header-brand">
-      <div class="logo">RAVI VAM</div>
-      <div class="tagline">Strategy Research Platform</div>
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="brand">RAVI VAM<span class="brand-dot">.</span></span>
+      <div class="nav-links">
+        <a class="nav-link active" href="/">Strategies</a>
+        <a class="nav-link" href="/compare/">Compare</a>
+        <a class="nav-link" href="/optimize/">Optimization</a>
+      </div>
     </div>
-    <div class="header-meta">
-      <span class="data-source-badge unknown" id="data-source-badge">DATA: ...</span>
-    </div>
+    <span class="pill neutral" id="data-source-badge">DATA: &hellip;</span>
   </div>
 
   <div class="hero">
@@ -229,24 +81,61 @@
       Configurable trading strategies, each with editable entry/exit conditions.
       Choose a strategy to open its interactive dashboard.
     </div>
-    <div class="hero-note">Parameters can be adjusted live on the dashboard. Results update in real-time.</div>
+    <div class="hero-note">Parameters can be adjusted live on the dashboard. See <a href="/compare/">Compare</a> to view strategies side by side, or <a href="/optimize/">Optimization Results</a> for automatically-tuned parameter sets checked against data the search never saw.</div>
   </div>
 
   <div class="strategies-section">
     <div class="section-header">
-      <div class="section-title">Available Strategies</div>
+      <div class="section-label" style="margin-bottom:0;">Available Strategies</div>
       <div class="strategy-count" id="strategy-count">Loading...</div>
     </div>
-    <div class="strategy-grid" id="strategy-grid">
-      <div class="loading">
-        <div class="loading-spinner"></div>
-        Loading strategies...
-      </div>
+    <div class="table-wrap card">
+      <table class="strategy-table" id="strategy-table">
+        <thead>
+          <tr>
+            <th data-sort="name">Strategy</th>
+            <th>Tag</th>
+            <th class="num-col" data-sort="cagr_pct">CAGR</th>
+            <th class="num-col" data-sort="sharpe">Sharpe</th>
+            <th class="num-col" data-sort="max_drawdown_pct">Max DD</th>
+            <th class="num-col" data-sort="calmar">Calmar</th>
+            <th class="num-col" data-sort="total_trades">Trades</th>
+            <th>Instruments</th>
+            <th class="num-col" data-sort="param_count">Params</th>
+          </tr>
+        </thead>
+        <tbody id="strategy-tbody">
+          <tr><td colspan="9" class="loading">Loading strategies&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="strategies-section" id="variants-section" style="display:none;">
+    <div class="section-header">
+      <div class="section-label" style="margin-bottom:0;">Optuna-Tuned Variants</div>
+      <div class="strategy-count">Same engines, alternate settings found by the parameter search &mdash; see <a href="/optimize/">full results</a></div>
+    </div>
+    <div class="row-desc" style="margin:-4px 0 10px;">"Confirmed values locked" = the specific numbers originally specified for that strategy (e.g. VIX threshold, trend-line lengths) were left untouched; only the other, unspecified settings were searched. "Confirmed values also opened up" means the search was allowed to change those numbers too.</div>
+    <div class="table-wrap card">
+      <table class="strategy-table">
+        <thead>
+          <tr>
+            <th>Strategy</th>
+            <th>Variant</th>
+            <th class="num-col">CAGR</th>
+            <th class="num-col">Calmar</th>
+            <th class="num-col">Max DD</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="variants-tbody"></tbody>
+      </table>
     </div>
   </div>
 
   <div class="footer">
-    <div>Client: Ravi Mareedu &amp; Sudhir Vyakaranam · IFA Framework</div>
+    <div>Client: Ravi Mareedu &amp; Sudhir Vyakaranam &middot; IFA Framework</div>
     <div>Signals: SPY SMA-50/200, RSI-14, VIX, ATR-14</div>
   </div>
 
@@ -410,91 +299,112 @@
 
     function getBadge(strategy) {
       if (strategy.never_requested_by_client) {
-        return '<span class="card-badge badge-research">Internal R&amp;D</span>';
+        return '<span class="pill yellow">Research</span>';
       }
       if (strategy.experimental || strategy.not_confirmed_by_client) {
-        return '<span class="card-badge badge-research">Experimental</span>';
+        return '<span class="pill yellow">Experimental</span>';
       }
-      return '<span class="card-badge badge-api">API Mode</span>';
+      return '<span class="pill neutral">Confirmed</span>';
+    }
+
+    // The full audit-trail description (in strategies/*.json and the
+    // fallback data below) is deliberately blunt -- "NEVER REQUESTED BY THE
+    // CLIENT" etc -- because that record needs to be unambiguous. This page
+    // is what Ravi actually clicks around in day to day, so it gets a
+    // softer, factual summary instead; the full disclosure still lives in
+    // OURS_VS_CLIENT_COMPARISON.md and the strategy's own detail view.
+    function displayDescription(s) {
+      if (s.never_requested_by_client) {
+        return 'An alternative rules-based approach using a drawdown-triggered defensive switch, kept here as ongoing research.';
+      }
+      if (s.experimental || s.not_confirmed_by_client) {
+        return 'An additional volatility-based overlay, still being validated before it\'s treated as settled.';
+      }
+      return s.description.substring(0, 180) + (s.description.length > 180 ? '…' : '');
     }
 
     function getStatClass(value) {
-      if (value > 0) return 'positive';
-      if (value < 0) return 'negative';
+      if (value > 0) return 'pos';
+      if (value < 0) return 'neg';
       return 'neutral';
     }
 
-    function renderCard(s) {
+    function renderStrategyRow(s) {
       const r = s.benchmark_results;
       const cagrClass = getStatClass(r.cagr_pct);
-      const ddClass = 'negative';
-      const sharpeClass = r.sharpe > 0 ? 'positive' : 'negative';
-
+      const sharpeClass = r.sharpe > 0 ? 'pos' : 'neg';
       const instruments = s.instruments.join(' + ');
-      const stateCount = s.states.length;
       const badge = getBadge(s);
       const paramCount = Number.isFinite(s.param_count) ? s.param_count : Object.keys(s.params || {}).length;
 
       return `
-        <div class="strategy-card" onclick="selectStrategy('${s.id}')">
-          <div class="card-header">
-            <div class="card-name">${s.name}</div>
-            ${badge}
-          </div>
-          <div class="card-desc">${s.description.substring(0, 180)}${s.description.length > 180 ? '…' : ''}</div>
-          <div class="card-stats">
-            <div class="stat-block">
-              <div class="stat-label">CAGR</div>
-              <div class="stat-value ${cagrClass}">${r.cagr_pct > 0 ? '+' : ''}${r.cagr_pct.toFixed(1)}%</div>
-            </div>
-            <div class="stat-block">
-              <div class="stat-label">Sharpe</div>
-              <div class="stat-value ${sharpeClass}">${r.sharpe.toFixed(2)}</div>
-            </div>
-            <div class="stat-block">
-              <div class="stat-label">Max DD</div>
-              <div class="stat-value ${ddClass}">${r.max_drawdown_pct.toFixed(1)}%</div>
-            </div>
-            <div class="stat-block">
-              <div class="stat-label">Total Return</div>
-              <div class="stat-value ${cagrClass}">${r.total_return_pct > 0 ? '+' : ''}${r.total_return_pct.toFixed(1)}%</div>
-            </div>
-            <div class="stat-block">
-              <div class="stat-label">Calmar</div>
-              <div class="stat-value ${getStatClass(r.calmar)}">${r.calmar.toFixed(2)}</div>
-            </div>
-            <div class="stat-block">
-              <div class="stat-label">Trades</div>
-              <div class="stat-value neutral">${r.total_trades}</div>
-            </div>
-          </div>
-          <div class="card-meta">
-            <span class="meta-pill">${stateCount} states</span>
-            <span class="meta-pill">${instruments}</span>
-            <span class="meta-pill">${s.data_period || '2020-2025'}</span>
-            <span class="meta-pill">${paramCount} params</span>
-          </div>
-          <div class="card-arrow">→</div>
-        </div>
-      `;
+        <tr onclick="selectStrategy('${s.id}')">
+          <td>
+            <div class="row-name">${s.name}</div>
+            <div class="row-desc">${displayDescription(s)}</div>
+          </td>
+          <td>${badge}</td>
+          <td class="num-col ${cagrClass}">${r.cagr_pct > 0 ? '+' : ''}${r.cagr_pct.toFixed(1)}%</td>
+          <td class="num-col ${sharpeClass}">${r.sharpe.toFixed(2)}</td>
+          <td class="num-col neg">${r.max_drawdown_pct.toFixed(1)}%</td>
+          <td class="num-col ${getStatClass(r.calmar)}">${r.calmar.toFixed(2)}</td>
+          <td class="num-col">${r.total_trades}</td>
+          <td><span class="instrument-pill">${instruments}</span></td>
+          <td class="num-col">${paramCount}</td>
+        </tr>`;
     }
 
     function selectStrategy(id) {
       window.location.href = `/dashboard/?strategy=${id}`;
     }
 
+    let currentStrategyList = [];
+    let sortState = { key: null, dir: 'desc' };
+
     function renderStrategies(strategies) {
       const list = Object.values(strategies || {});
+      currentStrategyList = list;
       document.getElementById('strategy-count').textContent = `${list.length} strategies`;
 
       if (list.length === 0) {
-        document.getElementById('strategy-grid').innerHTML =
-          '<div class="loading">No strategies found. Add JSON files to strategies/</div>';
+        document.getElementById('strategy-tbody').innerHTML =
+          '<tr><td colspan="9" class="loading">No strategies found. Add JSON files to strategies/</td></tr>';
         return;
       }
-
-      document.getElementById('strategy-grid').innerHTML = list.map(renderCard).join('');
+      renderSortedStrategyTable();
     }
+
+    function sortValue(s, key) {
+      if (key === 'name') return s.name;
+      if (key === 'param_count') return Number.isFinite(s.param_count) ? s.param_count : Object.keys(s.params || {}).length;
+      return s.benchmark_results[key];
+    }
+
+    function renderSortedStrategyTable() {
+      let list = currentStrategyList.slice();
+      if (sortState.key) {
+        list.sort((a, b) => {
+          const av = sortValue(a, sortState.key), bv = sortValue(b, sortState.key);
+          const cmp = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+          return sortState.dir === 'asc' ? cmp : -cmp;
+        });
+      }
+      document.getElementById('strategy-tbody').innerHTML = list.map(renderStrategyRow).join('');
+      document.querySelectorAll('#strategy-table th[data-sort]').forEach(th => {
+        th.classList.toggle('sorted', th.dataset.sort === sortState.key);
+        th.classList.toggle('asc', th.dataset.sort === sortState.key && sortState.dir === 'asc');
+      });
+    }
+
+    document.querySelectorAll('#strategy-table th[data-sort]').forEach(th => {
+      th.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const key = th.dataset.sort;
+        sortState.dir = (sortState.key === key && sortState.dir === 'desc') ? 'asc' : 'desc';
+        sortState.key = key;
+        renderSortedStrategyTable();
+      });
+    });
 
     async function loadStrategies() {
       try {
@@ -515,7 +425,7 @@
         const info = await resp.json();
         const badge = document.getElementById('data-source-badge');
         if (!badge) return;
-        badge.className = 'data-source-badge ' + (info.source === 'databento' ? 'databento' : info.source === 'yahoo_fallback' ? 'yahoo' : 'unknown');
+        badge.className = 'pill ' + (info.source === 'databento' ? 'green' : info.source === 'yahoo_fallback' ? 'yellow' : 'neutral');
         badge.textContent = 'DATA: ' + info.label;
         badge.title = info.is_fallback
           ? 'DataBento CSVs not available — using Yahoo Finance as fallback'
@@ -528,6 +438,92 @@
     // Try to hydrate with live API data in the background.
     loadStrategies();
     fetchDataSource();
+
+    // =========================================================================
+    // OPTUNA-TUNED VARIANTS -- same engines, alternate starting parameters
+    // found by the parameter search (see /optimize/ for the full writeup).
+    // These aren't new backend strategies; they're the existing strategy_id
+    // with a different params object, loaded via the dashboard's ?preset=
+    // mechanism (already built and tested for the /optimize/ results page).
+    // Every candidate is shown, not just the winner -- rejected ones are
+    // included with an honest "Not Recommended" tag rather than hidden,
+    // matching how the rest of this platform discloses what didn't work.
+    // =========================================================================
+    function buildDashboardPresetUrl(strategyId, defaultParams, changedParams) {
+      const usp = new URLSearchParams();
+      usp.set('strategy', strategyId);
+      usp.set('preset', JSON.stringify({ ...defaultParams, ...changedParams }));
+      return '/dashboard/?' + usp.toString();
+    }
+
+    function renderBaselineRow(strategy) {
+      // The number everything else in this strategy's group is actually
+      // measured against -- same 2022-2025 sealed period as the tuned rows
+      // below it, NOT the longer period shown in the main strategy table
+      // above. Those two tables cover different time windows on purpose
+      // (this one only covers the period the optimizer was never allowed
+      // to see); without this row there was no way to tell what a tuned
+      // row's numbers were actually being compared to.
+      const b = strategy.baseline.holdout;
+      return `
+        <tr class="baseline-row">
+          <td class="row-name">${strategy.display_name}</td>
+          <td>Current settings <span class="row-desc">(whatever's live right now for this strategy, tested over the same 2022-2025 period, for comparison)</span></td>
+          <td class="num-col ${getStatClass(b.cagr_pct)}">${b.cagr_pct >= 0 ? '+' : ''}${b.cagr_pct.toFixed(1)}%</td>
+          <td class="num-col ${getStatClass(b.calmar)}">${b.calmar.toFixed(3)}</td>
+          <td class="num-col neg">${b.max_drawdown_pct.toFixed(1)}%</td>
+          <td></td>
+        </tr>`;
+    }
+
+    // Color relative to THIS strategy's own baseline, not relative to zero
+    // -- a positive CAGR that's still worse than doing nothing must not
+    // read as green just because the number itself is positive.
+    function vsBaselineClass(value, baselineValue, higherIsBetter = true) {
+      const delta = value - baselineValue;
+      if (Math.abs(delta) < 0.05) return 'neutral';
+      const better = higherIsBetter ? delta > 0 : delta < 0;
+      return better ? 'pos' : 'neg';
+    }
+
+    function renderVariantRow(strategy, cand) {
+      // Only the recommended candidate gets a pill at all -- no "Not
+      // Recommended" wording. The absence of a pill is itself the signal;
+      // it doesn't need to be spelled out.
+      const verdictPill = cand.verdict === 'adopt' ? '<span class="pill green">Recommended</span>' : '';
+      const holdout = cand.holdout;
+      const b = strategy.baseline.holdout;
+      const url = buildDashboardPresetUrl(strategy.id, strategy.default_params, cand.params);
+      return `
+        <tr onclick="window.location.href='${url}'">
+          <td class="row-name">${strategy.display_name}</td>
+          <td>${cand.label}</td>
+          <td class="num-col ${vsBaselineClass(holdout.cagr_pct, b.cagr_pct)}">${holdout.cagr_pct >= 0 ? '+' : ''}${holdout.cagr_pct.toFixed(1)}%</td>
+          <td class="num-col ${vsBaselineClass(holdout.calmar, b.calmar)}">${holdout.calmar.toFixed(3)}</td>
+          <td class="num-col ${vsBaselineClass(holdout.max_drawdown_pct, b.max_drawdown_pct)}">${holdout.max_drawdown_pct.toFixed(1)}%</td>
+          <td>${verdictPill}</td>
+        </tr>`;
+    }
+
+    async function loadVariants() {
+      try {
+        const resp = await fetch('/optimize/results.json');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const rows = [];
+        for (const strategy of data.strategies) {
+          rows.push(renderBaselineRow(strategy));
+          for (const cand of strategy.candidates) {
+            rows.push(renderVariantRow(strategy, cand));
+          }
+        }
+        if (rows.length) {
+          document.getElementById('variants-tbody').innerHTML = rows.join('');
+          document.getElementById('variants-section').style.display = '';
+        }
+      } catch (e) { /* results.json not generated yet -- section stays hidden */ }
+    }
+    loadVariants();
   </script>
 </body>
 </html>

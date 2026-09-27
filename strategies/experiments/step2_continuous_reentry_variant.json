@@ -1,0 +1,28 @@
+{
+    "id": "step2_continuous_reentry_variant",
+    "name": "Step 2 -- Continuous Re-entry Tolerance (EXPERIMENT, not a deliverable)",
+    "version": "experiment-1",
+    "description": "Replaces the 'N of 4 booleans' re-entry gate (step2_reentry_variant.json) with a continuous one: the minimum of four signed distances-past-threshold (SPY vs 200SMA, VIX headroom, SPY vs 50SMA, QQQ vs 50SMA), each as a % of its own threshold, must be >= -tolerance instead of >= 0. Zero tolerance reproduces today's exact behavior. Every other parameter held fixed at the already-recommended tuned config. Not a deliverable strategy -- lives outside strategies/*.json on purpose.",
+    "engine": "app.engines.step2_continuous_reentry_variant",
+    "instruments": ["UPRO", "TQQQ"],
+    "states": ["BULL_FULL", "BULL_TRIMMED", "DEF_SPY", "DEF_QQQ", "DEF_BOTH", "CASH"],
+    "params": {
+        "vixThreshold": {"type": "range", "default": 30, "min": 20, "max": 45, "step": 1, "tier": "confirmed"},
+        "smaKill":      {"type": "range", "default": 200, "min": 100, "max": 300, "step": 10, "tier": "confirmed"},
+        "smaDef":       {"type": "range", "default": 50, "min": 20, "max": 100, "step": 5, "tier": "confirmed"},
+        "rsiOB":        {"type": "range", "default": 75, "min": 65, "max": 85, "step": 1, "tier": "confirmed"},
+        "rsiRe":        {"type": "range", "default": 60, "min": 40, "max": 70, "step": 1, "tier": "confirmed"},
+
+        "confirmDays":  {"type": "range", "default": 2, "min": 0, "max": 15, "step": 1, "tier": "fixed"},
+        "cooldown":     {"type": "range", "default": 2, "min": 1, "max": 15, "step": 1, "tier": "fixed"},
+        "defSell":      {"type": "range", "default": 75, "min": 25, "max": 75, "step": 5, "tier": "fixed"},
+        "rsiPeriod":    {"type": "range", "default": 24, "min": 7, "max": 28, "step": 1, "tier": "fixed"},
+        "rsiTrim":      {"type": "range", "default": 50, "min": 10, "max": 50, "step": 5, "tier": "fixed"},
+        "uproSplit":    {"type": "range", "default": 10, "min": 10, "max": 90, "step": 5, "tier": "fixed"},
+
+        "reentryToleranceBps": {"type": "range", "default": 0, "min": 0, "max": 500, "step": 25, "tier": "free",
+                                 "tier_note": "NEW. The weakest of the four re-entry signals (as a signed % distance past its own threshold) may be up to this many bps short of fully clearing, instead of every signal needing to have already crossed. 0 = today's exact AND-gate behavior. 100bps = 1.00%."},
+
+        "capital": {"type": "range", "default": 100000, "min": 10000, "max": 1000000, "step": 10000, "tier": "input"}
+    }
+}

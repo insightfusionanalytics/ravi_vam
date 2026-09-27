@@ -1,0 +1,10 @@
+<svg aria-label="Line chart: UPRO price with shaded defensive period, August 2024 example" width="760" height="420" viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg">
+<rect x="316.3" y="30" width="165.8" height="290" fill="#DC4646" fill-opacity="0.16"/>
+<line x1="316.3" y1="30" x2="316.3" y2="320" stroke="#DC4646" stroke-width="2" stroke-dasharray="6,5"/>
+<line x1="482.1" y1="30" x2="482.1" y2="320" stroke="#DC4646" stroke-width="2" stroke-dasharray="6,5"/>
+<path d="M 40.0,67.9 L 58.4,58.1 L 76.8,89.8 L 95.3,111.6 L 113.7,135.6 L 132.1,110.1 L 150.5,123.6 L 168.9,166.4 L 187.4,181.9 L 205.8,159.5 L 224.2,164.3 L 242.6,169.5 L 261.1,119.7 L 279.5,176.1 L 297.9,222.0 L 316.3,261.7 L 334.7,273.1 L 353.2,291.9 L 371.6,225.5 L 390.0,219.8 L 408.4,219.1 L 426.8,182.4 L 445.3,175.3 L 463.7,130.5 L 482.1,128.3 L 500.5,105.2 L 518.9,108.7 L 537.4,97.1 L 555.8,116.6 L 574.2,92.8 L 592.6,103.3 L 611.1,101.5 L 629.5,131.5 L 647.9,111.3 L 666.3,90.0 L 684.7,149.7 L 703.2,155.9 L 721.6,159.8 L 740.0,207.5" fill="none" stroke="#4C7DFF" stroke-width="3"/>
+<text x="399.2" y="58" font-family="IBM Plex Sans" font-size="22" font-weight="700" fill="#DC4646" text-anchor="middle">DEFENSIVE / CASH</text>
+<text x="740.0" y="189.5" font-family="JetBrains Mono" font-size="24" font-weight="700" fill="#1FAD5C" text-anchor="end">+18.4%</text>
+<text x="40" y="404" font-family="JetBrains Mono" font-size="20" fill="#9098A3">2024-08-05</text>
+<text x="740.0" y="404" font-family="JetBrains Mono" font-size="20" fill="#9098A3" text-anchor="end">2024-08-16</text>
+</svg>

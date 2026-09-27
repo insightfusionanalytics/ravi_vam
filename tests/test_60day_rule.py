@@ -29,8 +29,16 @@ def step1_2020_window():
         return df[df.index <= pd.Timestamp("2020-09-30")]
 
     step1._mod.load_step1_data = truncated_loader
+    # run() caches raw data keyed only by (data_dir, full_history) -- it has
+    # no way to know the loader function underneath was just swapped, so
+    # without clearing here it would serve whichever dataset (full or
+    # truncated) happened to be cached first across the whole test session.
+    step1._load_raw_data_cached.cache_clear()
+    step1._INDICATOR_CACHE.clear()
     yield step1
     step1._mod.load_step1_data = original_loader
+    step1._load_raw_data_cached.cache_clear()
+    step1._INDICATOR_CACHE.clear()
 
 
 def test_immunity_improves_cagr_in_2020_window(step1_2020_window):

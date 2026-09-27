@@ -1,0 +1,33 @@
+{
+    "id": "step2_reentry_variant",
+    "name": "Step 2 -- Re-entry Lag Fix (EXPERIMENT, not a deliverable)",
+    "version": "experiment-1",
+    "description": "Isolates the effect of loosening the CASH->BULL_FULL re-entry condition from 'all 4 signals must clear simultaneously' to 'at least N of 4'. Exit side (kill switch) is untouched -- unlike step2_killfix_variant.json, which tested the exit side and failed the sealed holdout. Every other parameter held fixed at the already-recommended 'confirmed values locked' tuned config. Lives outside strategies/*.json on purpose -- not a deliverable strategy.",
+    "engine": "app.engines.step2_reentry_variant",
+    "instruments": ["UPRO", "TQQQ"],
+    "states": ["BULL_FULL", "BULL_TRIMMED", "DEF_SPY", "DEF_QQQ", "DEF_BOTH", "CASH"],
+    "params": {
+        "vixThreshold": {"type": "range", "default": 30, "min": 20, "max": 45, "step": 1, "tier": "confirmed"},
+        "smaKill":      {"type": "range", "default": 200, "min": 100, "max": 300, "step": 10, "tier": "confirmed"},
+        "smaDef":       {"type": "range", "default": 50, "min": 20, "max": 100, "step": 5, "tier": "confirmed"},
+        "rsiOB":        {"type": "range", "default": 75, "min": 65, "max": 85, "step": 1, "tier": "confirmed"},
+        "rsiRe":        {"type": "range", "default": 60, "min": 40, "max": 70, "step": 1, "tier": "confirmed"},
+
+        "confirmDays":  {"type": "range", "default": 2, "min": 0, "max": 15, "step": 1, "tier": "fixed"},
+        "cooldown":     {"type": "range", "default": 2, "min": 1, "max": 15, "step": 1, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (2), not re-searched here."},
+        "defSell":      {"type": "range", "default": 75, "min": 25, "max": 75, "step": 5, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (75), not re-searched here."},
+        "rsiPeriod":    {"type": "range", "default": 24, "min": 7, "max": 28, "step": 1, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (24), not re-searched here."},
+        "rsiTrim":      {"type": "range", "default": 50, "min": 10, "max": 50, "step": 5, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (50), not re-searched here."},
+        "uproSplit":    {"type": "range", "default": 10, "min": 10, "max": 90, "step": 5, "tier": "fixed",
+                          "tier_note": "Fixed at the already-recommended tuned value (10), not re-searched here."},
+
+        "reentryMinConditions": {"type": "range", "default": 4, "min": 2, "max": 4, "step": 1, "tier": "free",
+                                  "tier_note": "NEW. Re-entry from CASH fires once at least this many of {SPY>200SMA, VIX<threshold, SPY>50SMA, QQQ>50SMA} are true, instead of requiring all 4. 4 = today's behavior (no change)."},
+
+        "capital": {"type": "range", "default": 100000, "min": 10000, "max": 1000000, "step": 10000, "tier": "input"}
+    }
+}
