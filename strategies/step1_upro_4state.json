@@ -74,6 +74,18 @@
       "tier": "fixed",
       "tier_note": "Held fixed at 2, never optimized, as of 2026-09-24 -- same reasoning as Step 2's identical param (see strategies/step2_upro_tqqq_6state.json): freeing this let an optimizer push it high enough to quietly disable the defensive-trim rule rather than genuinely tune it (real SPY streaks below/above the 50-day average almost never sustain double-digit day counts), and it only looked good because 2011-2021 happened to reward staying invested."
     },
+    "reentryImmunityDays": {
+      "label": "Fresh Position Grace Period",
+      "group": "Defensive Trim (Priority 2)",
+      "type": "range",
+      "default": 60,
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "unit": " days",
+      "tier": "confirmed",
+      "tier_note": "Ravi's own number, confirmed directly with the client (WhatsApp, 2026-05-24) -- the single most-discussed refinement across the whole engagement, called 'blanketing' or 'defensive confirm days' in the original meetings. After a fresh full re-entry, the fast 50-day trim rule is switched off for this many days, so it can't immediately chop a brand-new position back down before the 50-day average catches up to the 200-day one. Fixes the exact 'buy high, sell low' pattern Ravi called out directly in the trade logs (raised in meetings 3, 4, and 5). Measured effect when this was built: CAGR improved from ~20.3% to 23% (Step 1) and ~20.4% to 22.6% (Step 2) versus no grace period. Applies only to the 50-day defensive trim -- the VIX/200-day kill switch is deliberately never affected by this and always fires immediately (see Section 4/9 of the whipsaw investigation for why that asymmetry itself became a separate finding)."
+    },
     "rsiPeriod": {
       "label": "RSI Period",
       "group": "RSI Trim (Priority 3)",

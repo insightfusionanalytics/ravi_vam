@@ -88,6 +88,18 @@
       "tier": "fixed",
       "tier_note": "Held fixed at 2, never optimized, as of 2026-09-24. When freed, a 200-trial pass pushed this to 14 -- but real SPY/QQQ streaks below/above the 50-day average almost never last that long (empirically: only 17% of real episodes reach 14 days, vs 73% reaching 2 days), so confirmDays=14 doesn't mean 'wait for stronger confirmation' -- it means the defensive-trim rule almost never fires at all (measured: defensive-state days dropped from 7.4% of the test period at the default to 3.6%). It scored well purely because 2011-2021 rewarded staying invested, which is exactly the kind of thing that looks smart in a backtest and hurts badly the one time a real crash isn't in the tested years. 2 is close to the median real episode length (3 days) -- long enough to filter single-day noise, short enough to still catch most genuine weakness."
     },
+    "reentryImmunityDays": {
+      "label": "Fresh Position Grace Period",
+      "group": "Defensive Trim (Priority 2)",
+      "type": "range",
+      "default": 60,
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "unit": " days",
+      "tier": "confirmed",
+      "tier_note": "Ravi's own number, confirmed directly with the client (WhatsApp, 2026-05-24) -- the single most-discussed refinement across the whole engagement, called 'blanketing' or 'defensive confirm days' in the original meetings. After a fresh full re-entry, the fast 50-day trim rule is switched off for this many days, so it can't immediately chop a brand-new position back down before the 50-day average catches up to the 200-day one. Fixes the exact 'buy high, sell low' pattern Ravi called out directly in the trade logs (raised in meetings 3, 4, and 5). Measured effect when this was built: CAGR improved from ~20.3% to 23% (Step 1) and ~20.4% to 22.6% (Step 2) versus no grace period. Applies only to the 50-day defensive trim -- the VIX/200-day kill switch is deliberately never affected by this and always fires immediately (see Section 4/9 of the whipsaw investigation for why that asymmetry itself became a separate finding)."
+    },
     "defSell": {
       "label": "Defensive Sell %",
       "group": "Defensive Trim (Priority 2)",
