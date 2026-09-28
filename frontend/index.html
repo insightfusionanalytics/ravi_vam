@@ -450,9 +450,17 @@
     // matching how the rest of this platform discloses what didn't work.
     // =========================================================================
     function buildDashboardPresetUrl(strategyId, defaultParams, changedParams) {
+      // Every number in this table is measured on the sealed holdout
+      // (2022-02-01 to 2025-12-30) -- carry that window into the dashboard
+      // too, so clicking through reproduces the exact reported CAGR/Calmar/
+      // MaxDD instead of silently landing on "Recent", a different window
+      // that would show a different number for the same params.
       const usp = new URLSearchParams();
       usp.set('strategy', strategyId);
-      usp.set('preset', JSON.stringify({ ...defaultParams, ...changedParams }));
+      usp.set('preset', JSON.stringify({
+        ...defaultParams, ...changedParams,
+        fullHistory: true, startDate: '2022-02-01', endDate: '2025-12-30',
+      }));
       return '/dashboard/?' + usp.toString();
     }
 
@@ -494,6 +502,24 @@
       const holdout = cand.holdout;
       const b = strategy.baseline.holdout;
       const url = buildDashboardPresetUrl(strategy.id, strategy.default_params, cand.params);
+
+      // Some fix attempts were deliberately never checked against the
+      // sealed holdout -- their dev-period signal was too weak to justify
+      // spending that look. Show the dev number plainly instead of faking a
+      // holdout column; never silently substitute one for the other.
+      if (!holdout) {
+        const d = cand.dev;
+        return `
+          <tr onclick="window.location.href='${url}'">
+            <td class="row-name">${strategy.display_name}</td>
+            <td>${cand.label} <span class="row-desc">(dev-period only, not checked against sealed holdout)</span></td>
+            <td class="num-col neutral">${d.cagr_pct >= 0 ? '+' : ''}${d.cagr_pct.toFixed(1)}%<sup>dev</sup></td>
+            <td class="num-col neutral">${d.calmar.toFixed(3)}<sup>dev</sup></td>
+            <td class="num-col neutral">${d.max_drawdown_pct.toFixed(1)}%<sup>dev</sup></td>
+            <td></td>
+          </tr>`;
+      }
+
       return `
         <tr onclick="window.location.href='${url}'">
           <td class="row-name">${strategy.display_name}</td>

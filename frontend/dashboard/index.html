@@ -377,6 +377,7 @@
     let portfolioData = [];
     let tradeLogData = [];
     let metricsData = {};
+    let lastRunParams = {};
     let charts = {};
     let series = {};
     let showBuys = true;
@@ -519,8 +520,22 @@
         if (!resp.ok) return;
         const fresh = await resp.json();
         strategyConfig = fresh;
-        // Rebuild sidebar if params changed (unlikely but safe).
+        // Rebuild sidebar if params changed (unlikely but safe) -- EXCEPT when a
+        // preset is active in the URL. buildSidebar() regenerates every slider at
+        // its JSON default and the History Range radio back to "recent", which
+        // silently wiped out an applied preset's params (and, before this fix,
+        // its history-range window too) the moment this background fetch
+        // resolved -- a real race, not hypothetical: it fires whenever the
+        // initial config fetch fell back (slow network, cold-start backend),
+        // exactly the conditions under which a shared preset link is likely to
+        // be opened. Re-apply the preset after rebuilding instead of skipping
+        // the rebuild outright, so the sidebar still reflects the freshly
+        // fetched config (labels/ranges), just not with the preset erased.
         buildSidebar(strategyConfig);
+        wireSliders();
+        if (new URLSearchParams(window.location.search).get('preset')) {
+          applyPresetFromURL();
+        }
       } catch (e) { /* silent — fallback is good enough */ }
     }
 
@@ -586,16 +601,21 @@
       }
 
       html += `<div class="section"><div class="section-title">History Range</div>
-        <div class="segmented-control">
+        <div class="segmented-control" style="flex-wrap:wrap;">
           <input type="radio" name="historyRange" id="hr-recent" value="recent" checked>
-          <label for="hr-recent">Recent (~2020-2025)</label>
+          <label for="hr-recent">Recent</label>
           <input type="radio" name="historyRange" id="hr-full" value="full">
-          <label for="hr-full">Full History (2011-2025)</label>
+          <label for="hr-full">Full (2011-25)</label>
+          <input type="radio" name="historyRange" id="hr-search" value="search">
+          <label for="hr-search">Search (2011-21)</label>
+          <input type="radio" name="historyRange" id="hr-sealed" value="sealed">
+          <label for="hr-sealed">Sealed (2022-25)</label>
         </div>
         <div style="margin-top:6px; font-size:10px; color:var(--text-muted);">
-          The short window shown by default is the flattering case. Full History
-          shows the same strategy over 2011-2025 — where its edge over just
-          buying the S&amp;P 500 is much smaller.
+          <b>Recent</b>/<b>Full</b> are exploratory views (~2019-2025 and 2011-2025). <b>Search</b> (2011-01-01 to
+          2021-12-31) and <b>Sealed</b> (2022-02-01 to 2025-12-30) are the exact windows used throughout
+          OPTIMIZATION_REPORT.md and the investigation deck — pick <b>Sealed</b> to independently reproduce any
+          CAGR/Calmar/drawdown number shown there for these settings.
         </div></div>`;
 
       html += `<button class="run-btn" id="run-btn" onclick="runBacktestViaAPI(readParams())">▶ Run Backtest</button>`;
@@ -641,6 +661,14 @@
         slider.value = value;
         const unit = strategyConfig.params[key] ? strategyConfig.params[key].unit : '';
         onParamChange(key, value, unit);
+        applied++;
+      }
+      // fullHistory/startDate/endDate aren't sliders -- they select the History
+      // Range radio instead. Handled separately so a preset link can force the
+      // exact "sealed" or "search" window a reported number came from, not just
+      // whatever range happened to be selected already.
+      if ('fullHistory' in preset || 'startDate' in preset || 'endDate' in preset) {
+        setHistoryRangeRadio(preset.fullHistory, preset.startDate, preset.endDate);
         applied++;
       }
       if (applied === 0) return;
@@ -696,10 +724,38 @@
       // confirmDir for step2
       const confirmDirInput = document.querySelector('input[name="confirmDir"]:checked');
       if (confirmDirInput) params.confirmDir = confirmDirInput.value;
-      // History range toggle (Step 1-4): Recent (~2020-2025) vs Full History (2011-2025)
+      // History range toggle (Step 1-4): recent / full / search (dev-fold) / sealed (holdout).
+      // "search" and "sealed" carry exact startDate/endDate so results here can be
+      // reproduced byte-for-byte against OPTIMIZATION_REPORT.md and the deck --
+      // "recent"/"full" are open-ended exploratory views with no date bounds.
       const historyRangeInput = document.querySelector('input[name="historyRange"]:checked');
-      if (historyRangeInput) params.fullHistory = historyRangeInput.value === 'full';
+      const historyRange = historyRangeInput ? historyRangeInput.value : 'recent';
+      if (historyRange === 'search') {
+        params.fullHistory = true;
+        params.startDate = '2011-01-01';
+        params.endDate = '2021-12-31';
+      } else if (historyRange === 'sealed') {
+        params.fullHistory = true;
+        params.startDate = '2022-02-01';
+        params.endDate = '2025-12-30';
+      } else {
+        params.fullHistory = (historyRange === 'full');
+        delete params.startDate;
+        delete params.endDate;
+      }
       return params;
+    }
+
+    // Checks the correct History Range radio for a given {fullHistory, startDate,
+    // endDate} combination, so a preset link (or a manual param match) can force
+    // the exact search/sealed window instead of silently defaulting to "recent".
+    function setHistoryRangeRadio(fullHistory, startDate, endDate) {
+      let value = 'recent';
+      if (startDate === '2011-01-01' && endDate === '2021-12-31') value = 'search';
+      else if (startDate === '2022-02-01' && endDate === '2025-12-30') value = 'sealed';
+      else if (fullHistory) value = 'full';
+      const radio = document.getElementById(`hr-${value}`);
+      if (radio) radio.checked = true;
     }
 
     // =========================================================================
@@ -1092,6 +1148,7 @@
           portfolioData = result.daily_log;
           tradeLogData = result.trades;
           metricsData = result.metrics;
+          lastRunParams = params;
 
           if (result.data_source) {
             const labels = { databento: 'DataBento', yahoo_fallback: 'Yahoo Finance (fallback)', unknown: 'Not yet determined' };
@@ -1765,7 +1822,11 @@
       const dataSourceLabel = (document.getElementById('data-source-badge') || {}).textContent || '';
       doc.text(`Data source: ${dataSourceLabel}`, 40, y); y += 14;
       const m = metricsData;
-      doc.text(`History range: ${m.full_history_mode ? 'Full History (2011-2025)' : 'Recent (~2020-2025)'}`, 40, y); y += 20;
+      const hrLabels = { search: 'Search / dev period (2011-01-01 to 2021-12-31)', sealed: 'Sealed holdout (2022-02-01 to 2025-12-30)', full: 'Full History (2011-2025)', recent: 'Recent (~2020-2025)' };
+      const hrValue = (lastRunParams.startDate === '2011-01-01' && lastRunParams.endDate === '2021-12-31') ? 'search'
+        : (lastRunParams.startDate === '2022-02-01' && lastRunParams.endDate === '2025-12-30') ? 'sealed'
+        : (m.full_history_mode ? 'full' : 'recent');
+      doc.text(`History range: ${hrLabels[hrValue]}`, 40, y); y += 20;
       doc.setTextColor(0);
 
       // Equity chart screenshot, if the chart library supports it

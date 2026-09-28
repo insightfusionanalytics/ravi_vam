@@ -14,7 +14,9 @@
   .page-title { font-size: 20px; font-weight: 700; margin: 28px 0 4px; }
   .page-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; max-width: 640px; line-height: 1.6; }
 
-  .picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .picker-group { margin-bottom: 14px; }
+  .picker-group-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
   .chip {
     display: flex; align-items: center; gap: 8px; padding: 8px 14px;
     border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
@@ -73,7 +75,7 @@
 
   <div class="wrap">
     <div class="page-title">Compare Strategies</div>
-    <div class="page-sub">Pick two or more strategies to see them side by side: equity curves over their own history, headline metrics, monthly returns, and the shape of their daily returns. Each strategy runs with its own default settings.</div>
+    <div class="page-sub">Pick two or more to see them side by side: equity curves, headline metrics, monthly returns, and the shape of daily returns. For the flagship, this includes the original settings, the adopted tuned config, and each whipsaw-fix attempt from the investigation &mdash; any combination, all run live, all on the same 2022&ndash;2025 sealed window used throughout the report.</div>
 
     <div class="picker" id="picker"><div class="loading">Loading strategies&hellip;</div></div>
     <div id="content"></div>
@@ -81,23 +83,56 @@
 
 <script>
 const API_BASE = window.__RAVI_API_BASE || '';
-const PALETTE = ['#4c7dff', '#1fad5c', '#c99a2e', '#dc4646', '#a855f7', '#22b8cf'];
+const PALETTE = ['#4c7dff', '#1fad5c', '#c99a2e', '#dc4646', '#a855f7', '#22b8cf', '#f97316', '#14b8a6'];
+
+// The same sealed-holdout window used throughout OPTIMIZATION_REPORT.md and
+// the investigation deck -- baked into every curated variant below so a
+// live comparison here always matches the numbers already shown elsewhere,
+// rather than accidentally running on a different date range.
+const HOLDOUT = { fullHistory: true, startDate: '2022-02-01', endDate: '2025-12-30' };
+
+// A "variant" is one runnable, labeled thing: which engine (strategy_id, as
+// far as /api/backtest is concerned) plus which params. Comparing "original
+// vs tuned" or "original vs a whipsaw fix" means two variants that share an
+// engine family but differ in params (or use a different experimental
+// engine module entirely) -- something the old strategy-only picker had no
+// way to express. Strategies with no curated list fall back to a single
+// "as-is" variant built from /api/strategies automatically.
+function withHoldout(params) { return { ...HOLDOUT, ...params }; }
+
+const CURATED_VARIANTS = {
+  step2_upro_tqqq_6state: [
+    { id: 'step2_original', label: 'UPRO+TQQQ — Original', engine: 'step2_upro_tqqq_6state', params: withHoldout({}) },
+    { id: 'step2_tuned', label: 'UPRO+TQQQ — Tuned (adopted)', engine: 'step2_upro_tqqq_6state', params: withHoldout({ cooldown: 2, defSell: 75, rsiPeriod: 24, rsiTrim: 50, uproSplit: 10 }) },
+    { id: 'step2_killfix', label: 'UPRO+TQQQ — Fix: Kill-Switch Buffer', engine: 'step2_killfix_variant', params: withHoldout({ killBufferBps: 75, killConfirmDays: 4, cooldown: 2, defSell: 75, rsiPeriod: 24, rsiTrim: 50, uproSplit: 10 }) },
+    { id: 'step2_reentry_bool', label: 'UPRO+TQQQ — Fix: Re-entry (3-of-4)', engine: 'step2_reentry_variant', params: withHoldout({ reentryMinConditions: 3, cooldown: 2, defSell: 75, rsiPeriod: 24, rsiTrim: 50, uproSplit: 10 }) },
+    { id: 'step2_reentry_cont', label: 'UPRO+TQQQ — Fix: Re-entry (continuous)', engine: 'step2_continuous_reentry_variant', params: withHoldout({ reentryToleranceBps: 250, cooldown: 2, defSell: 75, rsiPeriod: 24, rsiTrim: 50, uproSplit: 10 }) },
+  ],
+  step1_upro_4state: [
+    { id: 'step1_original', label: 'UPRO-Only — Original', engine: 'step1_upro_4state', params: withHoldout({}) },
+    { id: 'step1_tuned', label: 'UPRO-Only — Tuned (rejected)', engine: 'step1_upro_4state', params: withHoldout({ rsiPeriod: 12, uproSplit: 60 }) },
+  ],
+  step3_spxu_predatory_short: [
+    { id: 'step3_original', label: 'SPXU Hedge — Original', engine: 'step3_spxu_predatory_short', params: withHoldout({}) },
+    { id: 'step3_tuned', label: 'SPXU Hedge — Tuned (rejected)', engine: 'step3_spxu_predatory_short', params: withHoldout({ exitVix: 37 }) },
+  ],
+};
 
 // Which daily_log "state" values mean "not holding a directional position"
-// for this strategy -- used to reconstruct discrete investment episodes for
-// the expectancy stat (a strategy that continuously rebalances doesn't have
-// natural round-trip trades the way a single buy/sell pair does; the
-// stretch between leaving cash and returning to it is the closest honest
-// analogue). Strategies not listed here (the overlays, which are about
-// entering/exiting a hedge rather than being invested or not) skip this
-// stat rather than show a misleading number.
+// -- used to reconstruct discrete investment episodes for the expectancy
+// stat. Keyed by ENGINE now (several engines share the same state names),
+// not by variant id.
 const CASH_LIKE_STATES = {
   step1_upro_4state: ['CASH'],
   step2_upro_tqqq_6state: ['CASH'],
+  step2_killfix_variant: ['CASH'],
+  step2_reentry_variant: ['CASH'],
+  step2_continuous_reentry_variant: ['CASH'],
 };
 
-let cache = {}; // strategy_id -> {config, result}
-let selected = new Set();
+let cache = {}; // variant id -> result
+let selected = new Set(); // variant ids
+let variantIndex = {}; // variant id -> variant def (built in renderPicker)
 
 async function fetchStrategies() {
   const resp = await fetch(API_BASE + '/api/strategies');
@@ -105,24 +140,44 @@ async function fetchStrategies() {
   return resp.json();
 }
 
-async function fetchBacktest(strategyId) {
+async function fetchBacktest(engine, params) {
   const resp = await fetch(API_BASE + '/api/backtest', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ strategy_id: strategyId, params: {}, initial_capital: 100000 }),
+    body: JSON.stringify({ strategy_id: engine, params, initial_capital: 100000 }),
   });
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   return resp.json();
 }
 
+function buildVariantGroups(strategies) {
+  const groups = []; // [{ label, variants: [...] }]
+  for (const [id, config] of Object.entries(strategies)) {
+    if (CURATED_VARIANTS[id]) {
+      groups.push({ label: config.name, variants: CURATED_VARIANTS[id] });
+    } else {
+      groups.push({ label: config.name, variants: [{ id, label: config.name, engine: id, params: {} }] });
+    }
+  }
+  return groups;
+}
+
 function renderPicker(strategies) {
+  const groups = buildVariantGroups(strategies);
+  variantIndex = {};
+  let colorI = 0;
   const el = document.getElementById('picker');
-  const ids = Object.keys(strategies);
-  el.innerHTML = ids.map((id, i) => `
-    <label class="chip" data-id="${id}" style="--chip-color:${PALETTE[i % PALETTE.length]}">
-      <input type="checkbox" value="${id}">
-      <span class="swatch"></span>
-      ${strategies[id].name}
-    </label>`).join('');
+  el.innerHTML = groups.map(group => {
+    const chips = group.variants.map(v => {
+      variantIndex[v.id] = { ...v, color: PALETTE[colorI % PALETTE.length] };
+      colorI++;
+      return `<label class="chip" data-id="${v.id}" style="--chip-color:${variantIndex[v.id].color}">
+        <input type="checkbox" value="${v.id}">
+        <span class="swatch"></span>
+        ${v.label}
+      </label>`;
+    }).join('');
+    return `<div class="picker-group"><div class="picker-group-label">${group.label}</div><div class="picker">${chips}</div></div>`;
+  }).join('');
 
   el.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', (e) => {
@@ -130,14 +185,9 @@ function renderPicker(strategies) {
       const id = chip.dataset.id;
       if (selected.has(id)) { selected.delete(id); chip.classList.remove('selected'); }
       else { selected.add(id); chip.classList.add('selected'); }
-      renderComparison(strategies);
+      renderComparison();
     });
   });
-}
-
-function colorFor(id, strategies) {
-  const ids = Object.keys(strategies);
-  return PALETTE[ids.indexOf(id) % PALETTE.length];
 }
 
 function dailyReturns(dailyLog) {
@@ -245,22 +295,23 @@ function fmtMetric(v, digits, suffix = '') {
   return v.toFixed(digits) + suffix;
 }
 
-async function renderComparison(strategies) {
+async function renderComparison() {
   const content = document.getElementById('content');
   if (selected.size < 2) {
-    content.innerHTML = `<div class="empty-state">Select at least two strategies above to compare them.</div>`;
+    content.innerHTML = `<div class="empty-state">Select at least two to compare them.</div>`;
     return;
   }
   content.innerHTML = `<div class="loading">Running backtests&hellip;</div>`;
 
   const entries = [];
   for (const id of selected) {
+    const v = variantIndex[id];
     if (!cache[id]) {
-      const result = await fetchBacktest(id);
+      const result = await fetchBacktest(v.engine, v.params);
       cache[id] = result;
     }
     entries.push({
-      id, label: strategies[id].name, color: colorFor(id, strategies),
+      id, engine: v.engine, label: v.label, color: v.color,
       dailyLog: cache[id].daily_log, metrics: cache[id].metrics,
     });
   }
@@ -269,7 +320,7 @@ async function renderComparison(strategies) {
 
   // Equity overlay
   html += `<div class="card chart-card"><div class="card-pad">
-    <div class="section-label">Cumulative return, each strategy over its own history</div>
+    <div class="section-label">Cumulative return, same window for every selected item</div>
     <div class="legend-row">${entries.map(e => `<span><span class="swatch" style="background:${e.color}"></span>${e.label}</span>`).join('')}</div>
     <div id="chart-overlay"></div>
   </div></div>`;
@@ -278,7 +329,7 @@ async function renderComparison(strategies) {
   html += `<div class="card card-pad" style="margin-bottom:24px;">
     <div class="section-label">Headline metrics</div>
     <table class="metrics-table">
-      <thead><tr><th>Strategy</th><th>CAGR</th><th>Sharpe</th><th>Calmar</th><th>Max Drawdown</th><th>Trades</th></tr></thead>
+      <thead><tr><th>Variant</th><th>CAGR</th><th>Sharpe</th><th>Calmar</th><th>Max Drawdown</th><th>Trades</th></tr></thead>
       <tbody>${entries.map(e => `
         <tr>
           <td class="strategy-col"><span style="color:${e.color};">&#9679;</span> ${e.label}</td>
@@ -292,7 +343,7 @@ async function renderComparison(strategies) {
   </div>`;
 
   // Expectancy
-  const expectancyEntries = entries.map(e => ({ ...e, exp: computeExpectancy(e.dailyLog, e.id) })).filter(e => e.exp);
+  const expectancyEntries = entries.map(e => ({ ...e, exp: computeExpectancy(e.dailyLog, e.engine) })).filter(e => e.exp);
   if (expectancyEntries.length) {
     html += `<div class="card card-pad" style="margin-bottom:24px;">
       <div class="section-label">Expectancy per investment cycle (cash &rarr; invested &rarr; back to cash)</div>

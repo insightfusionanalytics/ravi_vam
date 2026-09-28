@@ -1,0 +1,19 @@
+strategy,config,verdict,period,period_start,period_end,cagr_pct,sharpe,sortino,calmar,max_drawdown_pct,total_trades,final_value,total_return_pct,vixThreshold,smaKill,smaDef,confirmDays,rsiOB,rsiRe,cooldown,defSell,rsiPeriod,rsiTrim,uproSplit,exitVix,vixEntry,spxuAllocation
+UPRO + TQQQ (flagship),Original,,Full History,2011-01-01,2025-12-30,18.65,0.696,0.796,0.421,-44.28,328,1092215.64,992.22,30,200,50,2,75,60,5,50,14,25,75,,,
+UPRO + TQQQ (flagship),Original,,Search (dev period),2011-01-01,2021-12-31,23.34,0.81,0.932,0.554,-42.12,244,812236.39,712.24,30,200,50,2,75,60,5,50,14,25,75,,,
+UPRO + TQQQ (flagship),Original,,Sealed (holdout),2022-02-01,2025-12-30,15.53,0.625,0.721,0.511,-30.41,82,175766.31,75.77,30,200,50,2,75,60,5,50,14,25,75,,,
+UPRO + TQQQ (flagship),Tuned,ADOPTED,Full History,2011-01-01,2025-12-30,27.82,0.835,0.979,0.639,-43.56,278,3092996.99,2993.0,30,200,50,2,75,60,2,75,24,50,10,,,
+UPRO + TQQQ (flagship),Tuned,ADOPTED,Search (dev period),2011-01-01,2021-12-31,35.5,0.991,1.174,0.889,-39.94,214,2077257.67,1977.26,30,200,50,2,75,60,2,75,24,50,10,,,
+UPRO + TQQQ (flagship),Tuned,ADOPTED,Sealed (holdout),2022-02-01,2025-12-30,21.24,0.696,0.816,0.522,-40.72,62,212218.84,112.22,30,200,50,2,75,60,2,75,24,50,10,,,
+UPRO-Only,Original,,Full History,2011-01-01,2025-12-30,14.14,0.583,0.659,0.286,-49.43,150,654363.27,554.36,30,200,50,2,75,60,,,14,,100,,,
+UPRO-Only,Original,,Search (dev period),2011-01-01,2021-12-31,16.85,0.649,0.733,0.341,-49.43,111,489735.54,389.74,30,200,50,2,75,60,,,14,,100,,,
+UPRO-Only,Original,,Sealed (holdout),2022-02-01,2025-12-30,14.49,0.618,0.72,0.508,-28.53,38,169653.86,69.65,30,200,50,2,75,60,,,14,,100,,,
+UPRO-Only,Tuned,REJECTED,Full History,2011-01-01,2025-12-30,9.6,0.583,0.661,0.291,-32.96,167,367478.87,267.48,30,200,50,2,75,60,,,12,,60,,,
+UPRO-Only,Tuned,REJECTED,Search (dev period),2011-01-01,2021-12-31,11.24,0.65,0.737,0.341,-32.96,124,296525.53,196.53,30,200,50,2,75,60,,,12,,60,,,
+UPRO-Only,Tuned,REJECTED,Sealed (holdout),2022-02-01,2025-12-30,9.52,0.614,0.713,0.542,-17.55,42,142646.81,42.65,30,200,50,2,75,60,,,12,,60,,,
+SPXU Hedge Overlay,Original,,Full History,2011-01-01,2025-12-30,-3.16,-0.158,-0.038,-0.066,-47.96,54,63360.48,-36.64,,,,,,,,,,,,30,30,50
+SPXU Hedge Overlay,Original,,Search (dev period),2011-01-01,2021-12-31,-3.05,-0.155,-0.034,-0.078,-39.32,28,72891.66,-27.11,,,,,,,,,,,,30,30,50
+SPXU Hedge Overlay,Original,,Sealed (holdout),2022-02-01,2025-12-30,-3.0,-0.13,-0.038,-0.168,-17.81,24,88780.07,-11.22,,,,,,,,,,,,30,30,50
+SPXU Hedge Overlay,Tuned,REJECTED,Full History,2011-01-01,2025-12-30,-4.38,-0.274,-0.065,-0.076,-57.71,96,52949.28,-47.05,,,,,,,,,,,,37,30,50
+SPXU Hedge Overlay,Tuned,REJECTED,Search (dev period),2011-01-01,2021-12-31,-2.66,-0.135,-0.029,-0.067,-39.66,36,75958.81,-24.04,,,,,,,,,,,,37,30,50
+SPXU Hedge Overlay,Tuned,REJECTED,Sealed (holdout),2022-02-01,2025-12-30,-8.25,-0.615,-0.163,-0.269,-30.6,56,71446.51,-28.55,,,,,,,,,,,,37,30,50

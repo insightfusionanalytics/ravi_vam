@@ -108,15 +108,25 @@ function colorClass(delta, higherIsBetter = true) {
 function paramsLine(baseParams, changed) {
   const parts = [];
   for (const [k, v] of Object.entries(changed)) {
+    // A whipsaw-fix param (e.g. killBufferBps) has no "before" value -- it
+    // doesn't exist on the confirmed engine at all, it's new. Show it as an
+    // addition, not a fake "undefined -> 3" transition.
+    if (!(k in baseParams)) {
+      parts.push(`<code>${k}: new, set to ${v}</code>`);
+      continue;
+    }
     const before = baseParams[k];
     parts.push(`<code>${k}: ${before} &rarr; ${v}</code>`);
   }
   return parts.join(' &nbsp; ');
 }
 function buildDashboardUrl(strategyId, params) {
+  // Same reasoning as frontend/index.html's buildDashboardPresetUrl -- every
+  // number on this page is the sealed-holdout result, so the dashboard link
+  // must carry that exact window too, or it reproduces a different number.
   const usp = new URLSearchParams();
   usp.set('strategy', strategyId);
-  usp.set('preset', JSON.stringify(params));
+  usp.set('preset', JSON.stringify({ ...params, fullHistory: true, startDate: '2022-02-01', endDate: '2025-12-30' }));
   return '/dashboard/?' + usp.toString();
 }
 
@@ -164,6 +174,25 @@ function renderHeadline(strategy) {
 function renderCandidateRow(strategy, cand) {
   const b = strategy.baseline.holdout, h = cand.holdout, dTuned = cand.dev;
   const pill = cand.verdict === 'adopt' ? '<span class="pill green">Adopt</span>' : '<span class="pill neutral">Not recommended</span>';
+
+  // Some candidates were deliberately never checked against the sealed
+  // holdout -- dev-period evidence alone didn't clear the bar to justify
+  // spending that look. Show the dev numbers plainly, not a fake holdout.
+  if (!h) {
+    return `
+      <tr class="candidate-row">
+        <td>
+          <strong>${cand.label}</strong><br>
+          <span class="params-changed">${paramsLine(strategy.default_params, cand.params)} &mdash; dev-period only, not checked against sealed holdout</span>
+        </td>
+        <td class="num">${dTuned.cagr_pct.toFixed(1)}%<br><span class="tuned-val">(dev period)</span></td>
+        <td class="num">${dTuned.calmar.toFixed(3)}<br><span class="tuned-val">(dev period)</span></td>
+        <td class="num">${dTuned.max_drawdown_pct.toFixed(1)}%<br><span class="tuned-val">(dev period)</span></td>
+        <td><span class="pill neutral">Not recommended</span></td>
+        <td class="candidate-note">${cand.verdict_note}</td>
+      </tr>`;
+  }
+
   return `
     <tr class="candidate-row">
       <td>

@@ -60,6 +60,39 @@ STRATEGIES = [
                 "verdict": "reject",
                 "verdict_note": "Tried specifically to find a version with the return gain but less drawdown. Worse on every measure on sealed data -- the drawdown trade-off looks like a real, structural feature of this strategy's parameter space, not an artifact of how the search was scored.",
             },
+            # --- Whipsaw-fix attempts (post-adoption investigation) ---
+            # All three stack on top of the adopted "confirmed values locked"
+            # config (cooldown/defSell/rsiPeriod/rsiTrim/uproSplit below) and
+            # isolate one additional mechanism change. Each uses a different
+            # engine module (app/engines/step2_*_variant.py), not the
+            # confirmed step2 engine -- see "engine" override, handled in
+            # main() below.
+            {
+                "label": "Fix attempt: kill-switch buffer + confirmation",
+                "key": "killfix",
+                "engine": "app.engines.step2_killfix_variant",
+                "params": {"cooldown": 2, "defSell": 75, "rsiPeriod": 24, "rsiTrim": 50, "uproSplit": 10, "killBufferBps": 75, "killConfirmDays": 4},
+                "verdict": "reject",
+                "verdict_note": "Properly optimized (0 guardrail rejections, every dev fold improved). Whipsaws genuinely dropped on sealed data (false alarms 4→2), but the slower trigger also absorbed more of a real decline (SVB, March 2023) -- CAGR came out slightly worse (21.24% → 20.61%), not better. Mechanism verified working as designed; net effect negative.",
+            },
+            {
+                "label": "Fix attempt: re-entry loosened (3-of-4 conditions)",
+                "key": "reentry_bool",
+                "engine": "app.engines.step2_reentry_variant",
+                "params": {"cooldown": 2, "defSell": 75, "rsiPeriod": 24, "rsiTrim": 50, "uproSplit": 10, "reentryMinConditions": 3},
+                "verdict": "reject",
+                "verdict_note": "Dev-period signal was weak and mixed (one fold worse, trades up 40%, improvement driven by reduced cross-fold variance rather than higher typical return) -- did not clear the bar to justify a sealed-holdout check. Not adopted on dev evidence alone.",
+                "skip_holdout": True,
+            },
+            {
+                "label": "Fix attempt: re-entry loosened (continuous tolerance)",
+                "key": "reentry_continuous",
+                "engine": "app.engines.step2_continuous_reentry_variant",
+                "params": {"cooldown": 2, "defSell": 75, "rsiPeriod": 24, "rsiTrim": 50, "uproSplit": 10, "reentryToleranceBps": 250},
+                "verdict": "reject",
+                "verdict_note": "A properly-built continuous generalization of the boolean version (verified identical to today's rule at zero tolerance), but the robust, density-picked region scored worse than baseline on dev (0.756 vs. 0.905), deeper drawdown, 35% more trades. Not adopted on dev evidence alone.",
+                "skip_holdout": True,
+            },
         ],
     },
     {
@@ -146,19 +179,31 @@ def main() -> None:
 
         candidates_out = []
         for cand in spec["candidates"]:
+            # A candidate may run through a different engine module than its
+            # strategy's confirmed one (the whipsaw-fix attempts each isolate
+            # one mechanism change in their own module) -- default_params still
+            # comes from the strategy's own JSON, since these fixes stack on
+            # top of the same confirmed/tuned param set either way.
+            cand_engine = importlib.import_module(cand["engine"]) if cand.get("engine") else engine_module
             full_params = {**default_params, **cand["params"]}
-            dev = _run(engine_module, full_params, *DEV_PERIOD)
-            holdout, holdout_curve = _run_with_curve(engine_module, full_params, *HOLDOUT_PERIOD)
-            candidates_out.append({
+            dev = _run(cand_engine, full_params, *DEV_PERIOD)
+            entry = {
                 "label": cand["label"],
                 "key": cand["key"],
                 "params": cand["params"],
                 "verdict": cand["verdict"],
                 "verdict_note": cand["verdict_note"],
                 "dev": dev,
-                "holdout": holdout,
-                "holdout_curve": holdout_curve,
-            })
+            }
+            if cand.get("skip_holdout"):
+                entry["holdout"] = None
+                entry["holdout_curve"] = None
+                entry["holdout_skipped"] = True
+            else:
+                holdout, holdout_curve = _run_with_curve(cand_engine, full_params, *HOLDOUT_PERIOD)
+                entry["holdout"] = holdout
+                entry["holdout_curve"] = holdout_curve
+            candidates_out.append(entry)
 
         output["strategies"].append({
             "id": spec["id"],

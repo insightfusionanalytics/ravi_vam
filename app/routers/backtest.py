@@ -42,6 +42,19 @@ def _get_engine(strategy_id: str):
             "v5b_nonleveraged": v5_module.run_v5b,
         }
         return fns[strategy_id]
+    # Whipsaw-fix experiments (see OPTIMIZATION_REPORT.md / the investigation
+    # deck) -- each is a Step 2 variant isolating one proposed fix. None of
+    # these are deliverables; kept queryable here so the dashboard/Compare
+    # page can run them live, same as any other engine.
+    elif strategy_id == "step2_killfix_variant":
+        from app.engines.step2_killfix_variant import run
+        return run
+    elif strategy_id == "step2_reentry_variant":
+        from app.engines.step2_reentry_variant import run
+        return run
+    elif strategy_id == "step2_continuous_reentry_variant":
+        from app.engines.step2_continuous_reentry_variant import run
+        return run
     return None
 
 
