@@ -22,10 +22,6 @@
     .back-link:hover { background: rgba(59,130,246,0.15); }
     .logo { font-size: 14px; font-weight: 800; color: var(--accent); letter-spacing: 1.5px; }
     .strategy-name { font-size: 13px; color: var(--text-dim); padding-left: 12px; border-left: 1px solid var(--card-border); }
-    .data-source-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 600; letter-spacing: 0.5px; }
-    .data-source-badge.databento { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
-    .data-source-badge.yahoo { background: rgba(234,179,8,0.12); color: var(--yellow); border: 1px solid rgba(234,179,8,0.25); }
-    .data-source-badge.unknown { background: rgba(163,163,163,0.12); color: var(--text-muted); border: 1px solid rgba(163,163,163,0.25); }
     .metrics-bar { grid-column: 1 / -1; display: flex; gap: 20px; padding: 12px 24px; background: var(--card); border-bottom: 1px solid var(--card-border); flex-wrap: wrap; }
     .metric { display: flex; flex-direction: column; gap: 2px; }
     .metric-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
@@ -176,7 +172,6 @@
       .back-link { font-size: 10px; padding: 3px 8px; }
       .logo { font-size: 12px; }
       .strategy-name { font-size: 11px; padding-left: 8px; border-left: none; }
-      .data-source-badge { font-size: 9px; padding: 2px 6px; }
       .metrics-bar { gap: 8px; padding: 8px 12px; }
       .metric { min-width: 0; }
       .metric-label { font-size: 9px; letter-spacing: 0.5px; }
@@ -240,7 +235,6 @@
       <a href="/compare/" class="back-link">Compare</a>
       <a href="/optimize/" class="back-link">Optimization</a>
       <div class="strategy-name" id="strategy-name-header">Loading...</div>
-      <span class="data-source-badge unknown" id="data-source-badge" title="Data source not yet determined">DATA: ...</span>
     </div>
   </div>
 
@@ -442,9 +436,6 @@
       document.getElementById('strategy-name-header').textContent = strategyConfig.name;
       document.title = `RAVI VAM — ${strategyConfig.name}`;
 
-      // Fetch and display active data source
-      fetchDataSource();
-
       buildSidebar(strategyConfig);
       buildStateMachineView(strategyConfig.states);
       createAllCharts();
@@ -493,10 +484,6 @@
         portfolioData = result.daily_log;
         tradeLogData = result.trades;
         metricsData = result.metrics;
-        if (result.data_source) {
-          const labels = { databento: 'DataBento', yahoo_fallback: 'Yahoo Finance (fallback)', unknown: 'Not yet determined' };
-          updateDataSourceBadge(result.data_source, labels[result.data_source] || result.data_source, result.data_source === 'yahoo_fallback');
-        }
         updateAllVisuals(getDefaultParams(strategyConfig));
         setApiStatus('Loaded (default params). Adjust sliders to re-run.');
       } catch (e) {
@@ -682,28 +669,6 @@
       if (sidebarParams) sidebarParams.prepend(notice);
 
       runBacktestViaAPI(readParams());
-    }
-
-    // =========================================================================
-    // DATA SOURCE INDICATOR
-    // =========================================================================
-    function updateDataSourceBadge(source, label, isFallback) {
-      const badge = document.getElementById('data-source-badge');
-      if (!badge) return;
-      badge.className = 'data-source-badge ' + (source === 'databento' ? 'databento' : source === 'yahoo_fallback' ? 'yahoo' : 'unknown');
-      badge.textContent = 'DATA: ' + label;
-      badge.title = isFallback
-        ? 'DataBento CSVs not available — using Yahoo Finance as fallback'
-        : 'Using DataBento market data';
-    }
-
-    async function fetchDataSource() {
-      try {
-        const resp = await fetch(API_BASE + '/api/data-source');
-        if (!resp.ok) return;
-        const info = await resp.json();
-        updateDataSourceBadge(info.source, info.label, info.is_fallback);
-      } catch (e) { /* silent — badge stays as "..." */ }
     }
 
     function getDefaultParams(config) {
@@ -1149,11 +1114,6 @@
           tradeLogData = result.trades;
           metricsData = result.metrics;
           lastRunParams = params;
-
-          if (result.data_source) {
-            const labels = { databento: 'DataBento', yahoo_fallback: 'Yahoo Finance (fallback)', unknown: 'Not yet determined' };
-            updateDataSourceBadge(result.data_source, labels[result.data_source] || result.data_source, result.data_source === 'yahoo_fallback');
-          }
 
           if (!Object.keys(charts).length) createAllCharts();
           updateAllVisuals(params);
@@ -1819,8 +1779,6 @@
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(90);
       doc.text(String((strategyConfig && strategyConfig.name) || currentStrategyId), 40, y); y += 14;
       doc.text(`Generated: ${new Date().toLocaleString()}`, 40, y); y += 14;
-      const dataSourceLabel = (document.getElementById('data-source-badge') || {}).textContent || '';
-      doc.text(`Data source: ${dataSourceLabel}`, 40, y); y += 14;
       const m = metricsData;
       const hrLabels = { search: 'Search / dev period (2011-01-01 to 2021-12-31)', sealed: 'Sealed holdout (2022-02-01 to 2025-12-30)', full: 'Full History (2011-2025)', recent: 'Recent (~2020-2025)' };
       const hrValue = (lastRunParams.startDate === '2011-01-01' && lastRunParams.endDate === '2021-12-31') ? 'search'

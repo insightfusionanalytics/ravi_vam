@@ -72,7 +72,6 @@
         <a class="nav-link" href="/optimize/">Optimization</a>
       </div>
     </div>
-    <span class="pill neutral" id="data-source-badge">DATA: &hellip;</span>
   </div>
 
   <div class="hero">
@@ -418,26 +417,10 @@
       }
     }
 
-    async function fetchDataSource() {
-      try {
-        const resp = await fetch(API_BASE + '/api/data-source');
-        if (!resp.ok) return;
-        const info = await resp.json();
-        const badge = document.getElementById('data-source-badge');
-        if (!badge) return;
-        badge.className = 'pill ' + (info.source === 'databento' ? 'green' : info.source === 'yahoo_fallback' ? 'yellow' : 'neutral');
-        badge.textContent = 'DATA: ' + info.label;
-        badge.title = info.is_fallback
-          ? 'DataBento CSVs not available — using Yahoo Finance as fallback'
-          : 'Using DataBento market data';
-      } catch (e) { /* silent */ }
-    }
-
     // Render immediately from local fallback to avoid blocking first paint.
     renderStrategies(FALLBACK_STRATEGIES);
     // Try to hydrate with live API data in the background.
     loadStrategies();
-    fetchDataSource();
 
     // =========================================================================
     // OPTUNA-TUNED VARIANTS -- same engines, alternate starting parameters
